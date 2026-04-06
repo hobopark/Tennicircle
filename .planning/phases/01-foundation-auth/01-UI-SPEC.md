@@ -57,21 +57,23 @@ Exceptions:
 ## Typography
 
 **Font families:**
-- Display/Headings: `Nunito`, weights 700 (Bold) and 800 (ExtraBold)
-- Body/UI: `Nunito Sans`, weights 400 (Regular) and 600 (SemiBold)
+- Display/Headings: `Nunito`, weight 700 (Bold)
+- Body/UI: `Nunito Sans`, weight 400 (Regular)
+
+**Declared weights: 400 (Regular) and 700 (Bold) only. No other weights are permitted.**
 
 | Role | Size | Weight | Line Height | Font Family |
 |------|------|--------|-------------|-------------|
 | Body | 16px | 400 | 1.5 | Nunito Sans |
-| Label / UI text | 14px | 600 | 1.4 | Nunito Sans |
+| Label / UI text | 14px | 400 | 1.4 | Nunito Sans |
 | Heading (card/section) | 20px | 700 | 1.3 | Nunito |
-| Display (page title) | 28px | 800 | 1.2 | Nunito |
+| Display (page title) | 28px | 700 | 1.2 | Nunito |
 
 **Usage notes:**
 - Body (16px/400) — form field values, helper text, paragraph copy
-- Label (14px/600) — form field labels, tab labels, button text, nav items
-- Heading (20px/700) — card titles, section headings, auth form heading ("Welcome back")
-- Display (28px/800) — page-level title on welcome page ("You're in, [name]")
+- Label (14px/400) — form field labels, tab labels, button text, nav items, helper/legal text below buttons, skip links
+- Heading (20px/700) — card titles, section headings, auth form heading ("Welcome back"), wordmark/logotype
+- Display (28px/700) — page-level title on welcome page ("You're in, [name]")
 - No italic variants in Phase 1
 - No additional sizes. If something doesn't fit these 4 roles, reconsider the layout.
 
@@ -159,7 +161,7 @@ Accent is NOT used for: text links (use `#1C1C1C` underlined), passive icons, ca
 ### Primary Button
 
 - Background: `#5E8C6A` (Court Green)
-- Text: `#FFFFFF`, Nunito Sans 14px weight 600
+- Text: `#FFFFFF`, Nunito Sans 14px weight 400
 - Border radius: 12px
 - Height: 52px
 - Width: 100% (full width within form context)
@@ -171,8 +173,8 @@ Accent is NOT used for: text links (use `#1C1C1C` underlined), passive icons, ca
 
 ### Form Labels
 
-- Font: Nunito Sans 14px weight 600, color `#1C1C1C`
-- Spacing below label: 6px before input
+- Font: Nunito Sans 14px weight 400, color `#1C1C1C`
+- Spacing below label: 8px before input
 
 ### Loading Spinner (auth state check)
 
@@ -221,8 +223,10 @@ No third-party registries. All components from shadcn official registry only.
 
 **Layout:** Full-page cream background. Auth card centered vertically at 45% viewport height (slightly above center — more natural than dead center). TenniCircle wordmark above card. Tabs inside card.
 
+**Primary focal point:** the auth card — all surrounding elements support it without competing.
+
 **Page structure (top to bottom):**
-1. TenniCircle logo/wordmark — Nunito ExtraBold 24px, color `#1C1C1C`, centered, 48px above card
+1. TenniCircle logo/wordmark — Nunito Bold 20px (heading size), color `#1C1C1C`, centered, 48px above card
 2. Auth card (440px max-width, white)
    - Heading: "Welcome back" (Login tab) / "Join TenniCircle" (Sign Up tab) — Nunito Bold 20px
    - Tab switcher: Login | Sign Up (inside card, below heading)
@@ -240,7 +244,7 @@ No third-party registries. All components from shadcn official registry only.
 - Email (label: "Email address", placeholder: "you@example.com")
 - Password (label: "Create a password", placeholder: "At least 8 characters")
 - CTA button: "Create account"
-- Below button: Helper text — "By signing up, you agree to our terms." — 12px `#8C8279` (terms page not built — static text only)
+- Below button: Helper text — "By signing up, you agree to our terms." — Nunito Sans 14px `#8C8279` (terms page not built — static text only)
 
 **Inline error placement (D-03):**
 - Error text appears 4px below the specific field that failed
@@ -255,7 +259,7 @@ No third-party registries. All components from shadcn official registry only.
 After successful sign-up, replace the form content (inside the same card) with:
 
 - Heading: "Check your email" — Nunito Bold 20px
-- Body: "We sent a confirmation link to **[email]**. Click it to activate your account." — 16px/400 with email in semibold
+- Body: "We sent a confirmation link to **[email]**. Click it to activate your account." — 16px/400 with email in bold
 - Helper: "Didn't get it? Check your spam folder or — " + "resend the email" link (Nunito Sans 14px, `#5E8C6A`, calls `resend()` once, then disables for 60s with countdown)
 - Do NOT navigate away from /auth — update in-place
 
@@ -267,10 +271,10 @@ After successful sign-up, replace the form content (inside the same card) with:
 
 **Card content:**
 - Icon: Lucide `Trophy` or `CircleDot`, size 40px, color `#5E8C6A`, centered at top of card
-- Heading: "You're in!" — Nunito ExtraBold 28px (display size)
+- Heading: "You're in!" — Nunito Bold 28px (display size)
 - Subheading: "Set up your profile to get the most out of TenniCircle." — Nunito Sans 16px `#8C8279`
 - CTA button: "Set up my profile" (full-width, primary style)
-- Skip link: "I'll do this later" — Nunito Sans 14px `#8C8279`, centered, below button, 12px margin top
+- Skip link: "I'll do this later" — Nunito Sans 14px `#8C8279`, centered, below button, 16px margin top
 
 **Role routing note:** Once the user has an established role AND the role-specific page exists (Phase 2+), the welcome page is bypassed. In Phase 1, all post-login traffic lands here.
 
@@ -357,7 +361,7 @@ No third-party registries declared for Phase 1.
 
 1. **globals.css:** Replace all existing CSS variables with the token set in the Color section. Remove the dark mode `@media (prefers-color-scheme: dark)` block entirely — no dark mode in Phase 1.
 
-2. **Font setup:** In `src/app/layout.tsx`, replace Geist imports with `Nunito` and `Nunito_Sans` from `next/font/google`. Load subsets: `['latin']`. Load weights for Nunito: `['700', '800']`. Load weights for Nunito Sans: `['400', '600']`.
+2. **Font setup:** In `src/app/layout.tsx`, replace Geist imports with `Nunito` and `Nunito_Sans` from `next/font/google`. Load subsets: `['latin']`. Load weights for Nunito: `['700']`. Load weights for Nunito Sans: `['400']`. Only 2 weights total — 400 and 700.
 
 3. **shadcn init:** Run `npx shadcn@latest init`. When asked for style, choose Default. When asked for base color, choose Slate (then override in globals.css with the warm palette — the preset base color doesn't matter since all variables are replaced).
 
