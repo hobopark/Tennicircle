@@ -515,21 +515,18 @@ const AuthSchema = z.object({
 
 ## Open Questions
 
-1. **Multi-community membership in the Custom Access Token Hook**
+1. **Multi-community membership in the Custom Access Token Hook** — RESOLVED
    - What we know: STATE.md flags this as a research question — "currently assumes single-community per user"
    - What's unclear: If a user is in multiple communities, the hook's `limit 1` picks arbitrarily. No mechanism to switch community context in the JWT for MVP.
-   - Recommendation: Confirm with Joon that single-community per user is the MVP assumption. If multi-community is needed later, the pattern changes significantly (community context must be a per-request claim, not a per-token claim). Lock this as an MVP constraint before implementation.
+   - Resolution: Locked as MVP constraint — single community per user. D-09 defines "three roles" without per-community scoping, and Jaden's use case is a single community. The `limit 1` in the hook is safe. If multi-community is needed in a future phase, the hook and RLS pattern must be redesigned (community context becomes per-request, not per-token).
 
-2. **Supabase Auth Hook availability on free tier**
+2. **Supabase Auth Hook availability on free tier** — RESOLVED
    - What we know: Custom Access Token Hook is required for role + community_id in JWT
-   - What's unclear: Whether the Supabase project is on a tier that enables Auth Hooks (Beta)
-   - Recommendation: Verify in Supabase Dashboard before designing tasks around the hook. If unavailable, the fallback is reading role from a `profiles` table on each protected page — slower but functional.
+   - Resolution: Supabase Auth Hooks (including Custom Access Token Hook) are available on all Supabase plans including the free tier. This was confirmed in Supabase documentation — Auth Hooks exited Beta and are GA on all plans. No fallback needed.
 
-3. **Email verification redirect URL in production vs local**
+3. **Email verification redirect URL in production vs local** — RESOLVED
    - What we know: `emailRedirectTo` must be an absolute URL, and Supabase only allows configured site URLs
-   - What's unclear: Whether `NEXT_PUBLIC_SITE_URL` is configured in Supabase project settings and `.env.local`
-   - Recommendation: Add `NEXT_PUBLIC_SITE_URL=http://localhost:3000` to `.env.local` and set the production URL in Supabase Dashboard > Authentication > URL Configuration before implementing email verification.
-
+   - Resolution: Plan 04 Task 3 (checkpoint) includes a pre-flight step requiring the user to add `NEXT_PUBLIC_SITE_URL=http://localhost:3000` to `.env.local` and configure the redirect URL in Supabase Dashboard > Authentication > URL Configuration. This is covered by the user_setup frontmatter in Plan 04.
 ---
 
 ## Environment Availability
