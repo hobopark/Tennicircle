@@ -92,18 +92,20 @@ All shadcn CSS variables are overridden in `globals.css` inside `:root`. Dark mo
 | Card surface | `#FFFFFF` | `--popover` | White card on top of cream bg (auth card) |
 | Primary text | `#1C1C1C` | `--foreground` | Body copy, headings, labels |
 | Secondary text | `#8C8279` | `--muted-foreground` | Placeholder text, helper text, inactive tab label |
-| Accent — Court Green | `#5E8C6A` | `--primary` | Primary CTA button fill, active tab indicator, focus ring |
+| Accent — Court Blue | `#2D5F8A` | `--primary` | Primary CTA button fill, active tab indicator, focus ring |
 | Accent foreground | `#FFFFFF` | `--primary-foreground` | Text on primary button |
+| Highlight — Tennis Yellow | `#C4D82E` | `--accent` | Success badges, active indicators, subtle highlights |
+| Highlight foreground | `#1C1C1C` | `--accent-foreground` | Text on yellow highlight (dark for contrast) |
 | Secondary action | `#C17C5E` | `--secondary` | Secondary/ghost button hover, badge highlight (deferred to later phases) |
 | Border / divider | `#E8E2DA` | `--border` | Input borders, card dividers, tab underline |
 | Destructive | `#C75D5D` | `--destructive` | Error messages, destructive button (not in Phase 1 UI but declared for consistency) |
-| Ring (focus) | `#5E8C6A` | `--ring` | Focus outline, matches accent |
+| Ring (focus) | `#2D5F8A` | `--ring` | Focus outline, matches accent |
 
 **Semantic status colors (declare in globals.css, not shadcn variables):**
 - Success: `#5B9A6B`
 - Error: `#C75D5D`
 - Warning: `#C4944A`
-- Info: `#5B89A6`
+- Info: `#2D5F8A` (matches Court Blue — replaces the separate info blue)
 
 ### Color contract rules (anti-patterns — enforce strictly)
 
@@ -111,17 +113,24 @@ All shadcn CSS variables are overridden in `globals.css` inside `:root`. Dark mo
 - Do NOT use `#000000` for any text — use `#1C1C1C`
 - Do NOT add visible borders to auth card — use shadow only
 - Do NOT apply the accent color to non-interactive elements (accent is reserved — see below)
+- Do NOT use Tennis Yellow for large surfaces — it's a highlight, not a fill
 
-**Accent (`#5E8C6A` Court Green) reserved for:**
+**Accent (`#2D5F8A` Court Blue) reserved for:**
 1. Primary button fill and hover state
 2. Active tab indicator (the underline/highlight on the selected tab)
 3. Input field focus ring/border
 4. Checkbox/radio checked state
 5. Loading spinner (Phase 1 skeleton states)
 
+**Highlight (`#C4D82E` Tennis Yellow) reserved for:**
+1. Success/completion badges and checkmarks (later phases)
+2. Active state dot indicators
+3. Subtle highlight accents (e.g., welcome page icon glow)
+4. NOT used for buttons, text, or large fills — highlight only
+
 Accent is NOT used for: text links (use `#1C1C1C` underlined), passive icons, card backgrounds, or page sections.
 
-**Rationale for Court Green over Sage Green:** The Borkd brief used Sage (#7A9E7E), which reads as "nature/wellness." Tennis court surface green (#5E8C6A) is slightly deeper and more purposeful — it reads as "sport" without being neon. It maintains the warm-but-confident aesthetic.
+**Rationale — Australian Open identity:** Court Blue (`#2D5F8A`) evokes the Australian Open hard court — instantly recognizable as tennis and locally relevant for a Sydney-based community. Tennis Yellow (`#C4D82E`) is a muted nod to the tennis ball — used sparingly as a highlight to avoid visual noise. Together they create a distinct tennis identity while keeping the warm, calm cream-base aesthetic from the design brief.
 
 ---
 
@@ -141,7 +150,7 @@ Accent is NOT used for: text links (use `#1C1C1C` underlined), passive icons, ca
 - Container background: `#F0EBE3` (warm sand pill)
 - Border radius: 12px (pill container)
 - Active tab: white background pill, `#1C1C1C` text, no accent fill on tab itself
-- Active tab indicator: 2px `#5E8C6A` underline below the active tab label (inside the pill is also acceptable)
+- Active tab indicator: 2px `#2D5F8A` underline below the active tab label (inside the pill is also acceptable)
 - Inactive tab: transparent, `#8C8279` text
 - Tab height: 44px minimum
 - Use shadcn `Tabs` component (`npx shadcn@latest add tabs`)
@@ -149,7 +158,7 @@ Accent is NOT used for: text links (use `#1C1C1C` underlined), passive icons, ca
 ### Input Fields
 
 - Background: `#F0EBE3` (warm sand)
-- Border: 1px solid `#E8E2DA` default, 1.5px solid `#5E8C6A` on focus
+- Border: 1px solid `#E8E2DA` default, 1.5px solid `#2D5F8A` on focus
 - Border radius: 12px
 - Height: 48px
 - Font: Nunito Sans 16px weight 400
@@ -160,13 +169,13 @@ Accent is NOT used for: text links (use `#1C1C1C` underlined), passive icons, ca
 
 ### Primary Button
 
-- Background: `#5E8C6A` (Court Green)
+- Background: `#2D5F8A` (Court Blue)
 - Text: `#FFFFFF`, Nunito Sans 14px weight 400
 - Border radius: 12px
 - Height: 52px
 - Width: 100% (full width within form context)
-- Hover: `background-color` darken 8% → `#4F7A5A`
-- Active/pressed: darken 12% → `#446850`
+- Hover: `background-color` darken 8% → `#265178`
+- Active/pressed: darken 12% → `#1F4466`
 - Disabled: opacity 0.4, cursor not-allowed
 - Loading state: spinner replaces button text (do not expand button width)
 - Use shadcn `Button` component (`npx shadcn@latest add button`)
@@ -178,7 +187,7 @@ Accent is NOT used for: text links (use `#1C1C1C` underlined), passive icons, ca
 
 ### Loading Spinner (auth state check)
 
-- Color: `#5E8C6A`
+- Color: `#2D5F8A`
 - Size: 24px
 - Full-page centered on cream background while Supabase session check completes
 - Do NOT show any nav or layout shell during loading
@@ -260,7 +269,7 @@ After successful sign-up, replace the form content (inside the same card) with:
 
 - Heading: "Check your email" — Nunito Bold 20px
 - Body: "We sent a confirmation link to **[email]**. Click it to activate your account." — 16px/400 with email in bold
-- Helper: "Didn't get it? Check your spam folder or — " + "resend the email" link (Nunito Sans 14px, `#5E8C6A`, calls `resend()` once, then disables for 60s with countdown)
+- Helper: "Didn't get it? Check your spam folder or — " + "resend the email" link (Nunito Sans 14px, `#2D5F8A`, calls `resend()` once, then disables for 60s with countdown)
 - Do NOT navigate away from /auth — update in-place
 
 ### /welcome — Welcome Page (D-11, post-login Phase 1 landing)
@@ -270,7 +279,7 @@ After successful sign-up, replace the form content (inside the same card) with:
 **Layout:** Full-page cream background. Single card centered.
 
 **Card content:**
-- Icon: Lucide `Trophy` or `CircleDot`, size 40px, color `#5E8C6A`, centered at top of card
+- Icon: Lucide `Trophy` or `CircleDot`, size 40px, color `#2D5F8A`, centered at top of card
 - Heading: "You're in!" — Nunito Bold 28px (display size)
 - Subheading: "Set up your profile to get the most out of TenniCircle." — Nunito Sans 16px `#8C8279`
 - CTA button: "Set up my profile" (full-width, primary style)
@@ -281,7 +290,7 @@ After successful sign-up, replace the form content (inside the same card) with:
 ### Loading State (auth check)
 
 - Full cream page background
-- 24px Court Green spinner, centered horizontally and vertically
+- 24px Court Blue spinner, centered horizontally and vertically
 - No layout shell, no nav, no card
 - Shown for maximum 2 seconds; if Supabase call takes longer, show spinner until resolved
 
