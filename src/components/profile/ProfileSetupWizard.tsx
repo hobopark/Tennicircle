@@ -21,16 +21,19 @@ interface ProfileSetupWizardProps {
   email: string
   communityId: string
   userId: string
+  userRole: string
 }
 
-const STEPS = ['identity', 'contact', 'avatar', 'skill'] as const
-type Step = (typeof STEPS)[number]
+const PLAYER_STEPS = ['identity', 'contact', 'avatar', 'skill'] as const
+const COACH_STEPS = ['identity', 'contact', 'avatar', 'coaching'] as const
+type Step = 'identity' | 'contact' | 'avatar' | 'skill' | 'coaching'
 
 const STEP_LABELS: Record<Step, string> = {
   identity: 'Identity',
   contact: 'Contact',
   avatar: 'Avatar',
   skill: 'Skill',
+  coaching: 'Coaching',
 }
 
 export function ProfileSetupWizard({
@@ -38,9 +41,12 @@ export function ProfileSetupWizard({
   email,
   communityId,
   userId,
+  userRole,
 }: ProfileSetupWizardProps) {
   const router = useRouter()
   const isEditing = existingProfile !== null
+  const isCoach = userRole === 'coach' || userRole === 'admin'
+  const STEPS = isCoach ? COACH_STEPS : PLAYER_STEPS
 
   const [currentStep, setCurrentStep] = useState<number>(0)
   const [formData, setFormData] = useState<Partial<ProfileInput>>({
@@ -248,8 +254,8 @@ export function ProfileSetupWizard({
           </div>
         )}
 
-        {/* Step 3: Skill */}
-        {currentStep === 3 && (
+        {/* Step 3: Skill (players only) */}
+        {currentStep === 3 && !isCoach && (
           <>
             <SkillLevelSelector
               value={formData.skillLevel}
@@ -273,6 +279,24 @@ export function ProfileSetupWizard({
               </p>
             </div>
           </>
+        )}
+
+        {/* Step 3: Coaching bio (coaches/admins only) */}
+        {currentStep === 3 && isCoach && (
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="coachingBio">Coaching bio &amp; specialties</Label>
+            <Textarea
+              id="coachingBio"
+              value={formData.coachingBio ?? ''}
+              onChange={e => handleFieldChange('coachingBio', e.target.value)}
+              placeholder="Your coaching experience, qualifications, and specialties..."
+              maxLength={500}
+              rows={4}
+            />
+            <p className="text-sm text-muted-foreground">
+              This appears on your profile so players know your background.
+            </p>
+          </div>
         )}
       </div>
 

@@ -2,6 +2,7 @@ import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ProfileSetupWizard } from '@/components/profile/ProfileSetupWizard'
 import type { PlayerProfile } from '@/lib/types/profiles'
+import type { UserRole } from '@/lib/types/auth'
 
 export default async function ProfileSetupPage() {
   const supabase = await createClient()
@@ -13,6 +14,8 @@ export default async function ProfileSetupPage() {
   // Get JWT claims for communityId
   const claims = await getJWTClaims(supabase)
   if (!claims.community_id) redirect('/welcome')
+
+  const userRole = (claims.user_role as UserRole) ?? 'pending'
 
   // Fetch existing profile (edit mode)
   const { data: existingProfile } = await supabase
@@ -29,6 +32,7 @@ export default async function ProfileSetupPage() {
         email={user.email ?? ''}
         communityId={claims.community_id}
         userId={user.id}
+        userRole={userRole}
       />
     </div>
   )

@@ -15,6 +15,7 @@ interface ProfileViewProps {
   viewerRole: UserRole
   memberId: string
   email: string
+  profileRole?: UserRole
 }
 
 function selfSkillBadgeClass(level: SkillLevel | null): string {
@@ -44,8 +45,10 @@ export function ProfileView({
   viewerRole,
   memberId,
   email,
+  profileRole,
 }: ProfileViewProps) {
   const isCoachOrAdmin = viewerRole === 'admin' || viewerRole === 'coach'
+  const isProfileCoach = profileRole === 'coach' || profileRole === 'admin'
 
   const cards = [
     // Profile header card
@@ -87,46 +90,50 @@ export function ProfileView({
       </div>
     </div>,
 
-    // Skill levels card
-    <div
-      key="skills"
-      className="bg-card rounded-3xl border border-border/50 p-6 mb-4"
-    >
-      <h2 className="font-heading font-bold text-base mb-3">Skill Level</h2>
-      <div className="flex gap-4">
-        <div className="flex flex-col gap-1">
-          <p className="text-sm text-muted-foreground">Self-assessed</p>
-          <span
-            className={`inline-flex h-5 items-center justify-center rounded-full px-2 py-0.5 text-sm font-medium ${selfSkillBadgeClass(profile.self_skill_level)}`}
+    // Skill levels card (hide for coach's own profile — coaches don't have skill levels)
+    ...(!isProfileCoach || !isOwnProfile
+      ? [
+          <div
+            key="skills"
+            className="bg-card rounded-3xl border border-border/50 p-6 mb-4"
           >
-            {profile.self_skill_level
-              ? profile.self_skill_level.charAt(0).toUpperCase() + profile.self_skill_level.slice(1)
-              : 'Not set'}
-          </span>
-        </div>
-        <div className="flex flex-col gap-1">
-          <p className="text-sm font-bold text-foreground">Coach assessment</p>
-          {isCoachOrAdmin && !isOwnProfile ? (
-            <CoachAssessmentWidget
-              subjectMemberId={memberId}
-              currentLevel={coachAssessment?.skill_level ?? null}
-            />
-          ) : (
-            <span
-              className={`inline-flex h-5 items-center justify-center rounded-full px-2 py-0.5 text-sm font-medium ${coachSkillBadgeClass(coachAssessment?.skill_level ?? null)}`}
-            >
-              {coachAssessment?.skill_level
-                ? coachAssessment.skill_level.charAt(0).toUpperCase() +
-                  coachAssessment.skill_level.slice(1)
-                : 'Not yet assessed'}
-            </span>
-          )}
-        </div>
-      </div>
-      {profile.utr != null && (
-        <p className="text-sm text-muted-foreground mt-3">UTR: {profile.utr}</p>
-      )}
-    </div>,
+            <h2 className="font-heading font-bold text-base mb-3">Skill Level</h2>
+            <div className="flex gap-4">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm text-muted-foreground">Self-assessed</p>
+                <span
+                  className={`inline-flex h-5 items-center justify-center rounded-full px-2 py-0.5 text-sm font-medium ${selfSkillBadgeClass(profile.self_skill_level)}`}
+                >
+                  {profile.self_skill_level
+                    ? profile.self_skill_level.charAt(0).toUpperCase() + profile.self_skill_level.slice(1)
+                    : 'Not set'}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-bold text-foreground">Coach assessment</p>
+                {isCoachOrAdmin && !isOwnProfile ? (
+                  <CoachAssessmentWidget
+                    subjectMemberId={memberId}
+                    currentLevel={coachAssessment?.skill_level ?? null}
+                  />
+                ) : (
+                  <span
+                    className={`inline-flex h-5 items-center justify-center rounded-full px-2 py-0.5 text-sm font-medium ${coachSkillBadgeClass(coachAssessment?.skill_level ?? null)}`}
+                  >
+                    {coachAssessment?.skill_level
+                      ? coachAssessment.skill_level.charAt(0).toUpperCase() +
+                        coachAssessment.skill_level.slice(1)
+                      : 'Not yet assessed'}
+                  </span>
+                )}
+              </div>
+            </div>
+            {profile.utr != null && (
+              <p className="text-sm text-muted-foreground mt-3">UTR: {profile.utr}</p>
+            )}
+          </div>,
+        ]
+      : []),
 
     // Contact info card (coaches/admins, or own profile)
     ...(isCoachOrAdmin || isOwnProfile
