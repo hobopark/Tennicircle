@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 1 context gathered
-last_updated: "2026-04-06T16:49:29.707Z"
-last_activity: 2026-04-06 — Roadmap created from requirements
+status: executing
+stopped_at: Completed 01-foundation-auth/01-01-PLAN.md
+last_updated: "2026-04-07T00:55:57.978Z"
+last_activity: 2026-04-07
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 4
+  completed_plans: 1
+  percent: 25
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Coaches can schedule sessions and members can RSVP — replacing spreadsheets entirely.
-**Current focus:** Phase 1 - Foundation & Auth
+**Current focus:** Phase 01 — foundation-auth
 
 ## Current Position
 
-Phase: 1 of 6 (Foundation & Auth)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-04-06 — Roadmap created from requirements
+Phase: 01 (foundation-auth) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-04-07
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01-foundation-auth P01 | 115 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,9 @@ Recent decisions affecting current work:
 - Foundation: Multi-tenant RLS + JWT Custom Access Token Hook must be in place before any feature work
 - Foundation: Template + exception model for recurring sessions (not pre-generation) — schema decision made in Phase 1 even though sessions ship in Phase 2
 - Foundation: Separate browser/server Supabase clients (never a shared singleton) to avoid cross-user session leaks on Vercel
+- [Phase 01-foundation-auth]: Next.js 16 uses proxy.ts (export function proxy) — middleware.ts is deprecated in v16
+- [Phase 01-foundation-auth]: Server Supabase client is read-only (no setAll) — proxy handles token refresh writes
+- [Phase 01-foundation-auth]: getUser() used in proxy (not getSession()) to validate JWT signature server-side (T-01-01)
 
 ### Pending Todos
 
@@ -76,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T16:49:29.704Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-foundation-auth/01-CONTEXT.md
+Last session: 2026-04-07T00:55:57.976Z
+Stopped at: Completed 01-foundation-auth/01-01-PLAN.md
+Resume file: None

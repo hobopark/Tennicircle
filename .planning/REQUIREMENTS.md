@@ -10,11 +10,11 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Authentication & Roles
 
 - [ ] **AUTH-01**: User can sign up with email and password
-- [ ] **AUTH-02**: User can log in and stay logged in across browser refresh
-- [ ] **AUTH-03**: Three user roles enforced: Admin, Coach, Client
+- [x] **AUTH-02**: User can log in and stay logged in across browser refresh
+- [x] **AUTH-03**: Three user roles enforced: Admin, Coach, Client
 - [ ] **AUTH-04**: Admin can add and remove coaches from the community
 - [ ] **AUTH-05**: Coaches can invite clients via invite link
-- [ ] **AUTH-06**: Multi-tenant data isolation via RLS (community-scoped)
+- [x] **AUTH-06**: Multi-tenant data isolation via RLS (community-scoped)
 
 ### Session Management
 
@@ -124,11 +124,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Complete |
+| AUTH-03 | Phase 1 | Complete |
 | AUTH-04 | Phase 1 | Pending |
 | AUTH-05 | Phase 1 | Pending |
-| AUTH-06 | Phase 1 | Pending |
+| AUTH-06 | Phase 1 | Complete |
 | SESS-01 | Phase 2 | Pending |
 | SESS-02 | Phase 2 | Pending |
 | SESS-03 | Phase 2 | Pending |
