@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-foundation-auth/01-01-PLAN.md
-last_updated: "2026-04-07T00:55:57.978Z"
+stopped_at: Completed 01-foundation-auth/01-02-PLAN.md
+last_updated: "2026-04-07T00:59:51.313Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
-  percent: 25
+  completed_plans: 2
+  percent: 50
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 ## Current Position
 
 Phase: 01 (foundation-auth) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-04-07
 
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 01-foundation-auth P01 | 115 | 2 tasks | 7 files |
+| Phase 01-foundation-auth P02 | 2 | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,8 @@ Recent decisions affecting current work:
 - [Phase 01-foundation-auth]: Next.js 16 uses proxy.ts (export function proxy) — middleware.ts is deprecated in v16
 - [Phase 01-foundation-auth]: Server Supabase client is read-only (no setAll) — proxy handles token refresh writes
 - [Phase 01-foundation-auth]: getUser() used in proxy (not getSession()) to validate JWT signature server-side (T-01-01)
+- [Phase 01-foundation-auth]: shadcn default preset with custom CSS variable overrides for TenniCircle warm palette; dark mode removed entirely for Phase 1
+- [Phase 01-foundation-auth]: Nunito (700) display font + Nunito Sans (400) body font via next/font/google; only 2 weights loaded for performance
 
 ### Pending Todos
 
@@ -80,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T00:55:57.976Z
-Stopped at: Completed 01-foundation-auth/01-01-PLAN.md
+Last session: 2026-04-07T00:59:51.312Z
+Stopped at: Completed 01-foundation-auth/01-02-PLAN.md
 Resume file: None

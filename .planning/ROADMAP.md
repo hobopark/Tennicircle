@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 1/4 plans executed
 Plans:
 - [x] 01-01-PLAN.md — Database schema, RLS, Supabase clients, proxy, and test infrastructure
-- [ ] 01-02-PLAN.md — Design system (shadcn + TenniCircle palette + fonts) and auth type definitions
+- [x] 01-02-PLAN.md — Design system (shadcn + TenniCircle palette + fonts) and auth type definitions
 - [ ] 01-03-PLAN.md — /auth page with login/signup tabs, email verification, and server actions
 - [ ] 01-04-PLAN.md — Welcome page, role-based routing, invite link system, and member management
 **UI hint**: yes

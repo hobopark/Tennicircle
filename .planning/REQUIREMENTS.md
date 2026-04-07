@@ -9,7 +9,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Authentication & Roles
 
-- [ ] **AUTH-01**: User can sign up with email and password
+- [x] **AUTH-01**: User can sign up with email and password
 - [x] **AUTH-02**: User can log in and stay logged in across browser refresh
 - [x] **AUTH-03**: Three user roles enforced: Admin, Coach, Client
 - [ ] **AUTH-04**: Admin can add and remove coaches from the community
@@ -123,7 +123,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Complete |
 | AUTH-02 | Phase 1 | Complete |
 | AUTH-03 | Phase 1 | Complete |
 | AUTH-04 | Phase 1 | Pending |
