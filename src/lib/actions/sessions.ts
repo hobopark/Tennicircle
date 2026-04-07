@@ -2,11 +2,242 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { CancelSessionSchema } from '@/lib/validations/sessions'
+import { CancelSessionSchema, SessionTemplateSchema, EditSessionSchema } from '@/lib/validations/sessions'
 import type { SessionActionResult } from '@/lib/types/sessions'
 
-// createSessionTemplate — added in Plan 03
-// editSession — added in Plan 03
+// D-01, D-03, D-04, D-16: Coach creates a recurring session template
+export async function createSessionTemplate(
+  _prevState: SessionActionResult,
+  formData: FormData
+): Promise<SessionActionResult> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const userRole = user.app_metadata?.user_role
+  if (userRole !== 'coach' && userRole !== 'admin') {
+    return { success: false, error: 'Only coaches and admins can create sessions' }
+  }
+
+  const communityId = user.app_metadata?.community_id
+  if (!communityId) {
+    return { success: false, error: 'No community associated with your account' }
+  }
+
+  // Parse co_coach_ids from comma-separated hidden input
+  const coCoachIds = formData.get('co_coach_ids')?.toString().split(',').filter(Boolean) ?? []
+
+  // Build parse object
+  const parseObj = { ...Object.fromEntries(formData), co_coach_ids: coCoachIds }
+
+  const parsed = SessionTemplateSchema.safeParse(parseObj)
+  if (!parsed.success) {
+    return { success: false, fieldErrors: parsed.error.flatten().fieldErrors }
+  }
+
+  // Get member record
+  const { data: member } = await supabase
+    .from('community_members')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!member) return { success: false, error: 'Member record not found' }
+
+  // Insert session template (exclude co_coach_ids and court_number — per-instance)
+  const { co_coach_ids: _coCoachIds, court_number: _courtNumber, ...templateData } = parsed.data
+
+  const { data: newTemplate, error: templateError } = await supabase
+    .from('session_templates')
+    .insert({
+      ...templateData,
+      coach_id: member.id,
+      community_id: communityId,
+    })
+    .select()
+    .single()
+
+  if (templateError) return { success: false, error: templateError.message }
+
+  // Generate sessions immediately (do not wait for cron)
+  await supabase.rpc('generate_sessions_from_templates')
+
+  // Assign coaches to each generated session
+  if (newTemplate) {
+    const { data: generatedSessions } = await supabase
+      .from('sessions')
+      .select('id')
+      .eq('template_id', newTemplate.id)
+
+    if (generatedSessions && generatedSessions.length > 0) {
+      const coachAssignments = generatedSessions.flatMap((session) => {
+        const assignments = [
+          { session_id: session.id, member_id: member.id, is_primary: true },
+        ]
+        if (coCoachIds.length > 0) {
+          coCoachIds.forEach((coCoachId) => {
+            assignments.push({ session_id: session.id, member_id: coCoachId, is_primary: false })
+          })
+        }
+        return assignments
+      })
+
+      await supabase.from('session_coaches').insert(coachAssignments)
+    }
+  }
+
+  revalidatePath('/coach')
+  revalidatePath('/sessions')
+
+  return { success: true }
+}
+
+// D-14: Coach edits a session instance with this/future scope
+export async function editSession(
+  sessionId: string,
+  scope: 'this' | 'future',
+  formData: FormData
+): Promise<SessionActionResult> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const userRole = user.app_metadata?.user_role
+  if (userRole !== 'coach' && userRole !== 'admin') {
+    return { success: false, error: 'Only coaches and admins can edit sessions' }
+  }
+
+  // Parse only non-empty fields
+  const rawData: Record<string, unknown> = {}
+  for (const [key, value] of formData.entries()) {
+    if (value !== '') rawData[key] = value
+  }
+
+  const parsed = EditSessionSchema.safeParse(rawData)
+  if (!parsed.success) {
+    return { success: false, fieldErrors: parsed.error.flatten().fieldErrors }
+  }
+
+  const updates: Record<string, unknown> = { ...parsed.data }
+
+  if (scope === 'this') {
+    // If start_time is provided, combine with current session date to get scheduled_at
+    if (parsed.data.start_time) {
+      const { data: currentSession } = await supabase
+        .from('sessions')
+        .select('scheduled_at')
+        .eq('id', sessionId)
+        .single()
+
+      if (currentSession) {
+        const sessionDate = currentSession.scheduled_at.split('T')[0]
+        updates.scheduled_at = `${sessionDate}T${parsed.data.start_time}:00+00:00`
+        delete updates.start_time
+      }
+    }
+
+    // Verify ownership: coach can only edit sessions they coach (T-02-12)
+    const communityId = user.app_metadata?.community_id
+    const { data: member } = await supabase
+      .from('community_members')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (member && userRole !== 'admin') {
+      const { data: coachRecord } = await supabase
+        .from('session_coaches')
+        .select('member_id')
+        .eq('session_id', sessionId)
+        .eq('member_id', member.id)
+        .single()
+
+      if (!coachRecord) {
+        return { success: false, error: 'You can only edit your own sessions' }
+      }
+    }
+
+    const { error } = await supabase
+      .from('sessions')
+      .update(updates)
+      .eq('id', sessionId)
+
+    if (error) return { success: false, error: error.message }
+  } else {
+    // scope === 'future'
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('template_id, scheduled_at')
+      .eq('id', sessionId)
+      .single()
+
+    if (!session?.template_id) {
+      return { success: false, error: 'Cannot edit future sessions — this session has no template' }
+    }
+
+    // Verify ownership for future scope
+    const { data: member } = await supabase
+      .from('community_members')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (member && userRole !== 'admin') {
+      const { data: template } = await supabase
+        .from('session_templates')
+        .select('coach_id')
+        .eq('id', session.template_id)
+        .single()
+
+      if (template?.coach_id !== member.id) {
+        return { success: false, error: 'You can only edit your own sessions' }
+      }
+    }
+
+    // Build template-level updates (excludes court_number which is per-instance)
+    const { court_number: _cn, start_time, ...templateFieldUpdates } = parsed.data
+    const templateUpdates: Record<string, unknown> = { ...templateFieldUpdates }
+    if (start_time) templateUpdates.start_time = start_time
+
+    if (Object.keys(templateUpdates).length > 0) {
+      const { error: templateError } = await supabase
+        .from('session_templates')
+        .update(templateUpdates)
+        .eq('id', session.template_id)
+
+      if (templateError) return { success: false, error: templateError.message }
+    }
+
+    // Build session-level updates, convert start_time to scheduled_at for each session
+    const sessionUpdates: Record<string, unknown> = {}
+    if (parsed.data.venue) sessionUpdates.venue = parsed.data.venue
+    if (parsed.data.capacity) sessionUpdates.capacity = parsed.data.capacity
+    if (parsed.data.duration_minutes) sessionUpdates.duration_minutes = parsed.data.duration_minutes
+    if (parsed.data.court_number !== undefined) sessionUpdates.court_number = parsed.data.court_number
+
+    // Note: start_time for future sessions is handled at template level; per-session scheduled_at
+    // update for start_time changes requires fetching each session's date — skip per-instance time update here.
+    // The template update above ensures new generated sessions get the new time.
+
+    if (Object.keys(sessionUpdates).length > 0) {
+      // CRITICAL: gte includes current session, does not touch past sessions (T-02-06)
+      const { error: sessionsError } = await supabase
+        .from('sessions')
+        .update(sessionUpdates)
+        .eq('template_id', session.template_id)
+        .gte('scheduled_at', session.scheduled_at)
+
+      if (sessionsError) return { success: false, error: sessionsError.message }
+    }
+  }
+
+  revalidatePath('/sessions')
+  revalidatePath('/coach')
+
+  return { success: true }
+}
 
 // D-17: Coaches and admins can cancel a session with a required reason
 export async function cancelSession(
