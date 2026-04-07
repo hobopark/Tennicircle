@@ -49,7 +49,14 @@ Plans:
   3. A client can RSVP to a session from their assigned coach, and is blocked from joining when the session is full
   4. A client who is waitlisted can be manually promoted to confirmed by the coach
   5. A client can cancel their own RSVP
-**Plans**: TBD
+**Plans:** 6 plans
+Plans:
+- [ ] 02-01-PLAN.md — Database schema (4 tables), RLS, capacity trigger, session generation function, types, validations, route config
+- [ ] 02-02-PLAN.md — RSVP server actions (join, cancel, promote) and session cancellation action
+- [ ] 02-03-PLAN.md — Session creation form, venue autocomplete, edit session with this/future scope
+- [ ] 02-04-PLAN.md — Coach weekly calendar grid and session detail page with attendee management
+- [ ] 02-05-PLAN.md — Client sessions page with card layout, RSVP dialogs, and cancel flow
+- [ ] 02-06-PLAN.md — Dependency install, schema push, and end-to-end verification checkpoint
 **UI hint**: yes
 
 ### Phase 3: Player Profiles
@@ -108,7 +115,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Auth | 4/4 | Complete   | 2026-04-07 |
-| 2. Session Management | 0/? | Not started | - |
+| 2. Session Management | 0/6 | Planning complete | - |
 | 3. Player Profiles | 0/? | Not started | - |
 | 4. Coach Dashboard & Community Events | 0/? | Not started | - |
 | 5. Notifications | 0/? | Not started | - |
