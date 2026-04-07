@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-foundation-auth/01-03-PLAN.md
-last_updated: "2026-04-07T01:05:11.789Z"
+status: verifying
+stopped_at: "Completed 01-foundation-auth/01-04-PLAN.md — checkpoint:human-verify reached at Task 4"
+last_updated: "2026-04-07T01:12:45.257Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
-  percent: 75
+  completed_plans: 4
+  percent: 100
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 Phase: 01 (foundation-auth) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-07
 
 Progress: [░░░░░░░░░░] 0%
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-foundation-auth P01 | 115 | 2 tasks | 7 files |
 | Phase 01-foundation-auth P02 | 2 | 2 tasks | 12 files |
 | Phase 01-foundation-auth P03 | 3 | 2 tasks | 9 files |
+| Phase 01-foundation-auth P04 | 4 | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - [Phase 01-foundation-auth]: Zod 4 uses z.email() top-level API (not z.string().email()) — confirmed from installed zod 4.3.6
 - [Phase 01-foundation-auth]: useActionState field error clearing: local useState per field with empty string override on onChange, undefined defers to server state
 - [Phase 01-foundation-auth]: EmailVerificationPending uses browser createClient for resend() — avoids server round-trip, Supabase handles rate limiting
+- [Phase 01-foundation-auth]: Role routing in middleware reads app_metadata.user_role (server-controlled JWT claim) — enforces T-01-04-06 proxy role check security
+- [Phase 01-foundation-auth]: Null-safe vitest mock pattern: use 'key' in overrides instead of overrides.key ?? default when null is a valid override value
 
 ### Pending Todos
 
@@ -87,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T01:05:11.787Z
-Stopped at: Completed 01-foundation-auth/01-03-PLAN.md
+Last session: 2026-04-07T01:12:45.255Z
+Stopped at: Completed 01-foundation-auth/01-04-PLAN.md — checkpoint:human-verify reached at Task 4
 Resume file: None
