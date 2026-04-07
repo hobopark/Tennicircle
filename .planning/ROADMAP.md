@@ -71,10 +71,10 @@ Plans:
   4. A coach can add a progress note after a session, and the player can see that note on their profile
 **Plans:** 4 plans
 Plans:
-- [ ] 03-01-PLAN.md — Database migration (3 tables + display_name), types, validations, server actions, test stubs, dependency installs
-- [ ] 03-02-PLAN.md — Profile setup wizard (4-step), avatar upload with square crop, skill level selector
-- [ ] 03-03-PLAN.md — Profile view pages, lesson history, coach assessment widget, progress notes, nav update
-- [ ] 03-04-PLAN.md — Schema push to Supabase and end-to-end verification checkpoint
+- [x] 03-01-PLAN.md — Database migration (3 tables + display_name), types, validations, server actions, test stubs, dependency installs
+- [x] 03-02-PLAN.md — Profile setup wizard (4-step), avatar upload with square crop, skill level selector
+- [x] 03-03-PLAN.md — Profile view pages, lesson history, coach assessment widget, progress notes, nav update
+- [x] 03-04-PLAN.md — Schema push to Supabase and end-to-end verification checkpoint
 **UI hint**: yes
 
 ### Phase 4: Coach Dashboard & Community Events
