@@ -129,7 +129,7 @@
 
 **No Database Schema:**
 - Issue: Supabase project created but no tables, policies, or schema documented
-- Files: Referenced in `.env.local` (https://REDACTED_PROJECT_REF.supabase.co) but not configured
+- Files: Referenced in `.env.local` ($NEXT_PUBLIC_SUPABASE_URL) but not configured
 - Impact: Data has nowhere to go. No data model for the application
 - Fix approach: Design schema in Supabase console. Document in `./src/lib/schema.sql` or Supabase UI. Create migrations
 

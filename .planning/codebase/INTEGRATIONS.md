@@ -8,7 +8,7 @@
 - Supabase - Backend-as-a-Service for database, authentication, and real-time features
   - SDK/Client: @supabase/supabase-js 2.101.1
   - SSR Support: @supabase/ssr 0.10.0
-  - Base URL: Environment variable `NEXT_PUBLIC_SUPABASE_URL` (https://REDACTED_PROJECT_REF.supabase.co)
+  - Base URL: Environment variable `NEXT_PUBLIC_SUPABASE_URL` ($NEXT_PUBLIC_SUPABASE_URL)
   - Auth: Environment variable `NEXT_PUBLIC_SUPABASE_ANON_KEY` (JWT token for anonymous/public access)
 
 ## Data Storage
