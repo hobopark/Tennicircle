@@ -11,9 +11,11 @@ export const SessionTemplateSchema = z.object({
   ends_on: z.string().date().optional(),
   court_number: z.string().optional(),
   co_coach_ids: z.array(z.string().uuid()).optional(),
+  invited_client_ids: z.array(z.string().min(1)).min(1, { error: 'Select at least one client' }),
 })
 
 export const EditSessionSchema = z.object({
+  title: z.string().min(1, { error: 'Title is required' }).optional(),
   venue: z.string().min(1, { error: 'Venue is required' }).optional(),
   capacity: z.coerce.number().int().min(1, { error: 'Capacity must be at least 1' }).optional(),
   start_time: z.string().regex(/^\d{2}:\d{2}$/, { error: 'Time must be HH:MM' }).optional(),

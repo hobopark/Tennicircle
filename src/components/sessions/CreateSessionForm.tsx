@@ -34,40 +34,45 @@ interface CoachOption {
   display_name: string
 }
 
+interface AssignedClient {
+  id: string
+  email: string
+}
+
+interface CreateSessionFormProps {
+  communityId: string
+  assignedClients: AssignedClient[]
+}
+
 const initialState: SessionActionResult = { success: false }
 
-export function CreateSessionForm() {
+export function CreateSessionForm({ communityId, assignedClients }: CreateSessionFormProps) {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(createSessionTemplate, initialState)
 
   const [venue, setVenue] = useState('')
-  const [communityId, setCommunityId] = useState('')
   const [coCoachIds, setCoCoachIds] = useState<string[]>([])
+  const [invitedClientIds, setInvitedClientIds] = useState<string[]>(assignedClients.map(c => c.id))
   const [availableCoaches, setAvailableCoaches] = useState<CoachOption[]>([])
 
   useEffect(() => {
-    async function loadUserContext() {
+    async function loadCoaches() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user || !communityId) return
 
-      const cid = user.app_metadata?.community_id
-      if (cid) setCommunityId(cid)
-
-      // Get current member id to exclude self
       const { data: currentMember } = await supabase
         .from('community_members')
         .select('id')
         .eq('user_id', user.id)
         .single()
 
-      if (!currentMember || !cid) return
+      if (!currentMember) return
 
-      // Fetch other coaches in community
       const { data: coaches } = await supabase
         .from('community_members')
         .select('id, display_name')
-        .eq('community_id', cid)
+        .eq('community_id', communityId)
         .eq('role', 'coach')
         .neq('id', currentMember.id)
 
@@ -76,8 +81,8 @@ export function CreateSessionForm() {
       }
     }
 
-    loadUserContext()
-  }, [])
+    loadCoaches()
+  }, [communityId])
 
   useEffect(() => {
     if (state.success) {
@@ -89,6 +94,12 @@ export function CreateSessionForm() {
 
   function toggleCoCoach(id: string) {
     setCoCoachIds((prev) =>
+      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+    )
+  }
+
+  function toggleClient(id: string) {
+    setInvitedClientIds((prev) =>
       prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
     )
   }
@@ -230,6 +241,34 @@ export function CreateSessionForm() {
           type="date"
           className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
+      </div>
+
+      {/* Invite clients */}
+      <div className="space-y-2">
+        <Label>Invite clients</Label>
+        {assignedClients.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No clients assigned to you yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {assignedClients.map((client) => (
+              <label key={client.id} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border border-input accent-primary"
+                  checked={invitedClientIds.includes(client.id)}
+                  onChange={() => toggleClient(client.id)}
+                />
+                <span className="text-sm text-foreground">
+                  {client.email}
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+        <input type="hidden" name="invited_client_ids" value={invitedClientIds.join(',')} />
+        {state.fieldErrors?.invited_client_ids && (
+          <p className="text-sm text-destructive">{state.fieldErrors.invited_client_ids[0]}</p>
+        )}
       </div>
 
       {/* Co-coaches */}

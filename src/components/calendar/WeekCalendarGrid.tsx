@@ -7,6 +7,7 @@ import type { Session } from '@/lib/types/sessions'
 
 interface WeekCalendarGridProps {
   sessions: Session[]
+  linkPrefix?: string // e.g. '/coach/sessions' or '/sessions'
   initialDate?: string
   loading?: boolean
 }
@@ -78,7 +79,7 @@ for (let h = GRID_START_HOUR; h < GRID_END_HOUR; h++) {
   TIME_LABELS.push(formatTime(h, 30))
 }
 
-export function WeekCalendarGrid({ sessions, initialDate, loading = false }: WeekCalendarGridProps) {
+export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', initialDate, loading = false }: WeekCalendarGridProps) {
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
     if (initialDate) return getWeekStart(new Date(initialDate))
     return getWeekStart(new Date())
@@ -142,34 +143,7 @@ export function WeekCalendarGrid({ sessions, initialDate, loading = false }: Wee
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Navigation */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={goToPrevWeek}
-          className="p-1.5 rounded-md hover:bg-muted transition-colors"
-          aria-label="Previous week"
-        >
-          <ChevronLeft className="w-5 h-5 text-foreground" />
-        </button>
-        <button
-          onClick={goToNextWeek}
-          className="p-1.5 rounded-md hover:bg-muted transition-colors"
-          aria-label="Next week"
-        >
-          <ChevronRight className="w-5 h-5 text-foreground" />
-        </button>
-        <button
-          onClick={goToToday}
-          className="px-3 py-1 text-sm rounded-md border border-border hover:bg-muted transition-colors text-foreground"
-        >
-          Today
-        </button>
-        <span className="text-sm text-muted-foreground ml-2">
-          {currentWeekStart.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })}
-        </span>
-      </div>
-
+    <div className="flex flex-col">
       {/* Empty state */}
       {!hasSessionsThisWeek && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -183,6 +157,51 @@ export function WeekCalendarGrid({ sessions, initialDate, loading = false }: Wee
           </Link>
         </div>
       )}
+
+      {/* Navigation — directly above the grid */}
+      <div className="flex items-center gap-1.5 mb-2">
+        <button
+          onClick={goToPrevWeek}
+          className="p-1 rounded-md hover:bg-muted transition-colors"
+          aria-label="Previous week"
+        >
+          <ChevronLeft className="w-4 h-4 text-foreground" />
+        </button>
+        <button
+          onClick={goToNextWeek}
+          className="p-1 rounded-md hover:bg-muted transition-colors"
+          aria-label="Next week"
+        >
+          <ChevronRight className="w-4 h-4 text-foreground" />
+        </button>
+        <button
+          onClick={goToToday}
+          className="px-2.5 py-0.5 text-sm rounded-md border border-border hover:bg-muted transition-colors text-foreground"
+        >
+          Today
+        </button>
+        <div className="relative ml-1.5">
+          <button
+            onClick={() => {
+              const picker = document.getElementById('week-date-picker') as HTMLInputElement
+              picker?.showPicker()
+            }}
+            className="text-sm text-muted-foreground hover:text-foreground cursor-pointer hover:underline"
+          >
+            {currentWeekStart.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })}
+          </button>
+          <input
+            id="week-date-picker"
+            type="date"
+            className="absolute inset-0 opacity-0 w-0 h-0"
+            onChange={(e) => {
+              if (e.target.value) {
+                setCurrentWeekStart(getWeekStart(new Date(e.target.value + 'T12:00:00')))
+              }
+            }}
+          />
+        </div>
+      </div>
 
       {/* Calendar grid */}
       <div className="w-full overflow-x-auto rounded-lg border border-border">
@@ -248,6 +267,8 @@ export function WeekCalendarGrid({ sessions, initialDate, loading = false }: Wee
               const gridRow = getGridRow(session.scheduled_at)
               const rowSpan = getGridRowSpan(session.duration_minutes)
               const isCancelled = session.cancelled_at !== null
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const isUserConfirmed = (session as any)._userConfirmed !== false // true if not tagged (coach view) or explicitly confirmed
 
               // Get RSVP count if available (sessions may have session_rsvps count from query)
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -255,6 +276,10 @@ export function WeekCalendarGrid({ sessions, initialDate, loading = false }: Wee
               const attendeeCount = Array.isArray(rsvpCountArr)
                 ? (rsvpCountArr[0] as { count: number } | undefined)?.count ?? 0
                 : 0
+
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const hasUserTag = '_userConfirmed' in (session as any)
+              const isNotAttending = hasUserTag && !isUserConfirmed
 
               return (
                 <div
@@ -267,19 +292,25 @@ export function WeekCalendarGrid({ sessions, initialDate, loading = false }: Wee
                   }}
                 >
                   <Link
-                    href={`/coach/sessions/${session.id}`}
+                    href={`${linkPrefix}/${session.id}`}
                     className={`block h-full w-full rounded-lg text-[13px] p-1 overflow-hidden cursor-pointer transition-opacity hover:opacity-90 ${
                       isCancelled
                         ? 'bg-muted text-muted-foreground'
+                        : isNotAttending
+                        ? 'bg-primary/15 text-primary border-2 border-dashed border-primary/40'
                         : 'bg-primary text-primary-foreground'
                     }`}
                   >
                     <div className={`font-medium truncate leading-tight ${isCancelled ? 'line-through' : ''}`}>
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      {(session as any).session_templates?.title || formatTimeShort(session.scheduled_at)}
+                    </div>
+                    <div className="truncate leading-tight opacity-80">
                       {formatTimeShort(session.scheduled_at)}
                     </div>
                     {rowSpan > 1 && (
-                      <div className="truncate leading-tight opacity-80">
-                        {session.venue}
+                      <div className="truncate leading-tight opacity-70 text-[11px]">
+                        {session.venue}{session.court_number ? ` · Court No.${session.court_number}` : ''}
                       </div>
                     )}
                     {rowSpan > 2 && attendeeCount > 0 && (

@@ -26,7 +26,7 @@ export async function login(
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email: validated.data.email,
     password: validated.data.password,
   })
@@ -54,8 +54,20 @@ export async function login(
     }
   }
 
-  // Redirect to welcome page per D-11 (role-specific routes land in Phase 2+)
-  redirect('/welcome')
+  // Redirect to role-specific home using the session from signInWithPassword response
+  let destination = '/welcome'
+  if (data.session?.access_token) {
+    try {
+      const payload = JSON.parse(atob(data.session.access_token.split('.')[1]))
+      const roleHome: Record<string, string> = {
+        admin: '/admin',
+        coach: '/coach',
+        client: '/sessions',
+      }
+      destination = roleHome[payload.user_role] || '/welcome'
+    } catch { /* fall through to /welcome */ }
+  }
+  redirect(destination)
 }
 
 export async function signup(

@@ -15,9 +15,12 @@ export function WelcomePage() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setRole((user.app_metadata?.user_role as UserRole) || 'pending')
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.access_token) {
+        try {
+          const payload = JSON.parse(atob(session.access_token.split('.')[1]))
+          setRole((payload.user_role as UserRole) || 'pending')
+        } catch { /* fall through */ }
       }
     })
   }, [])

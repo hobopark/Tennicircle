@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import type { UserRole } from '@/lib/types/auth'
 
 // AUTH-04: Admin can update a community member's role
@@ -14,8 +14,8 @@ export async function updateMemberRole(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const currentRole = user.app_metadata?.user_role
-  if (currentRole !== 'admin') return { success: false, error: 'Only admins can update roles' }
+  const claims = await getJWTClaims(supabase)
+  if (claims.user_role !== 'admin') return { success: false, error: 'Only admins can update roles' }
 
   const { error } = await supabase
     .from('community_members')
@@ -79,8 +79,8 @@ export async function removeMember(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const currentRole = user.app_metadata?.user_role
-  if (currentRole !== 'admin') return { success: false, error: 'Only admins can remove members' }
+  const removeClaims = await getJWTClaims(supabase)
+  if (removeClaims.user_role !== 'admin') return { success: false, error: 'Only admins can remove members' }
 
   const { error } = await supabase
     .from('community_members')

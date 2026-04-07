@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { CancelSessionSchema, SessionTemplateSchema, EditSessionSchema } from '@/lib/validations/sessions'
 import type { SessionActionResult } from '@/lib/types/sessions'
 
@@ -15,21 +15,23 @@ export async function createSessionTemplate(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const userRole = user.app_metadata?.user_role
+  const claims = await getJWTClaims(supabase)
+  const userRole = claims.user_role
   if (userRole !== 'coach' && userRole !== 'admin') {
     return { success: false, error: 'Only coaches and admins can create sessions' }
   }
 
-  const communityId = user.app_metadata?.community_id
+  const communityId = claims.community_id
   if (!communityId) {
     return { success: false, error: 'No community associated with your account' }
   }
 
-  // Parse co_coach_ids from comma-separated hidden input
+  // Parse co_coach_ids and invited_client_ids from comma-separated hidden inputs
   const coCoachIds = formData.get('co_coach_ids')?.toString().split(',').filter(Boolean) ?? []
+  const invitedClientIds = formData.get('invited_client_ids')?.toString().split(',').filter(Boolean) ?? []
 
   // Build parse object
-  const parseObj = { ...Object.fromEntries(formData), co_coach_ids: coCoachIds }
+  const parseObj = { ...Object.fromEntries(formData), co_coach_ids: coCoachIds, invited_client_ids: invitedClientIds }
 
   const parsed = SessionTemplateSchema.safeParse(parseObj)
   if (!parsed.success) {
@@ -45,8 +47,22 @@ export async function createSessionTemplate(
 
   if (!member) return { success: false, error: 'Member record not found' }
 
-  // Insert session template (exclude co_coach_ids and court_number — per-instance)
-  const { co_coach_ids: _coCoachIds, court_number: _courtNumber, ...templateData } = parsed.data
+  // Validate invited clients belong to this coach
+  if (invitedClientIds.length > 0) {
+    const { data: validClients } = await supabase
+      .from('community_members')
+      .select('id')
+      .eq('coach_id', member.id)
+      .eq('role', 'client')
+      .in('id', invitedClientIds)
+
+    if (!validClients || validClients.length !== invitedClientIds.length) {
+      return { success: false, error: 'One or more selected clients are not assigned to you' }
+    }
+  }
+
+  // Insert session template (exclude non-column fields)
+  const { co_coach_ids: _coCoachIds, court_number: courtNumber, invited_client_ids: _invitedIds, ...templateData } = parsed.data
 
   const { data: newTemplate, error: templateError } = await supabase
     .from('session_templates')
@@ -62,6 +78,14 @@ export async function createSessionTemplate(
 
   // Generate sessions immediately (do not wait for cron)
   await supabase.rpc('generate_sessions_from_templates')
+
+  // Apply court number to generated sessions if provided
+  if (newTemplate && courtNumber) {
+    await supabase
+      .from('sessions')
+      .update({ court_number: courtNumber })
+      .eq('template_id', newTemplate.id)
+  }
 
   // Assign coaches to each generated session
   if (newTemplate) {
@@ -87,6 +111,33 @@ export async function createSessionTemplate(
     }
   }
 
+  // Insert session invitations for selected clients
+  if (newTemplate && invitedClientIds.length > 0) {
+    const invitations = invitedClientIds.map(clientId => ({
+      template_id: newTemplate.id,
+      member_id: clientId,
+    }))
+    await supabase.from('session_invitations').insert(invitations)
+
+    // Auto-confirm invited clients for all generated sessions
+    const { data: generatedForRsvp } = await supabase
+      .from('sessions')
+      .select('id')
+      .eq('template_id', newTemplate.id)
+
+    if (generatedForRsvp && generatedForRsvp.length > 0) {
+      const autoRsvps = generatedForRsvp.flatMap((session) =>
+        invitedClientIds.map(clientId => ({
+          community_id: communityId,
+          session_id: session.id,
+          member_id: clientId,
+          rsvp_type: 'confirmed' as const,
+        }))
+      )
+      await supabase.from('session_rsvps').insert(autoRsvps)
+    }
+  }
+
   revalidatePath('/coach')
   revalidatePath('/sessions')
 
@@ -104,7 +155,8 @@ export async function editSession(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const userRole = user.app_metadata?.user_role
+  const editClaims = await getJWTClaims(supabase)
+  const userRole = editClaims.user_role
   if (userRole !== 'coach' && userRole !== 'admin') {
     return { success: false, error: 'Only coaches and admins can edit sessions' }
   }
@@ -120,7 +172,9 @@ export async function editSession(
     return { success: false, fieldErrors: parsed.error.flatten().fieldErrors }
   }
 
-  const updates: Record<string, unknown> = { ...parsed.data }
+  // Title lives on session_templates, not sessions — only update on "future" scope
+  const { title: newTitle, ...sessionFields } = parsed.data
+  const updates: Record<string, unknown> = { ...sessionFields }
 
   if (scope === 'this') {
     // If start_time is provided, combine with current session date to get scheduled_at
@@ -132,14 +186,16 @@ export async function editSession(
         .single()
 
       if (currentSession) {
-        const sessionDate = currentSession.scheduled_at.split('T')[0]
-        updates.scheduled_at = `${sessionDate}T${parsed.data.start_time}:00+00:00`
+        // Parse session date in local time, then convert to ISO UTC
+        const sessionDate = new Date(currentSession.scheduled_at).toLocaleDateString('en-CA') // YYYY-MM-DD
+        const localDateTime = new Date(`${sessionDate}T${parsed.data.start_time}:00`)
+        updates.scheduled_at = localDateTime.toISOString()
         delete updates.start_time
       }
     }
 
     // Verify ownership: coach can only edit sessions they coach (T-02-12)
-    const communityId = user.app_metadata?.community_id
+    const communityId = editClaims.community_id
     const { data: member } = await supabase
       .from('community_members')
       .select('id')
@@ -197,9 +253,10 @@ export async function editSession(
     }
 
     // Build template-level updates (excludes court_number which is per-instance)
-    const { court_number: _cn, start_time, ...templateFieldUpdates } = parsed.data
+    const { court_number: _cn, start_time, title: _titleExtracted, ...templateFieldUpdates } = parsed.data
     const templateUpdates: Record<string, unknown> = { ...templateFieldUpdates }
     if (start_time) templateUpdates.start_time = start_time
+    if (newTitle) templateUpdates.title = newTitle
 
     if (Object.keys(templateUpdates).length > 0) {
       const { error: templateError } = await supabase
@@ -250,8 +307,8 @@ export async function cancelSession(
   if (!user) return { success: false, error: 'Not authenticated' }
 
   // Auth check: only coach or admin
-  const userRole = user.app_metadata?.user_role
-  if (userRole !== 'coach' && userRole !== 'admin') {
+  const cancelClaims = await getJWTClaims(supabase)
+  if (cancelClaims.user_role !== 'coach' && cancelClaims.user_role !== 'admin') {
     return { success: false, error: 'Only coaches and admins can cancel sessions' }
   }
 
@@ -273,6 +330,13 @@ export async function cancelSession(
     .eq('id', sessionId)
 
   if (error) return { success: false, error: error.message }
+
+  // Cascade: cancel all active RSVPs for this session
+  await supabase
+    .from('session_rsvps')
+    .update({ cancelled_at: new Date().toISOString() })
+    .eq('session_id', sessionId)
+    .is('cancelled_at', null)
 
   revalidatePath('/sessions')
   revalidatePath('/coach')

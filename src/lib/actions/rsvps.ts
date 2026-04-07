@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import type { RsvpActionResult, SessionActionResult } from '@/lib/types/sessions'
 
 // SESS-05: RSVP to a session (confirmed or waitlisted based on capacity)
@@ -11,7 +11,8 @@ export async function rsvpSession(sessionId: string): Promise<RsvpActionResult> 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const communityId = user.app_metadata?.community_id
+  const claims = await getJWTClaims(supabase)
+  const communityId = claims.community_id
   if (!communityId) return { success: false, error: 'No community associated with your account' }
 
   // Get member record
@@ -26,12 +27,24 @@ export async function rsvpSession(sessionId: string): Promise<RsvpActionResult> 
   // Check session is not cancelled and get capacity
   const { data: session, error: sessionError } = await supabase
     .from('sessions')
-    .select('capacity, cancelled_at')
+    .select('capacity, cancelled_at, template_id')
     .eq('id', sessionId)
     .single()
 
   if (sessionError || !session) return { success: false, error: 'Session not found' }
   if (session.cancelled_at !== null) return { success: false, error: 'This session has been cancelled' }
+
+  // Verify client is invited to this session's template
+  if (session.template_id) {
+    const { data: invitation } = await supabase
+      .from('session_invitations')
+      .select('id')
+      .eq('template_id', session.template_id)
+      .eq('member_id', member.id)
+      .single()
+
+    if (!invitation) return { success: false, error: 'You are not invited to this session' }
+  }
 
   // Count confirmed RSVPs (non-cancelled)
   const { count: confirmedCount, error: confirmedError } = await supabase
@@ -143,9 +156,20 @@ export async function promoteFromWaitlist(rsvpId: string): Promise<SessionAction
   if (!user) return { success: false, error: 'Not authenticated' }
 
   // Auth check: only coach or admin — T-02-07
-  const userRole = user.app_metadata?.user_role
-  if (userRole !== 'coach' && userRole !== 'admin') {
+  const promoteClaims = await getJWTClaims(supabase)
+  if (promoteClaims.user_role !== 'coach' && promoteClaims.user_role !== 'admin') {
     return { success: false, error: 'Only coaches can promote from waitlist' }
+  }
+
+  // Verify the RSVP's session belongs to this coach's community
+  const { data: rsvpCheck } = await supabase
+    .from('session_rsvps')
+    .select('community_id')
+    .eq('id', rsvpId)
+    .single()
+
+  if (rsvpCheck && rsvpCheck.community_id !== promoteClaims.community_id) {
+    return { success: false, error: 'You cannot manage sessions outside your community' }
   }
 
   // Get the RSVP and session capacity
@@ -205,8 +229,8 @@ export async function removeFromWaitlist(rsvpId: string): Promise<SessionActionR
   if (!user) return { success: false, error: 'Not authenticated' }
 
   // Auth check: only coach or admin
-  const userRole = user.app_metadata?.user_role
-  if (userRole !== 'coach' && userRole !== 'admin') {
+  const removeClaims = await getJWTClaims(supabase)
+  if (removeClaims.user_role !== 'coach' && removeClaims.user_role !== 'admin') {
     return { success: false, error: 'Only coaches can remove from waitlist' }
   }
 

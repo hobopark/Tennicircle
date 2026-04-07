@@ -40,7 +40,7 @@ export default async function CoachPage() {
   const { data: ownedSessions } = templateIds && templateIds.length > 0
     ? await supabase
         .from('sessions')
-        .select('*, session_rsvps(count)')
+        .select('*, session_rsvps(count), session_templates(title)')
         .in('template_id', templateIds.map(t => t.id))
         .order('scheduled_at', { ascending: true })
     : { data: [] }
@@ -55,7 +55,7 @@ export default async function CoachPage() {
   const { data: coCoachedSessions } = coCoachIds.length > 0
     ? await supabase
         .from('sessions')
-        .select('*, session_rsvps(count)')
+        .select('*, session_rsvps(count), session_templates(title)')
         .in('id', coCoachIds)
         .order('scheduled_at', { ascending: true })
     : { data: [] }

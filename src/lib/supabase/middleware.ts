@@ -56,7 +56,19 @@ export async function updateSession(request: NextRequest) {
 
   // Role-based route protection (D-13)
   if (user) {
-    const userRole = user.app_metadata?.user_role as string | undefined
+    // Get role from JWT claims (Custom Access Token Hook injects user_role)
+    const { data: { session } } = await supabase.auth.getSession()
+    let userRole: string | undefined
+    if (session?.access_token) {
+      try {
+        const payload = JSON.parse(atob(session.access_token.split('.')[1]))
+        userRole = payload.user_role
+      } catch { /* fall through */ }
+    }
+    // Fallback to app_metadata
+    if (!userRole) {
+      userRole = user.app_metadata?.user_role as string | undefined
+    }
 
     // Role-route mapping per D-10
     const roleRoutes: Record<string, string[]> = {
@@ -68,7 +80,7 @@ export async function updateSession(request: NextRequest) {
     const roleHome: Record<string, string> = {
       admin: '/admin',
       coach: '/coach',
-      client: '/welcome', // Phase 1: client goes to /welcome since /sessions doesn't exist
+      client: '/sessions',
       pending: '/welcome',
     }
 
@@ -78,6 +90,12 @@ export async function updateSession(request: NextRequest) {
     // Pending users always go to /welcome
     if (currentRole === 'pending' && currentPath !== '/welcome') {
       return NextResponse.redirect(new URL('/welcome', request.url))
+    }
+
+    // Non-pending users on /welcome get redirected to their role home
+    if (currentRole !== 'pending' && currentPath === '/welcome') {
+      const home = roleHome[currentRole] || '/welcome'
+      return NextResponse.redirect(new URL(home, request.url))
     }
 
     // Check if user's role can access current path

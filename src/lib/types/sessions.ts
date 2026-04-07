@@ -49,6 +49,14 @@ export interface SessionCoach {
   is_primary: boolean
 }
 
+// Matches session_invitations table
+export interface SessionInvitation {
+  id: string
+  template_id: string
+  member_id: string
+  created_at: string
+}
+
 // Enriched session for client display (D-09)
 export interface SessionWithDetails extends Session {
   template?: SessionTemplate

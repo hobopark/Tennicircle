@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import type { Session, SessionActionResult } from '@/lib/types/sessions'
 
 interface EditSessionFormProps {
-  session: Session
+  session: Session & { session_templates?: { title: string } | null }
   templateId: string | null
 }
 
@@ -35,10 +35,10 @@ function formatDate(scheduledAt: string): string {
 }
 
 function extractTime(scheduledAt: string): string {
-  // Extract HH:MM from ISO timestamp
+  // Extract HH:MM from ISO timestamp in local time
   const date = new Date(scheduledAt)
-  const hours = date.getUTCHours().toString().padStart(2, '0')
-  const minutes = date.getUTCMinutes().toString().padStart(2, '0')
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
   return `${hours}:${minutes}`
 }
 
@@ -130,6 +130,23 @@ export function EditSessionForm({ session, templateId }: EditSessionFormProps) {
   // Edit form
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Title — only editable in "future" scope since it's a template property */}
+      <div className="space-y-1.5">
+        <Label htmlFor="title">Session title {scope === 'this' && <span className="text-muted-foreground font-normal">(edit all future to change)</span>}</Label>
+        <Input
+          id="title"
+          name={scope === 'future' || templateId === null ? 'title' : undefined}
+          type="text"
+          defaultValue={session.session_templates?.title ?? ''}
+          placeholder="e.g. Tuesday Evening Group"
+          disabled={scope === 'this' && templateId !== null}
+          aria-invalid={!!fieldErrors.title}
+        />
+        {fieldErrors.title && (
+          <p className="text-sm text-destructive">{fieldErrors.title[0]}</p>
+        )}
+      </div>
+
       {/* Venue */}
       <div className="space-y-1.5">
         <Label htmlFor="venue">Venue</Label>

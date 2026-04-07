@@ -51,12 +51,12 @@ Plans:
   5. A client can cancel their own RSVP
 **Plans:** 7 plans
 Plans:
-- [ ] 02-00-PLAN.md -- Vitest install and test stubs (Wave 0)
-- [ ] 02-01-PLAN.md — Database schema (4 tables), RLS, capacity trigger, session generation function, types, validations, route config
-- [ ] 02-02-PLAN.md — RSVP server actions (join, cancel, promote) and session cancellation action
-- [ ] 02-03-PLAN.md — Session creation form, venue autocomplete, edit session with this/future scope
-- [ ] 02-04-PLAN.md — Coach weekly calendar grid and session detail page with attendee management
-- [ ] 02-05-PLAN.md — Client sessions page with card layout, RSVP dialogs, and cancel flow
+- [x] 02-00-PLAN.md -- Vitest install and test stubs (Wave 0)
+- [x] 02-01-PLAN.md — Database schema (4 tables), RLS, capacity trigger, session generation function, types, validations, route config
+- [x] 02-02-PLAN.md — RSVP server actions (join, cancel, promote) and session cancellation action
+- [x] 02-03-PLAN.md — Session creation form, venue autocomplete, edit session with this/future scope
+- [x] 02-04-PLAN.md — Coach weekly calendar grid and session detail page with attendee management
+- [x] 02-05-PLAN.md — Client sessions page with card layout, RSVP dialogs, and cancel flow
 - [ ] 02-06-PLAN.md — Dependency install, schema push, and end-to-end verification checkpoint
 **UI hint**: yes
 

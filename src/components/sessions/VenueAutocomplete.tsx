@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Popover } from '@base-ui/react/popover'
 import { createClient } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/input'
 
@@ -16,6 +15,7 @@ export function VenueAutocomplete({ value, onChange, communityId, error }: Venue
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   async function fetchSuggestions(inputValue: string) {
     if (!inputValue || inputValue.length < 1) {
@@ -55,46 +55,40 @@ export function VenueAutocomplete({ value, onChange, communityId, error }: Venue
     setIsOpen(false)
   }
 
-  function handleOpenChange(open: boolean) {
-    setIsOpen(open)
-  }
-
   return (
-    <div className="relative">
-      <Popover.Root open={isOpen} onOpenChange={handleOpenChange}>
-        <Popover.Trigger
-          render={
-            <Input
-              value={value}
-              onChange={handleInputChange}
-              placeholder="e.g. Moore Park Tennis Club"
-              aria-label="Venue"
-              className={error ? 'border-destructive focus-visible:ring-destructive' : ''}
-            />
-          }
-          nativeButton={false}
-        />
-        <Popover.Portal>
-          <Popover.Positioner sideOffset={4} align="start" style={{ zIndex: 50, width: 'var(--anchor-width, 100%)' }}>
-            <Popover.Popup className="rounded-lg border border-border bg-popover py-1 shadow-md">
-              {suggestions.map((suggestion) => (
-                <button
-                  key={suggestion}
-                  type="button"
-                  className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted focus:bg-muted focus:outline-none"
-                  onMouseDown={(e) => {
-                    // Prevent blur before click registers
-                    e.preventDefault()
-                    handleSelect(suggestion)
-                  }}
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </Popover.Popup>
-          </Popover.Positioner>
-        </Popover.Portal>
-      </Popover.Root>
+    <div className="relative" ref={containerRef}>
+      <Input
+        value={value}
+        onChange={handleInputChange}
+        onBlur={() => {
+          // Delay closing so click on suggestion registers
+          setTimeout(() => setIsOpen(false), 150)
+        }}
+        onFocus={() => {
+          if (suggestions.length > 0) setIsOpen(true)
+        }}
+        placeholder="e.g. Moore Park Tennis Club"
+        aria-label="Venue"
+        autoComplete="off"
+        className={error ? 'border-destructive focus-visible:ring-destructive' : ''}
+      />
+      {isOpen && suggestions.length > 0 && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-lg border border-border bg-popover py-1 shadow-md">
+          {suggestions.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted focus:bg-muted focus:outline-none"
+              onMouseDown={(e) => {
+                e.preventDefault()
+                handleSelect(suggestion)
+              }}
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      )}
       {error && (
         <p className="mt-1 text-sm text-destructive">{error}</p>
       )}

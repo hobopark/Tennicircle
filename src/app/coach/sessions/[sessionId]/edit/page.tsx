@@ -8,7 +8,7 @@ export default async function EditSessionPage({ params }: { params: Promise<{ se
 
   const { data: session } = await supabase
     .from('sessions')
-    .select('*')
+    .select('*, session_templates(title)')
     .eq('id', sessionId)
     .single()
 

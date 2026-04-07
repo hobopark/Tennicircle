@@ -2,12 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(),
+  getJWTClaims: vi.fn().mockResolvedValue({ user_role: 'coach', community_id: 'community-1' }),
 }))
 
 import { createInviteLink, revokeInviteLink } from '@/lib/actions/invites'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getJWTClaims } from '@/lib/supabase/server'
 
 const mockCreateClient = vi.mocked(createClient)
+const mockGetJWTClaims = vi.mocked(getJWTClaims)
 
 function createMockSupabase(overrides: {
   user?: Record<string, unknown> | null
@@ -131,6 +133,7 @@ describe('createInviteLink', () => {
       },
     })
     mockCreateClient.mockResolvedValue(mockSupabase as never)
+    mockGetJWTClaims.mockResolvedValueOnce({ user_role: 'client', community_id: 'community-1' })
 
     const result = await createInviteLink('client')
 
@@ -146,6 +149,7 @@ describe('createInviteLink', () => {
       },
     })
     mockCreateClient.mockResolvedValue(mockSupabase as never)
+    mockGetJWTClaims.mockResolvedValueOnce({ user_role: 'admin', community_id: 'community-1' })
 
     const result = await createInviteLink('coach')
 

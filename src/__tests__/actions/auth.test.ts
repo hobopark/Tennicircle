@@ -17,15 +17,25 @@ import { redirect } from 'next/navigation'
 const mockCreateClient = vi.mocked(createClient)
 const mockRedirect = vi.mocked(redirect)
 
+function encodeJWT(claims: Record<string, unknown>) {
+  const header = btoa(JSON.stringify({ alg: 'HS256' }))
+  const payload = btoa(JSON.stringify(claims))
+  return `${header}.${payload}.signature`
+}
+
 // Helper to create a mock Supabase client
 function createMockSupabase(overrides: {
-  signInWithPasswordResult?: { error: { message: string } | null }
+  signInWithPasswordResult?: { data?: unknown; error: { message: string } | null }
   signUpResult?: { data?: unknown; error: { message: string } | null }
+  userRole?: string
 } = {}) {
+  const defaultSession = {
+    access_token: encodeJWT({ user_role: overrides.userRole ?? 'pending' }),
+  }
   return {
     auth: {
       signInWithPassword: vi.fn().mockResolvedValue(
-        overrides.signInWithPasswordResult ?? { error: null }
+        overrides.signInWithPasswordResult ?? { data: { session: defaultSession }, error: null }
       ),
       signUp: vi.fn().mockResolvedValue(
         overrides.signUpResult ?? { data: {}, error: null }
@@ -95,8 +105,8 @@ describe('login server action', () => {
     )
   })
 
-  it('redirects to /welcome on successful login', async () => {
-    const mockSupabase = createMockSupabase({ signInWithPasswordResult: { error: null } })
+  it('redirects to role-specific home on successful login', async () => {
+    const mockSupabase = createMockSupabase({ userRole: 'coach' })
     mockCreateClient.mockResolvedValue(mockSupabase as ReturnType<typeof createMockSupabase> as never)
 
     const formData = new FormData()
@@ -105,7 +115,7 @@ describe('login server action', () => {
 
     await login({}, formData)
 
-    expect(mockRedirect).toHaveBeenCalledWith('/welcome')
+    expect(mockRedirect).toHaveBeenCalledWith('/coach')
   })
 
   it('returns AuthFormState shape', async () => {

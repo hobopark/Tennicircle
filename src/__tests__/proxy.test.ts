@@ -11,10 +11,21 @@ import { createServerClient } from '@supabase/ssr'
 
 const mockCreateServerClient = vi.mocked(createServerClient)
 
+function encodeJWT(claims: Record<string, unknown>) {
+  const header = btoa(JSON.stringify({ alg: 'HS256' }))
+  const payload = btoa(JSON.stringify(claims))
+  return `${header}.${payload}.signature`
+}
+
 function createMockSupabaseWithUser(user: Record<string, unknown> | null) {
+  const role = (user?.app_metadata as Record<string, unknown>)?.user_role
+  const accessToken = role ? encodeJWT({ user_role: role }) : null
   return {
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user } }),
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: user ? { access_token: accessToken } : null },
+      }),
     },
     cookies: {
       getAll: vi.fn().mockReturnValue([]),

@@ -23,10 +23,10 @@ export default async function SessionDetailPage({ params }: PageProps) {
   const { sessionId } = await params
   const supabase = await createClient()
 
-  // Fetch session
+  // Fetch session with template title
   const { data: session } = await supabase
     .from('sessions')
-    .select('*')
+    .select('*, session_templates(title)')
     .eq('id', sessionId)
     .single()
 

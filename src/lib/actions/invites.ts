@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import type { InviteLink } from '@/lib/types/auth'
 
 // AUTH-05 + D-06 + D-07: Coaches and admins can generate invite links
@@ -12,8 +12,9 @@ export async function createInviteLink(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const userRole = user.app_metadata?.user_role
-  const communityId = user.app_metadata?.community_id
+  const claims = await getJWTClaims(supabase)
+  const userRole = claims.user_role
+  const communityId = claims.community_id
 
   // Admins can create coach or client invites; coaches can only create client invites
   if (role === 'coach' && userRole !== 'admin') {
