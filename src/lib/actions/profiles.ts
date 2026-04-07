@@ -131,7 +131,8 @@ export async function setCoachAssessment(input: unknown): Promise<ProfileActionR
   try {
     parsed = CoachAssessmentSchema.parse(input)
   } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : 'Invalid input' }
+    console.error('[setCoachAssessment] validation failed, input:', JSON.stringify(input), 'error:', err)
+    return { success: false, error: err instanceof Error ? err.message : String(err) }
   }
 
   // Get current user's community_members id as coach_member_id
@@ -184,7 +185,8 @@ export async function addProgressNote(input: unknown): Promise<ProfileActionResu
   try {
     parsed = ProgressNoteSchema.parse(input)
   } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : 'Invalid input' }
+    console.error('[addProgressNote] validation failed, input:', JSON.stringify(input), 'error:', err)
+    return { success: false, error: err instanceof Error ? err.message : String(err) }
   }
 
   // Get coach's community_members id
