@@ -55,5 +55,11 @@ export const ROLE_HOME_ROUTES: Record<Exclude<UserRole, 'pending'>, string> = {
   client: '/sessions',
 } as const
 
+export const ROLE_ALLOWED_ROUTES: Record<Exclude<UserRole, 'pending'>, string[]> = {
+  admin: ['/admin', '/coach', '/sessions', '/welcome', '/profile'],
+  coach: ['/coach', '/sessions', '/welcome', '/profile'],
+  client: ['/sessions', '/welcome', '/profile'],
+} as const
+
 // Public routes that don't require authentication
 export const PUBLIC_ROUTES = ['/auth', '/'] as const
