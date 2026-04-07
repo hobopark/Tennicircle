@@ -54,8 +54,44 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // Role-based route protection (D-13) — expanded in Plan 04
-  // For now: basic auth check is sufficient; role routing added when role pages exist
+  // Role-based route protection (D-13)
+  if (user) {
+    const userRole = user.app_metadata?.user_role as string | undefined
+
+    // Role-route mapping per D-10
+    const roleRoutes: Record<string, string[]> = {
+      admin: ['/admin', '/coach', '/welcome', '/profile'],
+      coach: ['/coach', '/welcome', '/profile'],
+      client: ['/sessions', '/welcome', '/profile'],
+    }
+
+    const roleHome: Record<string, string> = {
+      admin: '/admin',
+      coach: '/coach',
+      client: '/welcome', // Phase 1: client goes to /welcome since /sessions doesn't exist
+      pending: '/welcome',
+    }
+
+    const currentPath = request.nextUrl.pathname
+    const currentRole = userRole || 'pending'
+
+    // Pending users always go to /welcome
+    if (currentRole === 'pending' && currentPath !== '/welcome') {
+      return NextResponse.redirect(new URL('/welcome', request.url))
+    }
+
+    // Check if user's role can access current path
+    if (currentRole !== 'pending') {
+      const allowedPaths = roleRoutes[currentRole] || ['/welcome']
+      const canAccess = allowedPaths.some(path => currentPath.startsWith(path))
+
+      // If accessing a restricted path, silently redirect to role home (D-13)
+      if (!canAccess && !isPublicPath && currentPath !== '/') {
+        const home = roleHome[currentRole] || '/welcome'
+        return NextResponse.redirect(new URL(home, request.url))
+      }
+    }
+  }
 
   return supabaseResponse
 }
