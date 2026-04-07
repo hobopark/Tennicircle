@@ -57,7 +57,7 @@ Plans:
 - [x] 02-03-PLAN.md — Session creation form, venue autocomplete, edit session with this/future scope
 - [x] 02-04-PLAN.md — Coach weekly calendar grid and session detail page with attendee management
 - [x] 02-05-PLAN.md — Client sessions page with card layout, RSVP dialogs, and cancel flow
-- [ ] 02-06-PLAN.md — Dependency install, schema push, and end-to-end verification checkpoint
+- [x] 02-06-PLAN.md — Dependency install, schema push, and end-to-end verification checkpoint
 **UI hint**: yes
 
 ### Phase 3: Player Profiles
