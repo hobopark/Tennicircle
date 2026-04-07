@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
-import { Nunito, Nunito_Sans } from "next/font/google";
+import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 
-const nunito = Nunito({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  weight: ["700"],
-  variable: "--font-nunito",
+  weight: ["500", "600", "700"],
+  variable: "--font-space-grotesk",
 });
 
-const nunitoSans = Nunito_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400"],
-  variable: "--font-nunito-sans",
+  weight: ["400", "500", "600"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${nunito.variable} ${nunitoSans.variable} h-full antialiased`}
+      className={`${spaceGrotesk.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="font-sans min-h-full flex flex-col">{children}</body>
     </html>
