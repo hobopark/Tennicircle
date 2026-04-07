@@ -31,11 +31,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. An Admin can add a coach to the community; that coach can then invite a client via invite link
   4. A Coach cannot see data from another community; a Client cannot see sessions they were not invited to
   5. Role changes take effect immediately without requiring the affected user to log out and back in
-**Plans:** 1/4 plans executed
+**Plans:** 3/4 plans executed
 Plans:
 - [x] 01-01-PLAN.md — Database schema, RLS, Supabase clients, proxy, and test infrastructure
 - [x] 01-02-PLAN.md — Design system (shadcn + TenniCircle palette + fonts) and auth type definitions
-- [ ] 01-03-PLAN.md — /auth page with login/signup tabs, email verification, and server actions
+- [x] 01-03-PLAN.md — /auth page with login/signup tabs, email verification, and server actions
 - [ ] 01-04-PLAN.md — Welcome page, role-based routing, invite link system, and member management
 **UI hint**: yes
 
@@ -107,7 +107,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Auth | 1/4 | In Progress|  |
+| 1. Foundation & Auth | 3/4 | In Progress|  |
 | 2. Session Management | 0/? | Not started | - |
 | 3. Player Profiles | 0/? | Not started | - |
 | 4. Coach Dashboard & Community Events | 0/? | Not started | - |

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-foundation-auth/01-02-PLAN.md
-last_updated: "2026-04-07T00:59:51.313Z"
+stopped_at: Completed 01-foundation-auth/01-03-PLAN.md
+last_updated: "2026-04-07T01:05:11.789Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
-  percent: 50
+  completed_plans: 3
+  percent: 75
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 ## Current Position
 
 Phase: 01 (foundation-auth) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-04-07
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01-foundation-auth P01 | 115 | 2 tasks | 7 files |
 | Phase 01-foundation-auth P02 | 2 | 2 tasks | 12 files |
+| Phase 01-foundation-auth P03 | 3 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,9 @@ Recent decisions affecting current work:
 - [Phase 01-foundation-auth]: getUser() used in proxy (not getSession()) to validate JWT signature server-side (T-01-01)
 - [Phase 01-foundation-auth]: shadcn default preset with custom CSS variable overrides for TenniCircle warm palette; dark mode removed entirely for Phase 1
 - [Phase 01-foundation-auth]: Nunito (700) display font + Nunito Sans (400) body font via next/font/google; only 2 weights loaded for performance
+- [Phase 01-foundation-auth]: Zod 4 uses z.email() top-level API (not z.string().email()) — confirmed from installed zod 4.3.6
+- [Phase 01-foundation-auth]: useActionState field error clearing: local useState per field with empty string override on onChange, undefined defers to server state
+- [Phase 01-foundation-auth]: EmailVerificationPending uses browser createClient for resend() — avoids server round-trip, Supabase handles rate limiting
 
 ### Pending Todos
 
@@ -83,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T00:59:51.312Z
-Stopped at: Completed 01-foundation-auth/01-02-PLAN.md
+Last session: 2026-04-07T01:05:11.787Z
+Stopped at: Completed 01-foundation-auth/01-03-PLAN.md
 Resume file: None
