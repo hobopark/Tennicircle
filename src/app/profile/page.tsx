@@ -126,7 +126,6 @@ export default async function ProfilePage() {
             </div>
           )}
 
-
           <LessonHistory
             initialEntries={lessonEntries}
             memberId={memberId}
