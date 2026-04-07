@@ -800,22 +800,19 @@ export const ROLE_ALLOWED_ROUTES: Record<Exclude<UserRole, 'pending'>, string[]>
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **pg_cron enabled on this Supabase project?**
+1. **pg_cron enabled on this Supabase project? (RESOLVED)**
    - What we know: pg_cron is available on free tier per Supabase community discussion
-   - What's unclear: Whether the extension is already enabled in this project's Supabase dashboard
-   - Recommendation: Include `CREATE EXTENSION IF NOT EXISTS pg_cron` in the migration; if it fails (insufficient permissions), the fallback Vercel Cron route handles it. Both strategies should be planned.
+   - **Resolution:** The migration wraps the `cron.schedule` call in a `DO $$ BEGIN ... EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'pg_cron not available'; END $$;` block so it does not fail if unavailable. Plan 01 also includes `CREATE EXTENSION IF NOT EXISTS pg_cron`. A fallback Vercel Cron route is planned. Both paths are covered.
 
-2. **Calendar grid: FullCalendar vs custom CSS Grid?**
+2. **Calendar grid: FullCalendar vs custom CSS Grid? (RESOLVED)**
    - What we know: FullCalendar is recommended in STACK.md; custom CSS Grid is simpler for fixed weekly layout
-   - What's unclear: User preference / performance tolerance for FullCalendar bundle size
-   - Recommendation: Build custom CSS Grid for Phase 2 (D-06 shows a fixed time-slot grid, not drag-and-drop). FullCalendar adds ~200KB for features not yet needed.
+   - **Resolution:** Custom CSS Grid chosen for Phase 2. D-06 specifies a fixed weekly time-slot grid (7 day columns, 30-min time rows) without drag-and-drop. FullCalendar adds ~200KB for features not needed. Plan 04 implements CSS Grid with `grid-template-columns: 60px repeat(7, 1fr)`. FullCalendar can be adopted later if drag-and-drop is requested.
 
-3. **Co-coach visibility: do co-coaches see the session on `/coach`?**
+3. **Co-coach visibility: do co-coaches see the session on `/coach`? (RESOLVED)**
    - What we know: D-16 says co-coaches see the session on their schedule
-   - What's unclear: Whether `session_coaches` is the source of truth or whether the template-level coach_id is also checked
-   - Recommendation: RLS should check both `session_templates.coach_id` and `session_coaches.member_id` for session visibility — both implemented in Pattern 5.
+   - **Resolution:** Both `session_templates.coach_id` (primary) and `session_coaches.member_id` (co-coaches) are checked. RLS SELECT on sessions (Plan 01) has two EXISTS sub-queries. Application query in Plan 04 uses two separate Supabase queries (template-owned + session_coaches join) merged in JS, avoiding SDK .or() sub-select limitations.
 
 ---
 
