@@ -59,34 +59,40 @@ export default async function ProfilePage() {
   const isCoachOrAdmin = userRole === 'coach' || userRole === 'admin'
 
   // Fetch community players for coaches/admins
-  let communityPlayers: { id: string; display_name: string | null; role: string; avatar_url: string | null }[] = []
+  // Join player_profiles via user_id to get display_name and avatar_url
+  let communityPlayers: { id: string; display_name: string | null; avatar_url: string | null }[] = []
   if (isCoachOrAdmin) {
     const { data: members } = await supabase
       .from('community_members')
-      .select('id, display_name, role')
+      .select('id, user_id, display_name, role')
       .eq('community_id', communityId)
       .neq('id', memberId)
       .in('role', ['client', 'member'])
-      .order('display_name', { ascending: true })
 
-    if (members) {
-      // Get avatar URLs from player_profiles for these members
-      const memberIds = members.map(m => m.id)
-      const { data: profiles } = memberIds.length > 0
-        ? await supabase
-            .from('player_profiles')
-            .select('user_id, avatar_url')
-            .eq('community_id', communityId)
-        : { data: [] }
+    if (members && members.length > 0) {
+      // Fetch player_profiles for these users to get their actual display names
+      const userIds = members.map(m => m.user_id)
+      const { data: profiles } = await supabase
+        .from('player_profiles')
+        .select('user_id, display_name, avatar_url')
+        .eq('community_id', communityId)
+        .in('user_id', userIds)
 
-      // We need user_id -> member_id mapping. Since we don't have it directly,
-      // just use display_name initials for now. Avatar lookup requires join.
-      communityPlayers = members.map(m => ({
-        id: m.id,
-        display_name: m.display_name,
-        role: m.role,
-        avatar_url: profiles?.find(p => p.avatar_url)?.avatar_url ?? null, // simplified
-      }))
+      const profileMap = new Map(
+        (profiles ?? []).map(p => [p.user_id, p])
+      )
+
+      communityPlayers = members
+        .map(m => {
+          const profile = profileMap.get(m.user_id)
+          return {
+            id: m.id,
+            display_name: profile?.display_name ?? m.display_name,
+            avatar_url: profile?.avatar_url ?? null,
+          }
+        })
+        .filter(p => p.display_name) // only show players who have set up profiles
+        .sort((a, b) => (a.display_name ?? '').localeCompare(b.display_name ?? ''))
     }
   }
 

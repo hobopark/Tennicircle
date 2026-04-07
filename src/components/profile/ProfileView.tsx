@@ -150,10 +150,12 @@ export function ProfileView({
                   {profile.phone ?? 'No phone added'}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-primary" />
-                <span className="text-sm text-foreground">{email}</span>
-              </div>
+              {email && (
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-primary" />
+                  <span className="text-sm text-foreground">{email}</span>
+                </div>
+              )}
             </div>
           </div>,
         ]

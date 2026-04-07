@@ -62,11 +62,9 @@ export default async function MemberProfilePage({ params }: PageProps) {
 
   const coachAssessment = assessment as CoachAssessment | null
 
-  // Get target user's email from auth — fetch via admin API is unavailable in anon client,
-  // so we look up their community_members email equivalent; fall back gracefully
-  // Note: in production, email can be surfaced via a server-side admin SDK call
-  // For now we use a placeholder that coaches/admins would expect
-  const targetEmail = profile.user_id
+  // Email not available via anon client (auth.users is admin-only).
+  // Pass empty string — ProfileView will hide the email row when empty.
+  const targetEmail = ''
 
   // Fetch lesson history
   const historyResult = await getLessonHistory(memberId, 20, 0)
