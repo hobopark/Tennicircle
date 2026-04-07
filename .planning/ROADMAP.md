@@ -69,7 +69,12 @@ Plans:
   2. A coach can set or update a coach-assessed skill level on a player's profile, visible alongside the self-assessed level
   3. A player can view their lesson history showing all sessions attended and which coaches they worked with
   4. A coach can add a progress note after a session, and the player can see that note on their profile
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 03-01-PLAN.md — Database migration (3 tables + display_name), types, validations, server actions, test stubs, dependency installs
+- [ ] 03-02-PLAN.md — Profile setup wizard (4-step), avatar upload with square crop, skill level selector
+- [ ] 03-03-PLAN.md — Profile view pages, lesson history, coach assessment widget, progress notes, nav update
+- [ ] 03-04-PLAN.md — Schema push to Supabase and end-to-end verification checkpoint
 **UI hint**: yes
 
 ### Phase 4: Coach Dashboard & Community Events
@@ -117,7 +122,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Foundation & Auth | 4/4 | Complete   | 2026-04-07 |
 | 2. Session Management | 0/7 | Planning complete | - |
-| 3. Player Profiles | 0/? | Not started | - |
+| 3. Player Profiles | 0/4 | Planning complete | - |
 | 4. Coach Dashboard & Community Events | 0/? | Not started | - |
 | 5. Notifications | 0/? | Not started | - |
 | 6. Polish & Launch Readiness | 0/? | Not started | - |
