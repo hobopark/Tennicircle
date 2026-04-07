@@ -24,8 +24,8 @@ design_ref: AceHub (Base44 prototype)
 | Preset | base-nova (style: "base-nova" in components.json) |
 | Component library | Radix UI (via shadcn base-nova) |
 | Icon library | lucide-react |
-| Font (heading) | Space Grotesk 500/600/700 — `var(--font-space-grotesk)`, class `font-heading` |
-| Font (body) | Inter 400/500/600 — `var(--font-inter)`, class `font-sans` |
+| Font (heading) | Space Grotesk 700 — `var(--font-space-grotesk)`, class `font-heading` |
+| Font (body) | Inter 400 — `var(--font-inter)`, class `font-sans` |
 | Base radius | 1rem (`--radius`) — cards use `rounded-3xl` (calc `2.2rem`) |
 
 Source: `components.json` (shadcn base-nova, verified), `src/app/globals.css` (updated to AceHub palette), `src/app/layout.tsx` (updated to Space Grotesk + Inter).
@@ -65,21 +65,23 @@ Exceptions:
 | Role | Font | Size | Weight | Line Height | Tailwind |
 |------|------|------|--------|-------------|---------|
 | Display heading | Space Grotesk | 24px | 700 | 1.2 | `font-heading font-bold text-2xl leading-tight` |
-| Section heading | Space Grotesk | 16px | 700 | 1.2 | `font-heading font-bold text-base leading-tight` |
-| Card title | Space Grotesk | 16px | 700 | 1.2 | `font-heading font-bold text-base` |
-| Stat value | Space Grotesk | 20px | 700 | 1.2 | `font-heading font-bold text-xl` |
-| Body | Inter | 16px | 400 | 1.5 | `text-base` |
-| Label / helper | Inter | 14px | 400 | 1.5 | `text-sm` |
-| Small / tag | Inter | 12px | 500 | 1.4 | `text-xs font-medium` |
-| Micro label | Inter | 10px | 500 | 1.4 | `text-[10px] font-medium` |
+| Stat value | Space Grotesk | 24px | 700 | 1.2 | `font-heading font-bold text-2xl` |
+| Body / section heading / card title | Inter | 16px | 400 | 1.5 | `text-base` (headings add `font-heading font-bold`) |
+| Label / helper / tag | Inter | 14px | 400 | 1.5 | `text-sm` |
+| Micro label | Inter | 10px | 400 | 1.4 | `text-[10px]` |
 
 Rules:
-- Use `font-heading` class for all headings (maps to `--font-space-grotesk`). Use default `font-sans` (Inter) for everything else.
-- Only loaded weights: Inter 400/500/600, Space Grotesk 500/600/700. Do not reference other weights.
-- Stat labels below stat values: `text-[10px] text-muted-foreground font-medium` — AceHub micro label pattern.
+- Exactly 4 font sizes: 24px, 16px, 14px, 10px. Do not introduce any other size.
+- Exactly 2 font weights: **400** (Inter body, labels, helpers) and **700** (Space Grotesk headings, bold labels). Do not use 500 or 600 anywhere.
+- Use `font-heading font-bold` for all headings regardless of size (section headings, card titles, stat values, display headings all use Space Grotesk 700).
+- Use default `font-sans` (Inter 400) for body text, labels, helper text, micro labels.
+- Stat values (sessions attended count, etc.) use `font-heading font-bold text-2xl` — consolidated from former 20px `text-xl` row.
+- Former `text-xs` (12px "Small / tag") rows are folded into `text-sm` (14px). Use `text-sm` for badge text, tags, and secondary labels.
+- Stat labels below stat values: `text-[10px] text-muted-foreground uppercase tracking-wide` — no `font-medium`, weight 400 only.
+- Bottom nav labels: `text-[10px]`, active state uses `font-bold` (700).
 - Progress notes text (read-only): `text-sm text-muted-foreground`.
-- Coach-assessed skill label: `text-sm font-medium text-foreground` — carries authority, not muted.
-- "See all" section links: `text-sm font-medium text-primary`.
+- Coach-assessed skill label: `text-sm font-bold text-foreground` — carries authority, not muted.
+- "See all" section links: `text-sm text-primary`.
 
 ---
 
@@ -186,7 +188,7 @@ Existing components reused from Phase 1/2:
 - 3 styled radio options in a column: Beginner, Intermediate, Advanced
 - Each option: `bg-muted rounded-2xl p-4 border border-border cursor-pointer transition-colors`
 - Selected state: `border-primary bg-primary/5`
-- Label: `text-base font-medium text-foreground font-heading`
+- Label: `text-base font-bold text-foreground font-heading`
 - Sub-description per level (`text-sm text-muted-foreground` below label):
   - Beginner: "Just starting out or returning to the game"
   - Intermediate: "Consistent rallying and match experience"
@@ -206,8 +208,8 @@ Existing components reused from Phase 1/2:
 
 **Stats grid:** `grid grid-cols-3 gap-3 mb-6`
 - Each stat card: `bg-card rounded-2xl border border-border/50 p-4 text-center`
-- Stat value: `font-heading font-bold text-xl text-foreground`
-- Stat label: `text-[10px] text-muted-foreground font-medium uppercase tracking-wide`
+- Stat value: `font-heading font-bold text-2xl text-foreground`
+- Stat label: `text-[10px] text-muted-foreground uppercase tracking-wide`
 
 Stats displayed: "Sessions attended" / "Coaches" / "Member since" (formatted "Apr 2026")
 
@@ -248,13 +250,13 @@ Same layout as own profile. Differences:
 
 **Coach skill assessment widget (inside skill levels card):**
 - Current coach-assessed level shown as a Badge with `ring-2 ring-primary`
-- "Update assessment" button: `text-sm text-primary font-medium` ghost style, inline right of badge
+- "Update assessment" button: `text-sm text-primary font-bold` ghost style, inline right of badge
 - Expands an inline form below the badges: same 3-option radio, "Save assessment" primary button (`h-10 rounded-xl text-sm`) + "Cancel" ghost link
 - On save: Sonner toast "Assessment updated"
 - `aria-expanded` on the trigger button
 
 **Progress note entry from profile:**
-- Below each lesson history entry the coach coached: collapsed "+ Add note" / "Edit note" link (`text-sm text-primary font-medium`)
+- Below each lesson history entry the coach coached: collapsed "+ Add note" / "Edit note" link (`text-sm text-primary font-bold`)
 - Expands: `<textarea>` with `min-h-20 rounded-2xl`, character counter `text-[10px] text-muted-foreground` at bottom-right when > 1800 chars used (limit 2000)
 - "Save note" button: `text-sm h-9 rounded-xl` primary; "Cancel" ghost link
 - `aria-label="Progress note for {player name}"`
@@ -271,8 +273,8 @@ Addition below the attendee list:
 - Sub-heading: `text-sm text-muted-foreground` — "Add notes for each player you coached today."
 - Per attendee row:
   - `bg-card rounded-2xl border border-border/50 p-4` card
-  - Left: avatar (32px `rounded-xl`) + display name `text-sm font-medium text-foreground`
-  - Right: "+ Add note" or "Edit note" link `text-sm text-primary font-medium`
+  - Left: avatar (32px `rounded-xl`) + display name `text-sm font-bold text-foreground`
+  - Right: "+ Add note" or "Edit note" link `text-sm text-primary font-bold`
   - Expanded: inline textarea below that row, same pattern as above
   - If note exists: first 80 chars shown as `text-sm text-muted-foreground` with "..." + "Edit note"
 
@@ -289,22 +291,22 @@ Used in both `/profile` (own view) and `/profile/[memberId]` (coach view).
 **Each lesson history item:** `bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer`
 
 ```
-[Date — text-sm font-medium]           [Time — text-sm text-muted-foreground]
+[Date — text-sm font-bold]             [Time — text-sm text-muted-foreground]
 [Venue — text-sm text-muted-foreground]
 [Coach: {names} — text-sm text-muted-foreground prefixed "with "]
 [Progress note box — if exists]
 ```
 
-- Date: `text-sm font-medium text-foreground` — "Tue 1 Apr 2026"
+- Date: `text-sm font-bold text-foreground` — "Tue 1 Apr 2026"
 - Time: `text-sm text-muted-foreground` — "6:00 PM · 60 min"
 - Venue: `text-sm text-muted-foreground`
 - Coach names: `text-sm text-muted-foreground` prefixed "with "
 - Progress note (player view): `bg-muted rounded-2xl p-3 mt-2 text-sm text-foreground`
-  - Prefixed with coach name: `text-[10px] text-muted-foreground font-medium mb-1`
+  - Prefixed with coach name: `text-[10px] text-muted-foreground mb-1`
 - Entire card is tappable: navigates to session detail (client role: read-only equivalent)
 - List: `<ul>` with `<li>` items
 
-**Pagination:** Show 20 items. "Load more" button at bottom: `text-sm text-primary font-medium hover:underline`. No infinite scroll — explicit button for MVP.
+**Pagination:** Show 20 items. "Load more" button at bottom: `text-sm text-primary hover:underline`. No infinite scroll — explicit button for MVP.
 
 ---
 
@@ -365,7 +367,7 @@ Pattern from AceHub — applies to all authenticated pages:
 - `pb-[env(safe-area-inset-bottom)]`
 - Active tab: `text-primary`, icon container `bg-primary/10 p-1.5 rounded-xl`
 - Inactive tab: `text-muted-foreground`
-- Label: `text-[10px] font-medium`, `font-bold` when active
+- Label: `text-[10px]`, `font-bold` when active
 - `AppNav.tsx` needs "Profile" link added: `{ href: '/profile', label: 'Profile', icon: User, roles: ['admin', 'coach', 'client'] }`
 
 ---
@@ -376,10 +378,11 @@ Pattern from AceHub — applies to all authenticated pages:
 |---------|------|
 | Wizard page title (new) | "Set up your profile" |
 | Wizard page title (edit) | "Edit your profile" |
-| Wizard step 1 CTA | "Continue" |
+| Wizard step 1 CTA | "Continue" (note: "Next" is equally acceptable; either is consistent with wizard conventions) |
 | Wizard step 4 CTA (final, new) | "Save profile" |
 | Wizard step 4 CTA (final, edit) | "Save changes" |
 | Wizard skip link | "I'll do this later" |
+| Inline dismiss / cancel | "Cancel" — used as ghost link for all inline dismiss actions (assessment widget, note editor) |
 | Profile edit CTA | Icon button (Settings icon) — no text label; `aria-label="Edit profile"` |
 | Coach assessment CTA | "Update assessment" |
 | Assessment save CTA | "Save assessment" |
@@ -444,7 +447,7 @@ No third-party registries. `components.json` has `"registries": {}` (verified). 
 | Font update (Space Grotesk + Inter) | `ACEHUB-DESIGN-REF.md` — design override |
 | Color tokens (full AceHub palette) | `ACEHUB-DESIGN-REF.md` — replaces old warm/brown tokens |
 | `globals.css` updated | Written this session to AceHub HSL values |
-| `layout.tsx` updated | Written this session — Space Grotesk + Inter replaces Nunito |
+| `layout.tsx` updated | Written this session — Space Grotesk + Inter replaces Nunito; weights reduced to 400/700 only |
 | Card pattern (rounded-3xl, border-border/50) | `ACEHUB-DESIGN-REF.md` component patterns |
 | Glassmorphic bottom nav | `ACEHUB-DESIGN-REF.md` bottom navigation section |
 | Framer Motion entrance animations | `ACEHUB-DESIGN-REF.md` animations section |
@@ -466,6 +469,8 @@ No third-party registries. `components.json` has `"registries": {}` (verified). 
 | Input height 48px | `src/components/auth/LoginForm.tsx` (Phase 1 pattern) |
 | Sonner toast pattern | `src/components/ui/sonner.tsx` (Phase 1) |
 | Page padding px-5 | `ACEHUB-DESIGN-REF.md` home page section |
+| Typography: 4 sizes, 2 weights | UI checker revision — collapsed 6 sizes to 4, 4 weights to 2 |
+| Copywriting: "Cancel" added | UI checker revision — explicit convention for inline dismiss actions |
 
 ---
 
