@@ -9,7 +9,7 @@ import type { UserRole } from '@/lib/types/auth'
 const NAV_LINKS: { href: string; label: string; roles: UserRole[] }[] = [
   { href: '/admin', label: 'Admin', roles: ['admin'] },
   { href: '/coach', label: 'Schedule', roles: ['admin', 'coach'] },
-  { href: '/welcome', label: 'Home', roles: ['admin', 'coach', 'client', 'pending'] },
+  { href: '/sessions', label: 'Sessions', roles: ['client', 'admin'] },
 ]
 
 export function AppNav() {
