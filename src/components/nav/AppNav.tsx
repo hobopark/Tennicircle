@@ -10,6 +10,7 @@ const NAV_LINKS: { href: string; label: string; roles: UserRole[] }[] = [
   { href: '/admin', label: 'Admin', roles: ['admin'] },
   { href: '/coach', label: 'Schedule', roles: ['admin', 'coach'] },
   { href: '/sessions', label: 'Sessions', roles: ['client', 'admin'] },
+  { href: '/profile', label: 'Profile', roles: ['admin', 'coach', 'client'] },
 ]
 
 export function AppNav() {

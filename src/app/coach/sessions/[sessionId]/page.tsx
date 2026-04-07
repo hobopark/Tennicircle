@@ -4,6 +4,8 @@ import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { SessionDetailPanel } from '@/components/sessions/SessionDetailPanel'
 import { AppNav } from '@/components/nav/AppNav'
+import { InitialsAvatar } from '@/components/profile/InitialsAvatar'
+import { ProgressNoteForm } from '@/components/profile/ProgressNoteForm'
 import type { Session, SessionRsvp } from '@/lib/types/sessions'
 
 interface PageProps {
@@ -93,6 +95,24 @@ export default async function SessionDetailPage({ params }: PageProps) {
     }
   })
 
+  // Fetch existing progress notes for this session
+  const { data: existingNotes } = await supabase
+    .from('progress_notes')
+    .select('subject_member_id, note_text')
+    .eq('session_id', sessionId)
+
+  const notesByMember = new Map<string, string>(
+    (existingNotes ?? []).map((n: { subject_member_id: string; note_text: string }) => [
+      n.subject_member_id,
+      n.note_text,
+    ])
+  )
+
+  // Confirmed (non-cancelled) RSVPs for progress note entry
+  const confirmedRsvps = rsvps.filter(
+    r => r.rsvp_type === 'confirmed' && !r.cancelled_at
+  )
+
   return (
     <>
       <AppNav />
@@ -112,6 +132,50 @@ export default async function SessionDetailPage({ params }: PageProps) {
             rsvps={rsvps}
             coaches={coaches}
           />
+
+          {/* Progress Notes section */}
+          {confirmedRsvps.length > 0 && (
+            <div className="mt-8">
+              <h2 className="font-heading font-bold text-base mt-8 mb-2">Progress Notes</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Add notes for each player you coached today.
+              </p>
+              <div className="flex flex-col gap-3">
+                {confirmedRsvps.map(rsvp => {
+                  const existingNote = notesByMember.get(rsvp.member_id)
+                    ? { note_text: notesByMember.get(rsvp.member_id)! }
+                    : null
+                  return (
+                    <div
+                      key={rsvp.member_id}
+                      className="bg-card rounded-2xl border border-border/50 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <InitialsAvatar
+                            name={rsvp.member_name}
+                            size={32}
+                            className="rounded-xl"
+                          />
+                          <span className="text-sm font-bold text-foreground">
+                            {rsvp.member_name}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <ProgressNoteForm
+                            sessionId={sessionId}
+                            subjectMemberId={rsvp.member_id}
+                            playerName={rsvp.member_name}
+                            existingNote={existingNote}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
