@@ -1,5 +1,6 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { CalendarDays, MapPin, Pencil } from 'lucide-react'
+import { CalendarDays, MapPin, Pencil, ChevronLeft } from 'lucide-react'
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { EventRsvpButton } from '@/components/events/EventRsvpButton'
@@ -125,6 +126,12 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
       <AppNav />
       <div className="min-h-screen bg-background">
         <div className="px-5 pt-14 pb-24 max-w-[640px] mx-auto">
+          <Link
+            href="/events"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" /> Back to Events
+          </Link>
 
           {/* Header card */}
           <div className="bg-card rounded-3xl border border-border/50 p-6 mb-4">

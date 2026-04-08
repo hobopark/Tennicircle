@@ -69,7 +69,7 @@ export default async function ClientSessionDetailPage({ params }: PageProps) {
             href="/sessions"
             className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
           >
-            <ChevronLeft className="w-4 h-4" /> Back to sessions
+            <ChevronLeft className="w-4 h-4" /> Back to Sessions
           </Link>
 
           {isCancelled && (

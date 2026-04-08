@@ -148,11 +148,11 @@ export default async function SessionDetailPage({ params }: PageProps) {
         <div className="max-w-2xl mx-auto px-4 py-8">
           {/* Back link */}
           <Link
-            href="/coach"
+            href="/coach/schedule"
             className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-            Back to schedule
+            Back to Schedule
           </Link>
 
           <SessionDetailPanel

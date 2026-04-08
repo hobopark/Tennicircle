@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Calendar, MapPin } from 'lucide-react'
+import { Calendar, MapPin, ChevronLeft } from 'lucide-react'
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 
@@ -69,6 +69,12 @@ export default async function SessionsAllPage() {
       <AppNav />
       <div className="min-h-screen bg-background">
         <div className="max-w-[640px] mx-auto px-5 pt-14 pb-24">
+          <Link
+            href="/sessions"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" /> Back to Dashboard
+          </Link>
           <h1 className="font-heading font-bold text-2xl text-foreground mb-6">Sessions</h1>
 
           {/* Future Lessons */}

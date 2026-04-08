@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { WeekCalendarGrid } from '@/components/calendar/WeekCalendarGrid'
 import { AppNav } from '@/components/nav/AppNav'
@@ -121,6 +121,12 @@ export default async function CoachSchedulePage() {
       <AppNav />
       <div className="min-h-screen bg-background">
         <div className="max-w-6xl mx-auto px-5 pt-14 pb-24">
+          <Link
+            href="/coach"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" /> Back to Dashboard
+          </Link>
           <div className="flex items-center justify-between mb-4">
             <h1 className="font-heading font-bold text-2xl text-foreground">Schedule</h1>
             <Link
