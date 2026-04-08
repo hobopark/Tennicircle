@@ -47,23 +47,23 @@ export async function GET(request: NextRequest) {
 
   let insertedCount = 0
   if (inserts.length > 0) {
-    // Plain insert — the DB unique index notifications_session_reminder_unique
-    // handles idempotency via ON CONFLICT (the 3-column partial index on
-    // member_id, notification_type, metadata->>'session_id' WHERE notification_type = 'session_reminder').
-    // Duplicates cause a unique constraint violation which we catch and log.
-    const { error: insertError } = await supabase
-      .from('notifications')
-      .insert(inserts)
+    // Insert individually so one duplicate doesn't block the entire batch.
+    // The unique index notifications_session_reminder_unique handles idempotency.
+    for (const row of inserts) {
+      const { error: insertError } = await supabase
+        .from('notifications')
+        .insert(row)
 
-    if (insertError) {
-      // 23505 = unique_violation — expected on re-run (idempotency working correctly)
-      if (insertError.code === '23505') {
-        console.log('Cron: some reminders already sent (idempotent skip)')
+      if (insertError) {
+        if (insertError.code === '23505') {
+          // Duplicate — already sent, skip silently
+        } else {
+          console.error('Notification insert error:', insertError.message)
+        }
       } else {
-        console.error('Notification insert error:', insertError.message)
+        insertedCount++
       }
     }
-    insertedCount = inserts.length
   }
 
   return Response.json({
