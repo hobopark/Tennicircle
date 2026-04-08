@@ -89,12 +89,12 @@ Plans:
   5. Coach and admin announcements are visible to all members; community-created events are separated into a distinct tab from official coaching sessions
 **Plans:** 6 plans
 Plans:
-- [ ] 04-00-PLAN.md — Wave 0 test stubs for events actions, announcements, calendar, and event card
-- [ ] 04-01-PLAN.md — Database schema (events, event_rsvps, announcements), RLS, types, validations, shadcn installs
-- [ ] 04-02-PLAN.md — Server actions (events CRUD, RSVP, announcements) and event UI components
-- [ ] 04-03-PLAN.md — Coach schedule day/week toggle, day view, player roster attendance dates
-- [ ] 04-04-PLAN.md — Events page, event detail page, client dashboard with calendar secondary view, bottom nav conversion
-- [ ] 04-05-PLAN.md — Schema push to Supabase and end-to-end verification checkpoint
+- [x] 04-00-PLAN.md — Wave 0 test stubs for events actions, announcements, calendar, and event card
+- [x] 04-01-PLAN.md — Database schema (events, event_rsvps, announcements), RLS, types, validations, shadcn installs
+- [x] 04-02-PLAN.md — Server actions (events CRUD, RSVP, announcements) and event UI components
+- [x] 04-03-PLAN.md — Coach schedule day/week toggle, day view, player roster attendance dates
+- [x] 04-04-PLAN.md — Events page, event detail page, client dashboard with calendar secondary view, bottom nav conversion
+- [x] 04-05-PLAN.md — Schema push to Supabase and end-to-end verification checkpoint
 **UI hint**: yes
 
 ### Phase 5: Notifications
