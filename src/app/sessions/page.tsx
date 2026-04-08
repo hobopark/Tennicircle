@@ -217,9 +217,13 @@ export default async function SessionsPage() {
     author: { ...a.author, display_name: annNameMap.get(a.author?.user_id) ?? a.author?.display_name ?? null },
   }))
 
+  // Count all upcoming confirmed RSVPs (sessions + events)
+  const upcomingSessionRsvpCount = upcomingSessions.length
+  const upcomingEventRsvpCount = upcomingEvents.length
+
   const stats = {
     sessionsThisMonth,
-    upcomingRsvps: upcomingSessions.length,
+    upcomingRsvps: upcomingSessionRsvpCount + upcomingEventRsvpCount,
     memberSince,
   }
 
