@@ -152,7 +152,7 @@ export default async function SessionsPage() {
   }
 
   const memberSinceDate = new Date(member.joined_at ?? new Date().toISOString())
-  const memberSince = memberSinceDate.toLocaleDateString('en-AU', { month: 'short', year: 'numeric' })
+  const memberSince = memberSinceDate.toLocaleDateString('en-AU', { timeZone: 'Australia/Sydney', month: 'short', year: 'numeric' })
 
   // Fetch events the user has RSVP'd to (only show RSVP'd events on dashboard)
   const communityId = claims.community_id

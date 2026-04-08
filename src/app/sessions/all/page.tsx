@@ -5,11 +5,12 @@ import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 
 function formatSessionDate(scheduledAt: string): string {
+  const tz = 'Australia/Sydney'
   const date = new Date(scheduledAt)
   return date.toLocaleDateString('en-AU', {
-    weekday: 'short', day: 'numeric', month: 'short',
+    timeZone: tz, weekday: 'short', day: 'numeric', month: 'short',
   }) + ' · ' + date.toLocaleTimeString('en-AU', {
-    hour: 'numeric', minute: '2-digit', hour12: true,
+    timeZone: tz, hour: 'numeric', minute: '2-digit', hour12: true,
   })
 }
 

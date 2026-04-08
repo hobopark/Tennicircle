@@ -11,13 +11,16 @@ import type { EventRsvp, EventType } from '@/lib/types/events'
 import { EVENT_TYPE_BADGE_CLASSES as TYPE_BADGE_CLASSES } from '@/lib/constants/events'
 
 function formatEventDate(startsAt: string): string {
+  const tz = 'Australia/Sydney'
   const date = new Date(startsAt)
   return date.toLocaleDateString('en-AU', {
+    timeZone: tz,
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   }) + ' · ' + date.toLocaleTimeString('en-AU', {
+    timeZone: tz,
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,

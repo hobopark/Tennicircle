@@ -12,13 +12,13 @@ interface PageProps {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-AU', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    timeZone: 'Australia/Sydney', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   })
 }
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-AU', {
-    hour: 'numeric', minute: '2-digit', hour12: true,
+    timeZone: 'Australia/Sydney', hour: 'numeric', minute: '2-digit', hour12: true,
   })
 }
 
