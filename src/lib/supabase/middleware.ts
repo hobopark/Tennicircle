@@ -72,9 +72,9 @@ export async function updateSession(request: NextRequest) {
 
     // Role-route mapping per D-10
     const roleRoutes: Record<string, string[]> = {
-      admin: ['/admin', '/coach', '/welcome', '/profile'],
-      coach: ['/coach', '/welcome', '/profile'],
-      client: ['/sessions', '/welcome', '/profile'],
+      admin: ['/admin', '/coach', '/welcome', '/profile', '/events'],
+      coach: ['/coach', '/welcome', '/profile', '/events'],
+      client: ['/sessions', '/welcome', '/profile', '/events'],
     }
 
     const roleHome: Record<string, string> = {
