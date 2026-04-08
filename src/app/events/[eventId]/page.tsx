@@ -77,10 +77,24 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   // Fetch all RSVPs for this event with member info
   const { data: rsvps } = await supabase
     .from('event_rsvps')
-    .select('*, member:community_members(display_name)')
+    .select('*, member:community_members(display_name, user_id)')
     .eq('event_id', eventId)
     .is('cancelled_at', null)
     .order('created_at', { ascending: true })
+
+  // Fetch profile names for RSVP members (player_profiles has the real display_name)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rsvpUserIds = (rsvps ?? []).map((r: any) => r.member?.user_id).filter(Boolean)
+  const { data: rsvpProfiles } = rsvpUserIds.length > 0
+    ? await supabase
+        .from('player_profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', rsvpUserIds)
+    : { data: [] }
+
+  const profileByUserId = new Map(
+    (rsvpProfiles ?? []).map(p => [p.user_id, p])
+  )
 
   // Fetch current user's RSVP
   const { data: userRsvpRow } = await supabase
@@ -91,7 +105,15 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     .is('cancelled_at', null)
     .maybeSingle()
 
-  const confirmedRsvps = (rsvps ?? []).filter((r: { rsvp_type: string }) => r.rsvp_type === 'confirmed')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const confirmedRsvps = (rsvps ?? []).filter((r: any) => r.rsvp_type === 'confirmed').map((r: any) => {
+    const profile = profileByUserId.get(r.member?.user_id)
+    return {
+      ...r,
+      _displayName: profile?.display_name ?? r.member?.display_name ?? 'Member',
+      _avatarUrl: profile?.avatar_url ?? null,
+    }
+  })
   const confirmedCount = confirmedRsvps.length
   const spotsLeft = event.capacity !== null ? event.capacity - confirmedCount : null
 
@@ -169,11 +191,19 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {confirmedRsvps.map((rsvp: any) => (
                   <div key={rsvp.id} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground flex-shrink-0">
-                      {rsvp.member?.display_name?.charAt(0)?.toUpperCase() ?? '?'}
-                    </div>
+                    {rsvp._avatarUrl ? (
+                      <img
+                        src={rsvp._avatarUrl}
+                        alt={rsvp._displayName}
+                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary flex-shrink-0">
+                        {rsvp._displayName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <span className="text-sm text-foreground flex-1">
-                      {rsvp.member?.display_name ?? 'Member'}
+                      {rsvp._displayName}
                     </span>
                     <span className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full">
                       Going
