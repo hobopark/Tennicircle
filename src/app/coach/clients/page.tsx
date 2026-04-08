@@ -30,12 +30,19 @@ export default async function ClientsPage() {
     .maybeSingle()
 
   // Fetch community members who are clients
-  const { data: members } = await supabase
+  // Coaches see only their assigned clients; admins see all
+  let membersQuery = supabase
     .from('community_members')
     .select('id, user_id, display_name, role')
     .eq('community_id', communityId)
     .in('role', ['client', 'member'])
     .neq('id', selfMember?.id ?? '')
+
+  if (userRole === 'coach' && selfMember) {
+    membersQuery = membersQuery.eq('coach_id', selfMember.id)
+  }
+
+  const { data: members } = await membersQuery
 
   // Get player profiles for display names and avatars
   const userIds = (members ?? []).map(m => m.user_id)
