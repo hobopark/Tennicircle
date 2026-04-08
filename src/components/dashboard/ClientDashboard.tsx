@@ -97,16 +97,16 @@ export function ClientDashboard({
         transition={{ delay: 1 * 0.08 }}
         className="grid grid-cols-3 gap-3 mb-6"
       >
-        <div className="bg-card rounded-2xl border border-border/50 p-4 text-center">
-          <p className="font-heading font-bold text-2xl text-foreground">{stats.sessionsThisMonth}</p>
+        <div className="bg-primary/10 rounded-2xl border border-primary/20 p-4 text-center">
+          <p className="font-heading font-bold text-2xl text-primary">{stats.sessionsThisMonth}</p>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Sessions this month</p>
         </div>
-        <div className="bg-card rounded-2xl border border-border/50 p-4 text-center">
-          <p className="font-heading font-bold text-2xl text-foreground">{stats.upcomingRsvps}</p>
+        <div className="bg-emerald-500/10 rounded-2xl border border-emerald-500/20 p-4 text-center">
+          <p className="font-heading font-bold text-2xl text-emerald-600 dark:text-emerald-400">{stats.upcomingRsvps}</p>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Upcoming RSVPs</p>
         </div>
-        <div className="bg-card rounded-2xl border border-border/50 p-4 text-center">
-          <p className="font-heading font-bold text-2xl text-foreground">{stats.memberSince}</p>
+        <div className="bg-amber-500/10 rounded-2xl border border-amber-500/20 p-4 text-center">
+          <p className="font-heading font-bold text-2xl text-amber-600 dark:text-amber-400">{stats.memberSince}</p>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Member since</p>
         </div>
       </motion.div>

@@ -46,6 +46,9 @@ export interface AuthFormState {
   }
   message?: string
   success?: boolean
+  values?: {
+    email?: string
+  }
 }
 
 // Role-based route configuration per D-10

@@ -77,7 +77,9 @@ export function AppNav() {
     >
       <div className="flex items-center justify-around px-2 h-16">
         {visibleTabs.map(tab => {
-          const isActive = pathname.startsWith(tab.href)
+          const isActive = tab.href === '/'
+            ? pathname === '/'
+            : pathname === tab.href || pathname.startsWith(tab.href + '/')
           return (
             <Link
               key={tab.href}
@@ -89,13 +91,13 @@ export function AppNav() {
               <span
                 className={
                   isActive
-                    ? 'bg-primary/10 p-1.5 rounded-xl transition-all duration-300'
+                    ? 'bg-primary text-primary-foreground p-1.5 rounded-xl transition-all duration-300 shadow-sm'
                     : 'p-1.5 transition-all duration-300'
                 }
               >
                 {tab.icon}
               </span>
-              <span className={`text-[10px] ${isActive ? 'font-bold' : ''}`}>
+              <span className={`text-[10px] ${isActive ? 'font-bold text-primary' : ''}`}>
                 {tab.label}
               </span>
             </Link>

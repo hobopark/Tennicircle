@@ -29,11 +29,21 @@ export default async function SessionsPage() {
     .single()
 
   if (!member) {
+    // No community member record yet — show a clean onboarding dashboard
+    const fallbackName = user.email?.split('@')[0] ?? 'Member'
     return (
       <>
         <AppNav />
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <p className="text-muted-foreground">Member record not found.</p>
+        <div className="min-h-screen bg-background">
+          <ClientDashboard
+            firstName={fallbackName}
+            displayName={fallbackName}
+            stats={{ sessionsThisMonth: 0, upcomingRsvps: 0, memberSince: 'Just joined' }}
+            upcomingSessions={[]}
+            upcomingEvents={[]}
+            announcements={[]}
+            userRole={userRole}
+          />
         </div>
       </>
     )
@@ -122,14 +132,18 @@ export default async function SessionsPage() {
   const memberSinceDate = new Date(member.joined_at ?? member.created_at)
   const memberSince = memberSinceDate.toLocaleDateString('en-AU', { month: 'short', year: 'numeric' })
 
-  // Fetch upcoming events (next 5)
-  const { data: events } = await supabase
-    .from('events')
-    .select('*, creator:community_members!created_by(display_name, avatar_url)')
-    .is('cancelled_at', null)
-    .gte('starts_at', now)
-    .order('starts_at', { ascending: true })
-    .limit(5)
+  // Fetch upcoming events (next 5) — explicit community_id filter as RLS backup
+  const communityId = claims.community_id
+  const { data: events } = communityId
+    ? await supabase
+        .from('events')
+        .select('*, creator:community_members!created_by(display_name, avatar_url)')
+        .eq('community_id', communityId)
+        .is('cancelled_at', null)
+        .gte('starts_at', now)
+        .order('starts_at', { ascending: true })
+        .limit(5)
+    : { data: [] }
 
   const eventIds = (events ?? []).map((e: { id: string }) => e.id)
 
@@ -171,12 +185,15 @@ export default async function SessionsPage() {
     user_rsvp: userEventRsvpMap.get(e.id) ?? null,
   }))
 
-  // Fetch latest 2 announcements
-  const { data: announcements } = await supabase
-    .from('announcements')
-    .select('*, author:community_members!created_by(display_name, avatar_url)')
-    .order('created_at', { ascending: false })
-    .limit(2)
+  // Fetch latest 2 announcements — explicit community_id filter
+  const { data: announcements } = communityId
+    ? await supabase
+        .from('announcements')
+        .select('*, author:community_members!created_by(display_name, avatar_url)')
+        .eq('community_id', communityId)
+        .order('created_at', { ascending: false })
+        .limit(2)
+    : { data: [] }
 
   const stats = {
     sessionsThisMonth,

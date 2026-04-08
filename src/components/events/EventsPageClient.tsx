@@ -45,27 +45,29 @@ export function EventsPageClient({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h1 className="font-heading font-bold text-2xl text-foreground">Events</h1>
-        <button
-          type="button"
-          onClick={openCreateEvent}
-          className="hidden sm:flex h-10 px-4 rounded-xl text-sm font-heading font-bold bg-primary text-primary-foreground items-center gap-2"
-        >
-          Create Event
-        </button>
+        {canPost && (
+          <button
+            type="button"
+            onClick={openCreateEvent}
+            className="hidden sm:flex h-10 px-4 rounded-xl text-sm font-heading font-bold bg-primary text-primary-foreground items-center gap-2"
+          >
+            Create Event
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="official">
-        <TabsList className="w-full bg-transparent border-b border-border/50 rounded-none p-0 mb-4 h-auto">
+        <TabsList className="w-full bg-muted/50 rounded-2xl p-1 mb-4 h-12">
           <TabsTrigger
             value="official"
-            className="flex-1 rounded-none border-b-2 border-transparent pb-2 text-muted-foreground font-heading font-bold text-sm data-[state=active]:text-primary data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            className="flex-1 rounded-xl h-10 text-sm font-heading font-bold text-muted-foreground transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
           >
             Official
           </TabsTrigger>
           <TabsTrigger
             value="community"
-            className="flex-1 rounded-none border-b-2 border-transparent pb-2 text-muted-foreground font-heading font-bold text-sm data-[state=active]:text-primary data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            className="flex-1 rounded-xl h-10 text-sm font-heading font-bold text-muted-foreground transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
           >
             Community
           </TabsTrigger>
@@ -174,15 +176,17 @@ export function EventsPageClient({
         </TabsContent>
       </Tabs>
 
-      {/* Mobile FAB */}
-      <button
-        type="button"
-        onClick={openCreateEvent}
-        aria-label="Create event"
-        className="sm:hidden fixed bottom-20 right-5 z-40 bg-primary text-primary-foreground w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-primary/20"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
+      {/* Mobile FAB — coach/admin only */}
+      {canPost && (
+        <button
+          type="button"
+          onClick={openCreateEvent}
+          aria-label="Create event"
+          className="sm:hidden fixed bottom-20 right-5 z-40 bg-primary text-primary-foreground w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-primary/20"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      )}
 
       {/* Create Event / Announcement Dialog */}
       <CreateEventDialog

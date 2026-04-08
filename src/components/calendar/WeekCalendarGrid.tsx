@@ -71,15 +71,24 @@ const GRID_START_HOUR = 6
 const GRID_END_HOUR = 22 // exclusive; row 2 + (22-6)*2 = row 34
 const TOTAL_TIME_ROWS = (GRID_END_HOUR - GRID_START_HOUR) * 2 // 32 rows
 
-function getGridRow(isoString: string): number {
+function getGridRowFraction(isoString: string): number {
   const d = new Date(isoString)
   const hour = d.getHours()
   const minutes = d.getMinutes()
-  return 2 + (hour - GRID_START_HOUR) * 2 + (minutes >= 30 ? 1 : 0)
+  // Returns fractional row position for precise placement
+  return 2 + (hour - GRID_START_HOUR) * 2 + (minutes / 30)
 }
 
-function getGridRowSpan(durationMinutes: number): number {
-  return Math.max(1, Math.ceil(durationMinutes / 30))
+function getEndTimeIso(isoString: string, durationMinutes: number): string {
+  const d = new Date(isoString)
+  d.setMinutes(d.getMinutes() + durationMinutes)
+  return d.toISOString()
+}
+
+function formatTimeRange(startIso: string, durationMinutes: number): string {
+  const start = formatTimeShort(startIso)
+  const end = formatTimeShort(getEndTimeIso(startIso, durationMinutes))
+  return `${start} – ${end}`
 }
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -186,15 +195,15 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
     <div className="flex flex-col">
       {/* View toggle pill */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="bg-muted rounded-full p-1 flex gap-1 h-8">
+        <div className="bg-muted/50 rounded-2xl p-1 flex gap-1 h-10">
           {(['day', 'week'] as const).map((v) => (
             <button
               key={v}
               onClick={() => handleViewChange(v)}
-              className={`px-3 text-sm rounded-full h-6 flex items-center transition-colors cursor-pointer ${
+              className={`px-4 text-sm rounded-xl h-8 flex items-center transition-all cursor-pointer ${
                 view === v
-                  ? 'bg-accent text-accent-foreground font-heading font-bold'
-                  : 'text-muted-foreground'
+                  ? 'bg-primary text-primary-foreground font-heading font-bold shadow-md'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {v === 'day' ? 'Day' : 'Week'}
@@ -257,10 +266,10 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                         isCancelled ? 'opacity-60' : ''
                       }`}
                     >
-                      {/* Top row: time + capacity */}
+                      {/* Top row: time range + capacity */}
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-bold text-foreground">
-                          {formatTimeShort(session.scheduled_at)}
+                          {formatTimeRange(session.scheduled_at, session.duration_minutes)}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
                           {confirmedCount}/{capacity}
@@ -435,12 +444,16 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                 ))
               )}
 
-              {/* Session blocks */}
+              {/* Session blocks — positioned with pixel offsets for precise time alignment */}
               {weekDays.map((day, colIdx) => {
                 const daySessions = sessionsByDay.get(colIdx) ?? []
                 return daySessions.map((session) => {
-                  const gridRow = getGridRow(session.scheduled_at)
-                  const rowSpan = getGridRowSpan(session.duration_minutes)
+                  const ROW_HEIGHT = 48 // matches gridTemplateRows
+                  const HEADER_HEIGHT = 40 // matches header row height
+                  const startFrac = getGridRowFraction(session.scheduled_at)
+                  const topPx = HEADER_HEIGHT + (startFrac - 2) * ROW_HEIGHT
+                  const durationRows = session.duration_minutes / 30
+                  const heightPx = durationRows * ROW_HEIGHT
                   const isCancelled = session.cancelled_at !== null
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const isUserConfirmed = (session as any)._userConfirmed !== false
@@ -458,8 +471,11 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                     <div
                       key={session.id}
                       style={{
-                        gridColumn: colIdx + 2,
-                        gridRow: `${gridRow} / span ${rowSpan}`,
+                        position: 'absolute',
+                        top: `${topPx}px`,
+                        height: `${heightPx}px`,
+                        left: `calc((100% - 60px) / 7 * ${colIdx} + 60px + 2px)`,
+                        width: `calc((100% - 60px) / 7 - 4px)`,
                         zIndex: 5,
                         padding: '2px',
                       }}
@@ -479,9 +495,9 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                           {(session as any).session_templates?.title || formatTimeShort(session.scheduled_at)}
                         </div>
                         <div className="truncate leading-tight opacity-80">
-                          {formatTimeShort(session.scheduled_at)}
+                          {formatTimeRange(session.scheduled_at, session.duration_minutes)}
                         </div>
-                        {rowSpan > 1 && (
+                        {durationRows > 1 && (
                           <div className="truncate leading-tight opacity-70 text-[11px]">
                             {session.venue}{session.court_number ? ` · Court No.${session.court_number}` : ''}
                           </div>

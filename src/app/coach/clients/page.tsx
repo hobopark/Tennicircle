@@ -98,18 +98,26 @@ export default async function ClientsPage() {
 
   const sessionDateMap = new Map((sessionDates ?? []).map(s => [s.id, s.scheduled_at]))
 
-  // Compute first lesson and last session per member
-  const attendanceMap = new Map<string, { firstLesson: string | null; lastSession: string | null }>()
+  // Compute first lesson, last session, and next session per member
+  const now = new Date().toISOString()
+  const attendanceMap = new Map<string, { firstLesson: string | null; lastSession: string | null; nextSession: string | null }>()
   for (const rsvp of (rsvpData ?? [])) {
     const scheduledAt = sessionDateMap.get(rsvp.session_id)
     if (!scheduledAt) continue
 
     const existing = attendanceMap.get(rsvp.member_id)
     if (!existing) {
-      attendanceMap.set(rsvp.member_id, { firstLesson: scheduledAt, lastSession: scheduledAt })
+      attendanceMap.set(rsvp.member_id, {
+        firstLesson: scheduledAt,
+        lastSession: scheduledAt,
+        nextSession: scheduledAt >= now ? scheduledAt : null,
+      })
     } else {
       if (scheduledAt < existing.firstLesson!) existing.firstLesson = scheduledAt
       if (scheduledAt > existing.lastSession!) existing.lastSession = scheduledAt
+      if (scheduledAt >= now && (!existing.nextSession || scheduledAt < existing.nextSession)) {
+        existing.nextSession = scheduledAt
+      }
     }
   }
 
@@ -127,6 +135,7 @@ export default async function ClientsPage() {
         hasProfile: !!profile,
         firstLesson: attendance?.firstLesson ?? null,
         lastSession: attendance?.lastSession ?? null,
+        nextSession: attendance?.nextSession ?? null,
       }
     })
     .filter(p => p.hasProfile)
@@ -175,10 +184,15 @@ export default async function ClientsPage() {
                     <p className="text-sm font-bold text-foreground truncate">
                       {player.displayName}
                     </p>
-                    {player.lastSession ? (
+                    {player.lastSession || player.nextSession ? (
                       <div className="flex flex-col mt-0.5">
+                        {player.nextSession && (
+                          <span className="text-[10px] font-bold text-primary">
+                            Next session: {formatAttendanceDate(player.nextSession)}
+                          </span>
+                        )}
                         <span className="text-[10px] text-muted-foreground">
-                          Last session: {formatAttendanceDate(player.lastSession)}
+                          Last session: {player.lastSession ? formatAttendanceDate(player.lastSession) : 'None'}
                         </span>
                         {player.firstLesson && (
                           <span className="text-[10px] text-muted-foreground">

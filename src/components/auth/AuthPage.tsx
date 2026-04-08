@@ -65,16 +65,16 @@ export function AuthPage() {
               onValueChange={handleTabChange}
               className="w-full"
             >
-              <TabsList className="w-full bg-card rounded-xl h-11 mb-6 p-1">
+              <TabsList className="w-full bg-muted/50 rounded-2xl h-12 mb-6 p-1">
                 <TabsTrigger
                   value="login"
-                  className="flex-1 text-sm font-sans data-active:bg-popover data-active:text-foreground text-muted-foreground rounded-lg"
+                  className="flex-1 text-sm font-sans rounded-xl h-10 text-muted-foreground transition-all data-active:bg-primary data-active:text-primary-foreground data-active:shadow-md"
                 >
                   Log in
                 </TabsTrigger>
                 <TabsTrigger
                   value="signup"
-                  className="flex-1 text-sm font-sans data-active:bg-popover data-active:text-foreground text-muted-foreground rounded-lg"
+                  className="flex-1 text-sm font-sans rounded-xl h-10 text-muted-foreground transition-all data-active:bg-primary data-active:text-primary-foreground data-active:shadow-md"
                 >
                   Sign up
                 </TabsTrigger>

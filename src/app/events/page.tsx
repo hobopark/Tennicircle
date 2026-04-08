@@ -40,10 +40,11 @@ export default async function EventsPage() {
     )
   }
 
-  // Fetch all events for the community
+  // Fetch all events for the community (explicit community_id filter as RLS backup)
   const { data: events } = await supabase
     .from('events')
     .select('*, creator:community_members!created_by(display_name, avatar_url)')
+    .eq('community_id', communityId)
     .is('cancelled_at', null)
     .order('starts_at', { ascending: true })
 
@@ -93,10 +94,11 @@ export default async function EventsPage() {
   const officialEvents = eventsWithStatus.filter(e => e.is_official)
   const communityEvents = eventsWithStatus.filter(e => !e.is_official)
 
-  // Fetch announcements
+  // Fetch announcements (explicit community_id filter)
   const { data: announcements } = await supabase
     .from('announcements')
     .select('*, author:community_members!created_by(display_name, avatar_url)')
+    .eq('community_id', communityId)
     .order('created_at', { ascending: false })
     .limit(10)
 

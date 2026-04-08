@@ -33,11 +33,13 @@ export async function login(
 
   if (error) {
     // Map Supabase errors to user-facing messages (T-01-03-03: generic messages only)
+    // Preserve email so the field stays populated on retry
     if (error.message.includes('Invalid login credentials')) {
       return {
         errors: {
           general: ['Incorrect email or password. Please try again.'],
         },
+        values: { email: validated.data.email },
       }
     }
     if (error.message.includes('Email not confirmed')) {
@@ -45,12 +47,14 @@ export async function login(
         errors: {
           general: ['Please verify your email before logging in. Check your inbox.'],
         },
+        values: { email: validated.data.email },
       }
     }
     return {
       errors: {
         general: ['Something went wrong. Please try again in a moment.'],
       },
+      values: { email: validated.data.email },
     }
   }
 
