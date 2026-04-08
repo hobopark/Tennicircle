@@ -111,14 +111,26 @@ export default async function CoachDashboardPage() {
     : { data: [] }
 
   // Announcements
-  const { data: announcements } = communityId
+  const { data: rawAnnouncements } = communityId
     ? await supabase
         .from('announcements')
-        .select('*, author:community_members!created_by(display_name)')
+        .select('*, author:community_members!created_by(display_name, user_id)')
         .eq('community_id', communityId)
         .order('created_at', { ascending: false })
         .limit(3)
     : { data: [] }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const annUserIds = (rawAnnouncements ?? []).map((a: any) => a.author?.user_id).filter(Boolean)
+  const { data: annProfiles } = annUserIds.length > 0
+    ? await supabase.from('player_profiles').select('user_id, display_name').in('user_id', annUserIds)
+    : { data: [] }
+  const annNameMap = new Map((annProfiles ?? []).map(p => [p.user_id, p.display_name]))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const announcements = (rawAnnouncements ?? []).map((a: any) => ({
+    ...a,
+    author: { ...a.author, display_name: annNameMap.get(a.author?.user_id) ?? a.author?.display_name ?? null },
+  }))
 
   return (
     <>

@@ -97,12 +97,29 @@ export default async function EventsPage() {
   const communityEvents = eventsWithStatus.filter(e => !e.is_official)
 
   // Fetch announcements (explicit community_id filter)
-  const { data: announcements } = await supabase
+  const { data: rawAnnouncements } = await supabase
     .from('announcements')
-    .select('*, author:community_members!created_by(display_name)')
+    .select('*, author:community_members!created_by(display_name, user_id)')
     .eq('community_id', communityId)
     .order('created_at', { ascending: false })
     .limit(10)
+
+  // Resolve author names from player_profiles
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const annAuthorUserIds = (rawAnnouncements ?? []).map((a: any) => a.author?.user_id).filter(Boolean)
+  const { data: annAuthorProfiles } = annAuthorUserIds.length > 0
+    ? await supabase.from('player_profiles').select('user_id, display_name').in('user_id', annAuthorUserIds)
+    : { data: [] }
+  const annProfileMap = new Map((annAuthorProfiles ?? []).map(p => [p.user_id, p.display_name]))
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const announcements = (rawAnnouncements ?? []).map((a: any) => ({
+    ...a,
+    author: {
+      ...a.author,
+      display_name: annProfileMap.get(a.author?.user_id) ?? a.author?.display_name ?? null,
+    },
+  }))
 
   return (
     <>
