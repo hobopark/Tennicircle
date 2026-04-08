@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import type { RsvpActionResult, SessionActionResult } from '@/lib/types/sessions'
 
 // SESS-05: RSVP to a session (confirmed or waitlisted based on capacity)
@@ -92,6 +93,28 @@ export async function rsvpSession(sessionId: string): Promise<RsvpActionResult> 
       return { success: false, error: "This session is now full. You've been added to the waitlist." }
     }
     return { success: false, error: insertError.message }
+  }
+
+  // NOTF-03: Notify member of RSVP confirmation (fire-and-forget)
+  if (rsvpType === 'confirmed') {
+    const { data: sessionInfo } = await supabase
+      .from('sessions')
+      .select('scheduled_at, venue')
+      .eq('id', sessionId)
+      .single()
+
+    if (sessionInfo) {
+      const serviceClient = createServiceClient()
+      const { formatDateTime } = await import('@/lib/utils/dates')
+      serviceClient.from('notifications').insert({
+        community_id: communityId,
+        member_id: member.id,
+        notification_type: 'rsvp_confirmed' as const,
+        title: "You're confirmed",
+        body: `You're confirmed for the session on ${formatDateTime(sessionInfo.scheduled_at)}`,
+        metadata: { resource_type: 'session' as const, resource_id: sessionId },
+      }).then(() => {})
+    }
   }
 
   revalidatePath('/sessions')
@@ -211,6 +234,26 @@ export async function promoteFromWaitlist(rsvpId: string): Promise<SessionAction
     .eq('id', rsvpId)
 
   if (updateError) return { success: false, error: updateError.message }
+
+  // NOTF-03: Notify promoted member (fire-and-forget)
+  const { data: promoSession } = await supabase
+    .from('sessions')
+    .select('scheduled_at, venue, community_id')
+    .eq('id', rsvp.session_id)
+    .single()
+
+  if (promoSession) {
+    const serviceClient = createServiceClient()
+    const { formatDateTime } = await import('@/lib/utils/dates')
+    serviceClient.from('notifications').insert({
+      community_id: promoSession.community_id,
+      member_id: rsvp.member_id,
+      notification_type: 'waitlist_promoted' as const,
+      title: "You've been moved off the waitlist",
+      body: `You've been moved off the waitlist for the session on ${formatDateTime(promoSession.scheduled_at)}`,
+      metadata: { resource_type: 'session' as const, resource_id: rsvp.session_id },
+    }).then(() => {})
+  }
 
   // Resequence remaining waitlist positions for the session
   await resequenceWaitlist(supabase, rsvp.session_id)

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { CreateEventSchema } from '@/lib/validations/events'
 import type { EventActionResult, EventRsvpActionResult } from '@/lib/types/events'
 
@@ -105,7 +106,7 @@ export async function rsvpEvent(eventId: string): Promise<EventRsvpActionResult>
   // Fetch event to check capacity and cancelled status
   const { data: event, error: eventError } = await supabase
     .from('events')
-    .select('id, capacity, cancelled_at, community_id')
+    .select('id, capacity, cancelled_at, community_id, title, starts_at')
     .eq('id', eventId)
     .single()
 
@@ -169,6 +170,20 @@ export async function rsvpEvent(eventId: string): Promise<EventRsvpActionResult>
     return { success: false, error: insertError.message }
   }
 
+  // NOTF-03: Notify member of event RSVP confirmation (fire-and-forget)
+  if (rsvpType === 'confirmed') {
+    const serviceClient = createServiceClient()
+    const { formatDateTime } = await import('@/lib/utils/dates')
+    serviceClient.from('notifications').insert({
+      community_id: communityId,
+      member_id: member.id,
+      notification_type: 'rsvp_confirmed' as const,
+      title: "You're confirmed",
+      body: `You're confirmed for ${event.title ?? 'the event'} on ${formatDateTime(event.starts_at)}`,
+      metadata: { resource_type: 'event' as const, resource_id: eventId },
+    }).then(() => {})
+  }
+
   revalidatePath('/events')
   revalidatePath('/sessions')
 
@@ -191,6 +206,17 @@ export async function cancelEventRsvp(eventId: string): Promise<EventRsvpActionR
 
   if (memberError || !member) return { success: false, error: 'Member record not found' }
 
+  // Get the active RSVP to determine its type before cancelling
+  const { data: existingRsvp, error: rsvpFetchError } = await supabase
+    .from('event_rsvps')
+    .select('rsvp_type')
+    .eq('event_id', eventId)
+    .eq('member_id', member.id)
+    .is('cancelled_at', null)
+    .single()
+
+  if (rsvpFetchError || !existingRsvp) return { success: false, error: 'Active RSVP not found' }
+
   const { error: cancelError } = await supabase
     .from('event_rsvps')
     .update({ cancelled_at: new Date().toISOString() })
@@ -199,6 +225,47 @@ export async function cancelEventRsvp(eventId: string): Promise<EventRsvpActionR
     .is('cancelled_at', null)
 
   if (cancelError) return { success: false, error: cancelError.message }
+
+  // If a confirmed spot was freed, promote the first waitlisted member
+  if (existingRsvp.rsvp_type === 'confirmed') {
+    const { data: nextWaitlisted } = await supabase
+      .from('event_rsvps')
+      .select('id, member_id')
+      .eq('event_id', eventId)
+      .eq('rsvp_type', 'waitlisted')
+      .is('cancelled_at', null)
+      .order('waitlist_position', { ascending: true })
+      .limit(1)
+      .single()
+
+    if (nextWaitlisted) {
+      await supabase
+        .from('event_rsvps')
+        .update({ rsvp_type: 'confirmed', waitlist_position: null })
+        .eq('id', nextWaitlisted.id)
+
+      // NOTF-03: Notify promoted member (fire-and-forget)
+      const { data: eventInfo } = await supabase
+        .from('events')
+        .select('title, starts_at')
+        .eq('id', eventId)
+        .single()
+
+      if (eventInfo) {
+        const serviceClient = createServiceClient()
+        const { formatDateTime } = await import('@/lib/utils/dates')
+        const claims = await getJWTClaims(supabase)
+        serviceClient.from('notifications').insert({
+          community_id: claims.community_id!,
+          member_id: nextWaitlisted.member_id,
+          notification_type: 'waitlist_promoted' as const,
+          title: "You've been moved off the waitlist",
+          body: `You've been moved off the waitlist for ${eventInfo.title} on ${formatDateTime(eventInfo.starts_at)}`,
+          metadata: { resource_type: 'event' as const, resource_id: eventId },
+        }).then(() => {})
+      }
+    }
+  }
 
   revalidatePath('/events')
   revalidatePath('/sessions')
