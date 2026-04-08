@@ -69,7 +69,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   // Fetch event with creator info
   const { data: event } = await supabase
     .from('events')
-    .select('*, creator:community_members!created_by(display_name, avatar_url)')
+    .select('*, creator:community_members!created_by(display_name)')
     .eq('id', eventId)
     .single()
 
@@ -78,7 +78,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   // Fetch all RSVPs for this event with member info
   const { data: rsvps } = await supabase
     .from('event_rsvps')
-    .select('*, member:community_members(display_name, avatar_url)')
+    .select('*, member:community_members(display_name)')
     .eq('event_id', eventId)
     .is('cancelled_at', null)
     .order('created_at', { ascending: true })

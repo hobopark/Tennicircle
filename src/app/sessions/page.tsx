@@ -137,7 +137,7 @@ export default async function SessionsPage() {
   const { data: events } = communityId
     ? await supabase
         .from('events')
-        .select('*, creator:community_members!created_by(display_name, avatar_url)')
+        .select('*, creator:community_members!created_by(display_name)')
         .eq('community_id', communityId)
         .is('cancelled_at', null)
         .gte('starts_at', now)
@@ -189,7 +189,7 @@ export default async function SessionsPage() {
   const { data: announcements } = communityId
     ? await supabase
         .from('announcements')
-        .select('*, author:community_members!created_by(display_name, avatar_url)')
+        .select('*, author:community_members!created_by(display_name)')
         .eq('community_id', communityId)
         .order('created_at', { ascending: false })
         .limit(2)

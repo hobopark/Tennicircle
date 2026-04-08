@@ -80,9 +80,11 @@ export function CreateEventDialog({
 
   const isPending = isEventPending || isAnnouncementPending
 
-  // Reset step when dialog closes/opens
+  // Sync step when dialog opens or isAnnouncement changes
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      setStep(isAnnouncement ? 'form' : 'type-select')
+    } else {
       setStep(isAnnouncement ? 'form' : 'type-select')
       setSelectedType('social')
       setDrawImageUrl('')

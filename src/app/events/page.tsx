@@ -3,6 +3,8 @@ import { AppNav } from '@/components/nav/AppNav'
 import { EventsPageClient } from '@/components/events/EventsPageClient'
 import type { EventWithRsvpStatus, EventRsvp } from '@/lib/types/events'
 
+export const dynamic = 'force-dynamic'
+
 export default async function EventsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -43,7 +45,7 @@ export default async function EventsPage() {
   // Fetch all events for the community (explicit community_id filter as RLS backup)
   const { data: events } = await supabase
     .from('events')
-    .select('*, creator:community_members!created_by(display_name, avatar_url)')
+    .select('*, creator:community_members!created_by(display_name)')
     .eq('community_id', communityId)
     .is('cancelled_at', null)
     .order('starts_at', { ascending: true })
@@ -97,7 +99,7 @@ export default async function EventsPage() {
   // Fetch announcements (explicit community_id filter)
   const { data: announcements } = await supabase
     .from('announcements')
-    .select('*, author:community_members!created_by(display_name, avatar_url)')
+    .select('*, author:community_members!created_by(display_name)')
     .eq('community_id', communityId)
     .order('created_at', { ascending: false })
     .limit(10)

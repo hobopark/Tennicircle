@@ -77,9 +77,14 @@ export function AppNav() {
     >
       <div className="flex items-center justify-around px-2 h-16">
         {visibleTabs.map(tab => {
-          const isActive = tab.href === '/'
-            ? pathname === '/'
-            : pathname === tab.href || pathname.startsWith(tab.href + '/')
+          // Longest-match-wins: only highlight the most specific matching tab
+          const matches = pathname === tab.href || pathname.startsWith(tab.href + '/')
+          const hasMoreSpecificMatch = matches && visibleTabs.some(
+            other => other.href !== tab.href
+              && other.href.startsWith(tab.href + '/')
+              && (pathname === other.href || pathname.startsWith(other.href + '/'))
+          )
+          const isActive = matches && !hasMoreSpecificMatch
           return (
             <Link
               key={tab.href}
