@@ -54,19 +54,29 @@ export default async function SessionDetailPage({ params }: PageProps) {
       .filter(Boolean) as string[]
   )]
 
-  // Build user ID -> display name map
+  // Build member ID -> display name map (prefer player_profiles over community_members)
   const memberNameMap = new Map<string, string>()
 
   if (uniqueUserIds.length > 0) {
-    // Fetch display names from community_members (display_name or email fallback)
-    const { data: memberProfiles } = await supabase
+    // Fetch from player_profiles first (has the real display name)
+    const { data: playerProfiles } = await supabase
+      .from('player_profiles')
+      .select('user_id, display_name')
+      .in('user_id', uniqueUserIds)
+
+    const profileNameByUserId = new Map(
+      (playerProfiles ?? []).map(p => [p.user_id, p.display_name])
+    )
+
+    // Fetch community_members to map member_id -> user_id
+    const { data: memberRows } = await supabase
       .from('community_members')
       .select('id, user_id, display_name')
       .in('user_id', uniqueUserIds)
 
-    for (const profile of memberProfiles ?? []) {
-      const displayName = profile.display_name ?? profile.user_id
-      memberNameMap.set(profile.id as string, displayName as string)
+    for (const m of memberRows ?? []) {
+      const name = profileNameByUserId.get(m.user_id) ?? m.display_name ?? 'Member'
+      memberNameMap.set(m.id as string, name as string)
     }
   }
 
