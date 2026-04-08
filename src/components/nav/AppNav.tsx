@@ -1,20 +1,59 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { ShieldCheck, CalendarDays, Calendar, Users, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { UserRole } from '@/lib/types/auth'
 
-// Role-based nav link visibility per D-14
-const NAV_LINKS: { href: string; label: string; roles: UserRole[] }[] = [
-  { href: '/admin', label: 'Admin', roles: ['admin'] },
-  { href: '/coach', label: 'Schedule', roles: ['admin', 'coach'] },
-  { href: '/sessions', label: 'Sessions', roles: ['client', 'admin'] },
-  { href: '/coach/clients', label: 'Clients', roles: ['admin', 'coach'] },
-  { href: '/profile', label: 'Profile', roles: ['admin', 'coach', 'client'] },
+// Role-based nav tab definitions per D-14
+const NAV_TABS: {
+  href: string
+  label: string
+  icon: React.ReactNode
+  roles: UserRole[]
+}[] = [
+  {
+    href: '/admin',
+    label: 'Admin',
+    icon: <ShieldCheck className="w-5 h-5" />,
+    roles: ['admin'],
+  },
+  {
+    href: '/coach',
+    label: 'Schedule',
+    icon: <CalendarDays className="w-5 h-5" />,
+    roles: ['admin', 'coach'],
+  },
+  {
+    href: '/sessions',
+    label: 'Sessions',
+    icon: <Calendar className="w-5 h-5" />,
+    roles: ['client', 'admin'],
+  },
+  {
+    href: '/coach/clients',
+    label: 'Clients',
+    icon: <Users className="w-5 h-5" />,
+    roles: ['admin', 'coach'],
+  },
+  {
+    href: '/events',
+    label: 'Events',
+    icon: <CalendarDays className="w-5 h-5" />,
+    roles: ['admin', 'coach', 'client'],
+  },
+  {
+    href: '/profile',
+    label: 'Profile',
+    icon: <User className="w-5 h-5" />,
+    roles: ['admin', 'coach', 'client'],
+  },
 ]
 
 export function AppNav() {
+  const pathname = usePathname()
   const [role, setRole] = useState<UserRole>('pending')
 
   useEffect(() => {
@@ -29,25 +68,39 @@ export function AppNav() {
     })
   }, [])
 
-  const visibleLinks = NAV_LINKS.filter(link => link.roles.includes(role))
+  const visibleTabs = NAV_TABS.filter(tab => tab.roles.includes(role))
 
   return (
-    <nav className="w-full bg-popover border-b border-border px-4 py-3">
-      <div className="max-w-4xl mx-auto flex items-center justify-between">
-        <Link href="/welcome" className="font-display text-base font-bold text-foreground">
-          TenniCircle
-        </Link>
-        <div className="flex items-center gap-4">
-          {visibleLinks.map(link => (
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-t border-border pb-[env(safe-area-inset-bottom)]"
+      aria-label="Bottom navigation"
+    >
+      <div className="flex items-center justify-around px-2 h-16">
+        {visibleTabs.map(tab => {
+          const isActive = pathname.startsWith(tab.href)
+          return (
             <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              key={tab.href}
+              href={tab.href}
+              className={`flex flex-col items-center gap-0.5 flex-1 py-2 ${
+                isActive ? 'text-primary' : 'text-muted-foreground'
+              }`}
             >
-              {link.label}
+              <span
+                className={
+                  isActive
+                    ? 'bg-primary/10 p-1.5 rounded-xl transition-all duration-300'
+                    : 'p-1.5 transition-all duration-300'
+                }
+              >
+                {tab.icon}
+              </span>
+              <span className={`text-[10px] ${isActive ? 'font-bold' : ''}`}>
+                {tab.label}
+              </span>
             </Link>
-          ))}
-        </div>
+          )
+        })}
       </div>
     </nav>
   )
