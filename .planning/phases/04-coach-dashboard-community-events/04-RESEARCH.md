@@ -615,7 +615,7 @@ When adding `/events`, these locations MUST be updated:
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Attendance query for DASH-03 — exact Supabase join syntax**
    - What we know: `session_rsvps` and `sessions` tables exist; need min/max `scheduled_at` per member
