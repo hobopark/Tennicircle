@@ -75,21 +75,38 @@ export default async function CoachSchedulePage() {
   if (sessionIds.length > 0) {
     const { data: attendees } = await supabase
       .from('session_rsvps')
-      .select('session_id, rsvp_type, member:community_members(display_name)')
+      .select('session_id, rsvp_type, member:community_members(display_name, user_id)')
       .in('session_id', sessionIds)
       .eq('rsvp_type', 'confirmed')
       .is('cancelled_at', null)
       .order('created_at', { ascending: true })
+
+    // Look up player_profiles for avatar URLs
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const attendeeUserIds = [...new Set((attendees ?? []).map((a: any) => a.member?.user_id).filter(Boolean))]
+    const { data: profiles } = attendeeUserIds.length > 0
+      ? await supabase
+          .from('player_profiles')
+          .select('user_id, display_name, avatar_url')
+          .in('user_id', attendeeUserIds)
+      : { data: [] }
+
+    const profileByUserId = new Map(
+      (profiles ?? []).map(p => [p.user_id, p])
+    )
 
     for (const session of sessions) {
       const id = session.id as string
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const sessionAttendees = (attendees ?? []).filter((a: any) => a.session_id === id)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const attendeePreview = sessionAttendees.slice(0, 5).map((a: any) => ({
-        display_name: a.member?.display_name ?? null,
-        avatar_url: null,
-      }))
+      const attendeePreview = sessionAttendees.slice(0, 5).map((a: any) => {
+        const profile = profileByUserId.get(a.member?.user_id)
+        return {
+          display_name: profile?.display_name ?? a.member?.display_name ?? null,
+          avatar_url: profile?.avatar_url ?? null,
+        }
+      })
 
       attendeeDataMap[id] = {
         confirmedCount: sessionAttendees.length,
