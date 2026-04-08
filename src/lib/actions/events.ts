@@ -206,6 +206,78 @@ export async function cancelEventRsvp(eventId: string): Promise<EventRsvpActionR
   return { success: true }
 }
 
+// Update an existing event (creator or admin only)
+export async function updateEvent(
+  eventId: string,
+  _prevState: EventActionResult,
+  formData: FormData
+): Promise<EventActionResult> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const claims = await getJWTClaims(supabase)
+
+  const { data: member, error: memberError } = await supabase
+    .from('community_members')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (memberError || !member) return { success: false, error: 'Member record not found' }
+
+  // Verify ownership
+  const { data: event, error: eventError } = await supabase
+    .from('events')
+    .select('id, created_by')
+    .eq('id', eventId)
+    .single()
+
+  if (eventError || !event) return { success: false, error: 'Event not found' }
+  if (event.created_by !== member.id && claims.user_role !== 'admin') {
+    return { success: false, error: 'You can only edit your own events' }
+  }
+
+  const parsed = CreateEventSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) {
+    return { success: false, fieldErrors: parsed.error.flatten().fieldErrors }
+  }
+
+  const startsAt = new Date(
+    `${parsed.data.starts_at_date}T${parsed.data.starts_at_time}`
+  ).toISOString()
+
+  const durationMinutes = parsed.data.duration_minutes && parsed.data.duration_minutes > 0
+    ? parsed.data.duration_minutes : null
+  const capacity = parsed.data.capacity && parsed.data.capacity > 0
+    ? parsed.data.capacity : null
+
+  const drawImageUrl = formData.get('draw_image_url')?.toString() || null
+
+  const { data: updated, error: updateError } = await supabase
+    .from('events')
+    .update({
+      title: parsed.data.title,
+      description: parsed.data.description || null,
+      venue: parsed.data.venue,
+      starts_at: startsAt,
+      duration_minutes: durationMinutes,
+      capacity,
+      draw_image_url: drawImageUrl,
+    })
+    .eq('id', eventId)
+    .select()
+    .single()
+
+  if (updateError) return { success: false, error: updateError.message }
+
+  revalidatePath('/events')
+  revalidatePath(`/events/${eventId}`)
+
+  return { success: true, data: updated }
+}
+
 // EVNT-05: Delete an event (creator or admin only)
 export async function deleteEvent(eventId: string): Promise<EventActionResult> {
   const supabase = await createClient()

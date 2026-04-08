@@ -56,3 +56,42 @@ export async function createAnnouncement(
 
   return { success: true, data: insertedAnnouncement }
 }
+
+// Update an existing announcement
+export async function updateAnnouncement(
+  announcementId: string,
+  _prevState: AnnouncementActionResult,
+  formData: FormData
+): Promise<AnnouncementActionResult> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const claims = await getJWTClaims(supabase)
+  if (claims.user_role !== 'coach' && claims.user_role !== 'admin') {
+    return { success: false, error: 'Only coaches and admins can edit announcements' }
+  }
+
+  const parsed = CreateAnnouncementSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) {
+    return { success: false, fieldErrors: parsed.error.flatten().fieldErrors }
+  }
+
+  const { data: updated, error } = await supabase
+    .from('announcements')
+    .update({
+      title: parsed.data.title,
+      body: parsed.data.body,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', announcementId)
+    .select()
+    .single()
+
+  if (error) return { success: false, error: error.message }
+
+  revalidatePath('/events')
+
+  return { success: true, data: updated }
+}

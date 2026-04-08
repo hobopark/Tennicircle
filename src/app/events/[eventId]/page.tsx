@@ -140,13 +140,13 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                 {EVENT_TYPE_LABELS[event.event_type as EventType]}
               </span>
               {isAdminOrCreator && (
-                <button
-                  type="button"
+                <Link
+                  href={`/events/${eventId}/edit`}
                   aria-label="Edit event"
                   className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center"
                 >
                   <Pencil size={16} className="text-muted-foreground" />
-                </button>
+                </Link>
               )}
             </div>
 
