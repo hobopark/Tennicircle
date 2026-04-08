@@ -389,9 +389,9 @@ Entire card tappable → `/sessions/[sessionId]`.
 ```
 
 Type badge (top-left):
-- Tournament: `text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-secondary/20 text-secondary-foreground`
-- Social Event: `text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-primary/10 text-primary`
-- Open Session: `text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent text-accent-foreground`
+- Tournament: `text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-secondary/20 text-secondary-foreground`
+- Social Event: `text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-primary/10 text-primary`
+- Open Session: `text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent text-accent-foreground`
 
 Spots remaining pill (top-right, only when capacity is set):
 - Spots available: `text-[10px] font-bold bg-card/90 backdrop-blur-sm px-3 py-1 rounded-full text-primary` — "{N} spots left"
@@ -721,19 +721,3 @@ Framer Motion installed in Phase 3 — no new package required this phase.
 | Session + event cards tappable with RSVP | CONTEXT.md D-13 |
 | Existing coach page structure | src/app/coach/page.tsx (verified — WeekCalendarGrid, extend not replace) |
 | Existing clients page structure | src/app/coach/clients/page.tsx (verified — extend with attendance data) |
-| Existing sessions page structure | src/app/sessions/page.tsx (verified — full redesign to action-oriented) |
-| AppNav current structure | src/components/nav/AppNav.tsx (verified — top-bar, convert to bottom nav) |
-| Reusable session components | src/components/sessions/ (verified — VenueAutocomplete, WaitlistPanel reusable) |
-
----
-
-## Checker Sign-Off
-
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-
-**Approval:** pending

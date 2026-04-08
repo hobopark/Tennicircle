@@ -85,6 +85,7 @@ Coaches can schedule sessions and members can RSVP — replacing spreadsheets en
 - **Multi-tenancy**: Data model must support multiple communities from the start
 - **Mobile**: Web-first, mobile-responsive from day one; no native app for MVP
 - **Payments**: No payment processing in MVP
+- **Design direction**: AceHub (Base44 prototype) — see `.planning/DESIGN-REF.md`. All frontend phases must reference this file for color tokens, fonts, card patterns, animations, and component styles
 
 ## Key Decisions
 
