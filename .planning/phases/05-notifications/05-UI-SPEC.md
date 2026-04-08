@@ -55,14 +55,14 @@ Source: DESIGN-REF.md + globals.css confirmed
 
 | Role | Size | Weight | Line Height | Font |
 |------|------|--------|-------------|------|
+| Meta / micro (timestamps, badge text) | 12px (`text-xs`) | 400 | 1.4 | Inter (`font-sans`) |
 | Body | 14px (`text-sm`) | 400 | 1.5 | Inter (`font-sans`) |
-| Label / notification meta | 12px (`text-xs`) | 400 | 1.4 | Inter (`font-sans`) |
 | Notification title | 16px (`text-base`) | 600 (`font-semibold`) | 1.4 | Space Grotesk (`font-heading`) |
 | Page heading | 20px (`text-xl`) | 700 (`font-bold`) | 1.2 | Space Grotesk (`font-heading`) |
 
 Notes:
-- Micro labels (timestamp, badge text): `text-[10px] font-medium` — matches AceHub pattern
-- Two weights only: 400 (regular body/meta) and 600–700 (headings/titles)
+- Timestamps, badge overflow text ("9+"), and all micro-labels use `text-xs` (12px). No sub-12px sizes permitted.
+- Two weights only: 400 (regular body/meta) and 600–700 (headings/titles).
 
 ---
 
@@ -110,7 +110,7 @@ No new shadcn components required. No third-party registry blocks.
 Each notification row renders as a card-style list item with this structure:
 
 ```
-[ avatar (32px) ] [ title (semibold, text-base) ]        [ timestamp (text-[10px] muted) ]
+[ avatar (32px) ] [ title (semibold, text-base) ]        [ timestamp (text-xs muted) ]
                    [ body copy (text-sm, muted) ]
 ```
 
@@ -125,15 +125,17 @@ Row minimum height: 44px touch target. Actual rendered height will be ~56–64px
 
 ## Notification Types
 
-Three types with distinct iconography:
+Three types with distinct iconography. Each icon container must include an accessible label so screen readers convey notification type.
 
-| Type | Trigger | Icon | Icon color class |
-|------|---------|------|-----------------|
-| Session reminder (NOTF-01) | Cron job 24h before session | `CalendarDays` (lucide) | `text-primary` |
-| Announcement (NOTF-02) | `createAnnouncement` server action | `Megaphone` (lucide) | `text-primary` |
-| RSVP confirmation / waitlist promotion (NOTF-03) | `rsvpSession`, `rsvpEvent`, auto-promotion | `CheckCircle2` (lucide) | `text-primary` |
+| Type | Trigger | Icon | Icon color class | `aria-label` |
+|------|---------|------|-----------------|--------------|
+| Session reminder (NOTF-01) | Cron job 24h before session | `CalendarDays` (lucide) | `text-primary` | `"Session reminder"` |
+| Announcement (NOTF-02) | `createAnnouncement` server action | `Megaphone` (lucide) | `text-primary` | `"Announcement"` |
+| RSVP confirmation / waitlist promotion (NOTF-03) | `rsvpSession`, `rsvpEvent`, auto-promotion | `CheckCircle2` (lucide) | `text-primary` | `"RSVP confirmed"` |
 
-Type icons replace the avatar when no sender persona is relevant (e.g., system-generated reminders). For announcement notifications, the posting coach/admin's `InitialsAvatar` is shown instead.
+Implementation requirement: the icon container element must carry `aria-label` as shown above and the lucide icon itself must have `aria-hidden="true"`. Alternatively, render a visually hidden `<span className="sr-only">` sibling with the same label text. Either approach satisfies the accessibility contract.
+
+Type icons replace the avatar when no sender persona is relevant (e.g., system-generated reminders). For announcement notifications, the posting coach/admin's `InitialsAvatar` is shown instead; no type icon is rendered, so no `aria-label` on the icon container is required in that case.
 
 ---
 
@@ -151,7 +153,7 @@ roles: ['admin', 'coach', 'client']
 Unread badge:
 - Position: absolute, top-right corner of icon container, `-top-1 -right-1`
 - Size: `w-5 h-5` (20px diameter)
-- Style: `bg-primary text-primary-foreground text-[10px] font-bold rounded-full`
+- Style: `bg-primary text-primary-foreground text-xs font-bold rounded-full`
 - Cap: shows "9+" when count exceeds 9
 - Visibility: hidden when count is 0 (do not render empty badge)
 
