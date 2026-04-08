@@ -24,11 +24,19 @@ export default async function SessionsPage() {
   const userRole = claims.user_role ?? 'client'
 
   // Get member record with joined_at for member-since stat
-  const { data: member } = await supabase
-    .from('community_members')
-    .select('id, joined_at, created_at')
-    .eq('user_id', user.id)
-    .single()
+  // Use maybeSingle + community_id filter to handle RLS edge cases
+  const { data: member, error: memberError } = claims.community_id
+    ? await supabase
+        .from('community_members')
+        .select('id, joined_at')
+        .eq('user_id', user.id)
+        .eq('community_id', claims.community_id)
+        .maybeSingle()
+    : await supabase
+        .from('community_members')
+        .select('id, joined_at')
+        .eq('user_id', user.id)
+        .maybeSingle()
 
   if (!member) {
     // No community member record yet — show a clean onboarding dashboard
@@ -131,7 +139,7 @@ export default async function SessionsPage() {
     sessionsThisMonth = (monthSessions ?? []).length
   }
 
-  const memberSinceDate = new Date(member.joined_at ?? member.created_at)
+  const memberSinceDate = new Date(member.joined_at ?? new Date().toISOString())
   const memberSince = memberSinceDate.toLocaleDateString('en-AU', { month: 'short', year: 'numeric' })
 
   // Fetch upcoming events (next 5) — explicit community_id filter as RLS backup
