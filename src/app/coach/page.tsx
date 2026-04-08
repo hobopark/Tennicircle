@@ -69,13 +69,50 @@ export default async function CoachPage() {
     (a, b) => new Date(a.scheduled_at as string).getTime() - new Date(b.scheduled_at as string).getTime()
   )
 
+  // Fetch attendee previews for all sessions (Query 3: session_rsvps with member join)
+  const sessionIds = sessions.map(s => s.id as string)
+  const attendeeDataMap: Record<string, {
+    confirmedCount: number
+    capacity: number | null
+    attendeePreview: Array<{ display_name: string | null; avatar_url: string | null }>
+  }> = {}
+
+  if (sessionIds.length > 0) {
+    const { data: attendees } = await supabase
+      .from('session_rsvps')
+      .select('session_id, rsvp_type, member:community_members(display_name, avatar_url)')
+      .in('session_id', sessionIds)
+      .eq('rsvp_type', 'confirmed')
+      .is('cancelled_at', null)
+      .order('created_at', { ascending: true })
+
+    // Group attendees by session_id and compute confirmedCount + attendeePreview
+    for (const session of sessions) {
+      const id = session.id as string
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sessionAttendees = (attendees ?? []).filter((a: any) => a.session_id === id)
+      const confirmedCount = sessionAttendees.length
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const attendeePreview = sessionAttendees.slice(0, 5).map((a: any) => ({
+        display_name: a.member?.display_name ?? null,
+        avatar_url: a.member?.avatar_url ?? null,
+      }))
+
+      attendeeDataMap[id] = {
+        confirmedCount,
+        capacity: (session.capacity as number) ?? null,
+        attendeePreview,
+      }
+    }
+  }
+
   return (
     <>
       <AppNav />
       <div className="min-h-screen bg-background">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="font-display text-[28px] font-bold text-foreground">Schedule</h1>
+        <div className="max-w-6xl mx-auto px-5 pt-14 pb-24">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="font-heading font-bold text-2xl text-foreground">Schedule</h1>
             <Link
               href="/coach/sessions/new"
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90"
@@ -84,7 +121,7 @@ export default async function CoachPage() {
             </Link>
           </div>
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <WeekCalendarGrid sessions={sessions as any} />
+          <WeekCalendarGrid sessions={sessions as any} attendeeData={attendeeDataMap} />
         </div>
       </div>
     </>
