@@ -86,7 +86,7 @@ export default async function SessionsPage() {
   const { data: allSessionRows } = upcomingSessionIds.length > 0
     ? await supabase
         .from('sessions')
-        .select('id, title, scheduled_at, duration_minutes, venue, capacity, session_templates(title)')
+        .select('id, scheduled_at, duration_minutes, venue, capacity, session_templates(title)')
         .in('id', upcomingSessionIds)
         .gte('scheduled_at', now)
         .order('scheduled_at', { ascending: true })
@@ -102,7 +102,7 @@ export default async function SessionsPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const upcomingSessions = (allSessionRows ?? []).map((s: any) => ({
     id: s.id,
-    title: s.title,
+    title: s.session_templates?.title ?? null,
     scheduled_at: s.scheduled_at,
     duration_minutes: s.duration_minutes,
     venue: s.venue,
