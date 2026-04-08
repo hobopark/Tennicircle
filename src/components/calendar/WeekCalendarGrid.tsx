@@ -18,12 +18,22 @@ interface SessionAttendeeData {
   attendeePreview: AttendeeInfo[]
 }
 
+interface CalendarEvent {
+  id: string
+  title: string
+  starts_at: string
+  duration_minutes: number | null
+  venue: string | null
+  event_type: string
+}
+
 interface WeekCalendarGridProps {
   sessions: Session[]
   linkPrefix?: string // e.g. '/coach/sessions' or '/sessions'
   initialDate?: string
   loading?: boolean
   attendeeData?: Record<string, SessionAttendeeData>
+  events?: CalendarEvent[]
 }
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -106,7 +116,7 @@ for (let h = GRID_START_HOUR; h < GRID_END_HOUR; h++) {
   TIME_LABELS.push(formatTime(h, 30))
 }
 
-export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', initialDate, loading = false, attendeeData = {} }: WeekCalendarGridProps) {
+export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', initialDate, loading = false, attendeeData = {}, events = [] }: WeekCalendarGridProps) {
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
     if (initialDate) return getWeekStart(new Date(initialDate))
     return getWeekStart(new Date())
@@ -165,6 +175,29 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
       .filter(s => isSameDay(new Date(s.scheduled_at), selectedDate))
       .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())
   }, [sessions, selectedDate])
+
+  // Day view: events for selected date
+  const dayViewEvents = useMemo(() => {
+    return events
+      .filter(e => isSameDay(new Date(e.starts_at), selectedDate))
+      .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
+  }, [events, selectedDate])
+
+  // Week view: events by day
+  const eventsByDay = useMemo(() => {
+    const map = new Map<number, CalendarEvent[]>()
+    for (let i = 0; i < 7; i++) map.set(i, [])
+    for (const event of events) {
+      const eventDate = new Date(event.starts_at)
+      for (let i = 0; i < 7; i++) {
+        if (isSameDay(eventDate, weekDays[i])) {
+          map.get(i)!.push(event)
+          break
+        }
+      }
+    }
+    return map
+  }, [events, weekDays])
 
   if (loading) {
     return (
@@ -236,11 +269,11 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
             </button>
           </div>
 
-          {/* Session list */}
-          {dayViewSessions.length === 0 ? (
+          {/* Session + Event list */}
+          {dayViewSessions.length === 0 && dayViewEvents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <CalendarX className="w-8 h-8 text-muted mb-3" />
-              <p className="text-sm text-muted-foreground">No sessions scheduled for this day.</p>
+              <p className="text-sm text-muted-foreground">Nothing scheduled for this day.</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -316,6 +349,39 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                               +{confirmedCount - 5}
                             </div>
                           )}
+                        </div>
+                      )}
+                    </Link>
+                  </motion.div>
+                )
+              })}
+              {/* Event cards in day view */}
+              {dayViewEvents.map((evt, index) => {
+                const duration = evt.duration_minutes ?? 60
+                return (
+                  <motion.div
+                    key={evt.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: (dayViewSessions.length + index) * 0.05 }}
+                  >
+                    <Link
+                      href={`/events/${evt.id}`}
+                      className="block bg-amber-500/10 border border-amber-500/30 rounded-3xl p-4 active:scale-[0.98] transition-transform cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-bold text-foreground">
+                          {formatTimeRange(evt.starts_at, duration)}
+                        </span>
+                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-full uppercase">
+                          {evt.event_type === 'tournament' ? 'Tournament' : evt.event_type === 'social' ? 'Social' : 'Open'}
+                        </span>
+                      </div>
+                      <p className="font-heading font-bold text-base mb-1">{evt.title}</p>
+                      {evt.venue && (
+                        <div className="flex items-center gap-1 mb-1">
+                          <MapPin className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">{evt.venue}</span>
                         </div>
                       )}
                     </Link>
@@ -443,6 +509,51 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                   />
                 ))
               )}
+
+              {/* Event blocks — amber colored, positioned like sessions */}
+              {weekDays.map((day, colIdx) => {
+                const dayEvents = eventsByDay.get(colIdx) ?? []
+                return dayEvents.map((evt) => {
+                  const ROW_HEIGHT = 48
+                  const HEADER_HEIGHT = 40
+                  const duration = evt.duration_minutes ?? 60
+                  const startFrac = getGridRowFraction(evt.starts_at)
+                  const topPx = HEADER_HEIGHT + (startFrac - 2) * ROW_HEIGHT
+                  const heightPx = (duration / 30) * ROW_HEIGHT
+
+                  return (
+                    <div
+                      key={evt.id}
+                      style={{
+                        position: 'absolute',
+                        top: `${topPx}px`,
+                        height: `${heightPx}px`,
+                        left: `calc((100% - 72px) / 7 * ${colIdx} + 72px + 2px)`,
+                        width: `calc((100% - 72px) / 7 - 4px)`,
+                        zIndex: 4,
+                        padding: '2px',
+                      }}
+                    >
+                      <Link
+                        href={`/events/${evt.id}`}
+                        className="block h-full w-full rounded-lg text-[13px] p-1 overflow-hidden cursor-pointer transition-opacity hover:opacity-90 bg-amber-500 text-white"
+                      >
+                        <div className="font-medium truncate leading-tight">
+                          {evt.title}
+                        </div>
+                        <div className="truncate leading-tight opacity-80">
+                          {formatTimeRange(evt.starts_at, duration)}
+                        </div>
+                        {(duration / 30) > 1 && evt.venue && (
+                          <div className="truncate leading-tight opacity-70 text-[11px]">
+                            {evt.venue}
+                          </div>
+                        )}
+                      </Link>
+                    </div>
+                  )
+                })
+              })}
 
               {/* Session blocks — positioned with pixel offsets for precise time alignment */}
               {weekDays.map((day, colIdx) => {

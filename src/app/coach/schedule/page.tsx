@@ -116,6 +116,32 @@ export default async function CoachSchedulePage() {
     }
   }
 
+  // Fetch events the coach is attending
+  const { data: myEventRsvps } = await supabase
+    .from('event_rsvps')
+    .select('event_id')
+    .eq('member_id', member.id)
+    .eq('rsvp_type', 'confirmed')
+    .is('cancelled_at', null)
+
+  const myEventIds = (myEventRsvps ?? []).map(r => r.event_id)
+  const { data: myEvents } = myEventIds.length > 0
+    ? await supabase
+        .from('events')
+        .select('id, title, starts_at, duration_minutes, venue, event_type')
+        .in('id', myEventIds)
+        .is('cancelled_at', null)
+    : { data: [] }
+
+  const calendarEvents = (myEvents ?? []).map(e => ({
+    id: e.id,
+    title: e.title,
+    starts_at: e.starts_at,
+    duration_minutes: e.duration_minutes,
+    venue: e.venue,
+    event_type: e.event_type,
+  }))
+
   return (
     <>
       <AppNav />
@@ -137,7 +163,7 @@ export default async function CoachSchedulePage() {
             </Link>
           </div>
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <WeekCalendarGrid sessions={sessions as any} attendeeData={attendeeDataMap} />
+          <WeekCalendarGrid sessions={sessions as any} attendeeData={attendeeDataMap} events={calendarEvents} />
         </div>
       </div>
     </>
