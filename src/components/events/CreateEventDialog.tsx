@@ -336,8 +336,8 @@ export function CreateEventDialog({
                   </div>
                 )}
 
-                {/* Social/Open Session: capacity */}
-                {(selectedType === 'social' || selectedType === 'open_session') && (
+                {/* Max attendees (optional, all event types) */}
+                {selectedType && (
                   <div>
                     <Label htmlFor="event-capacity">Max attendees (optional)</Label>
                     <Input
