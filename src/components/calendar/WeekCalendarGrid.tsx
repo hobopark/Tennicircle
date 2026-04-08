@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, MapPin, CalendarX } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -99,6 +99,60 @@ function formatTimeRange(startIso: string, durationMinutes: number): string {
   const start = formatTimeShort(startIso)
   const end = formatTimeShort(getEndTimeIso(startIso, durationMinutes))
   return `${start} – ${end}`
+}
+
+// Overlap detection: assign column index and total columns for side-by-side rendering
+interface CalendarBlock {
+  id: string
+  startMin: number // minutes from midnight
+  endMin: number
+  type: 'session' | 'event'
+  col?: number
+  totalCols?: number
+}
+
+function assignColumns(blocks: CalendarBlock[]): CalendarBlock[] {
+  if (blocks.length === 0) return blocks
+  // Sort by start time, then by duration (longer first)
+  const sorted = [...blocks].sort((a, b) => a.startMin - b.startMin || (b.endMin - b.startMin) - (a.endMin - a.startMin))
+
+  // Greedy column assignment
+  const columns: CalendarBlock[][] = []
+  for (const block of sorted) {
+    let placed = false
+    for (let c = 0; c < columns.length; c++) {
+      const lastInCol = columns[c][columns[c].length - 1]
+      if (lastInCol.endMin <= block.startMin) {
+        columns[c].push(block)
+        block.col = c
+        placed = true
+        break
+      }
+    }
+    if (!placed) {
+      block.col = columns.length
+      columns.push([block])
+    }
+  }
+
+  // Compute totalCols for each overlapping group
+  // A group is blocks that transitively overlap
+  for (const block of sorted) {
+    const overlapping = sorted.filter(
+      b => b.startMin < block.endMin && b.endMin > block.startMin
+    )
+    const maxCol = Math.max(...overlapping.map(b => (b.col ?? 0) + 1))
+    for (const b of overlapping) {
+      b.totalCols = Math.max(b.totalCols ?? 1, maxCol)
+    }
+  }
+
+  return sorted
+}
+
+function toMinutes(isoString: string): number {
+  const d = new Date(isoString)
+  return d.getHours() * 60 + d.getMinutes()
 }
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -510,118 +564,143 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                 ))
               )}
 
-              {/* Event blocks — amber colored, positioned like sessions */}
-              {weekDays.map((day, colIdx) => {
-                const dayEvents = eventsByDay.get(colIdx) ?? []
-                return dayEvents.map((evt) => {
-                  const ROW_HEIGHT = 48
-                  const HEADER_HEIGHT = 40
-                  const duration = evt.duration_minutes ?? 60
-                  const startFrac = getGridRowFraction(evt.starts_at)
-                  const topPx = HEADER_HEIGHT + (startFrac - 2) * ROW_HEIGHT
-                  const heightPx = (duration / 30) * ROW_HEIGHT
-
-                  return (
-                    <div
-                      key={evt.id}
-                      style={{
-                        position: 'absolute',
-                        top: `${topPx}px`,
-                        height: `${heightPx}px`,
-                        left: `calc((100% - 72px) / 7 * ${colIdx} + 72px + 2px)`,
-                        width: `calc((100% - 72px) / 7 - 4px)`,
-                        zIndex: 4,
-                        padding: '2px',
-                      }}
-                    >
-                      <Link
-                        href={`/events/${evt.id}`}
-                        className="block h-full w-full rounded-lg text-[13px] p-1 overflow-hidden cursor-pointer transition-opacity hover:opacity-90 bg-amber-500 text-white"
-                      >
-                        <div className="font-medium truncate leading-tight">
-                          {evt.title}
-                        </div>
-                        <div className="truncate leading-tight opacity-80">
-                          {formatTimeRange(evt.starts_at, duration)}
-                        </div>
-                        {(duration / 30) > 1 && evt.venue && (
-                          <div className="truncate leading-tight opacity-70 text-[11px]">
-                            {evt.venue}
-                          </div>
-                        )}
-                      </Link>
-                    </div>
-                  )
-                })
-              })}
-
-              {/* Session blocks — positioned with pixel offsets for precise time alignment */}
-              {weekDays.map((day, colIdx) => {
+              {/* Combined session + event blocks with overlap detection */}
+              {weekDays.map((_, colIdx) => {
                 const daySessions = sessionsByDay.get(colIdx) ?? []
-                return daySessions.map((session) => {
-                  const ROW_HEIGHT = 48 // matches gridTemplateRows
-                  const HEADER_HEIGHT = 40 // matches header row height
-                  const startFrac = getGridRowFraction(session.scheduled_at)
-                  const topPx = HEADER_HEIGHT + (startFrac - 2) * ROW_HEIGHT
-                  const durationRows = session.duration_minutes / 30
-                  const heightPx = durationRows * ROW_HEIGHT
-                  const isCancelled = session.cancelled_at !== null
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const isUserConfirmed = (session as any)._userConfirmed !== false
+                const dayEvents = eventsByDay.get(colIdx) ?? []
 
-                  // Attendee data from attendeeData prop
-                  const sessionAttendees = attendeeData[session.id]
-                  const confirmedCount = sessionAttendees?.confirmedCount
-                  const sessionCapacity = sessionAttendees?.capacity ?? session.capacity
+                // Build unified block list for overlap detection
+                const blocks: CalendarBlock[] = [
+                  ...daySessions.map(s => ({
+                    id: s.id,
+                    startMin: toMinutes(s.scheduled_at),
+                    endMin: toMinutes(s.scheduled_at) + s.duration_minutes,
+                    type: 'session' as const,
+                  })),
+                  ...dayEvents.map(e => ({
+                    id: e.id,
+                    startMin: toMinutes(e.starts_at),
+                    endMin: toMinutes(e.starts_at) + (e.duration_minutes ?? 60),
+                    type: 'event' as const,
+                  })),
+                ]
 
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const hasUserTag = '_userConfirmed' in (session as any)
-                  const isNotAttending = hasUserTag && !isUserConfirmed
+                const positioned = assignColumns(blocks)
+                const blockMap = new Map(positioned.map(b => [b.id, b]))
 
-                  return (
-                    <div
-                      key={session.id}
-                      style={{
-                        position: 'absolute',
-                        top: `${topPx}px`,
-                        height: `${heightPx}px`,
-                        left: `calc((100% - 72px) / 7 * ${colIdx} + 72px + 2px)`,
-                        width: `calc((100% - 72px) / 7 - 4px)`,
-                        zIndex: 5,
-                        padding: '2px',
-                      }}
-                    >
-                      <Link
-                        href={`${linkPrefix}/${session.id}`}
-                        className={`block h-full w-full rounded-lg text-[13px] p-1 overflow-hidden cursor-pointer transition-opacity hover:opacity-90 ${
-                          isCancelled
-                            ? 'bg-muted text-muted-foreground'
-                            : isNotAttending
-                            ? 'bg-primary/15 text-primary border-2 border-dashed border-primary/40'
-                            : 'bg-primary text-primary-foreground'
-                        }`}
-                      >
-                        <div className={`font-medium truncate leading-tight ${isCancelled ? 'line-through' : ''}`}>
-                          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                          {(session as any).session_templates?.title || formatTimeShort(session.scheduled_at)}
+                const ROW_HEIGHT = 48
+                const HEADER_HEIGHT = 40
+
+                return (
+                  <React.Fragment key={`blocks-${colIdx}`}>
+                    {/* Session blocks */}
+                    {daySessions.map((session) => {
+                      const block = blockMap.get(session.id)
+                      const col = block?.col ?? 0
+                      const totalCols = block?.totalCols ?? 1
+                      const startFrac = getGridRowFraction(session.scheduled_at)
+                      const topPx = HEADER_HEIGHT + (startFrac - 2) * ROW_HEIGHT
+                      const durationRows = session.duration_minutes / 30
+                      const heightPx = durationRows * ROW_HEIGHT
+                      const isCancelled = session.cancelled_at !== null
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const isUserConfirmed = (session as any)._userConfirmed !== false
+                      const sessionAttendees = attendeeData[session.id]
+                      const confirmedCount = sessionAttendees?.confirmedCount
+                      const sessionCapacity = sessionAttendees?.capacity ?? session.capacity
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const hasUserTag = '_userConfirmed' in (session as any)
+                      const isNotAttending = hasUserTag && !isUserConfirmed
+
+                      return (
+                        <div
+                          key={session.id}
+                          style={{
+                            position: 'absolute',
+                            top: `${topPx}px`,
+                            height: `${heightPx}px`,
+                            left: `calc((100% - 72px) / 7 * ${colIdx} + 72px + ((100% - 72px) / 7 - 4px) * ${col} / ${totalCols} + 2px)`,
+                            width: `calc(((100% - 72px) / 7 - 4px) / ${totalCols})`,
+                            zIndex: 5,
+                            padding: '1px',
+                          }}
+                        >
+                          <Link
+                            href={`${linkPrefix}/${session.id}`}
+                            className={`block h-full w-full rounded-lg text-[13px] p-1 overflow-hidden cursor-pointer transition-opacity hover:opacity-90 ${
+                              isCancelled
+                                ? 'bg-muted text-muted-foreground'
+                                : isNotAttending
+                                ? 'bg-primary/15 text-primary border-2 border-dashed border-primary/40'
+                                : 'bg-primary text-primary-foreground'
+                            }`}
+                          >
+                            <div className={`font-medium truncate leading-tight ${isCancelled ? 'line-through' : ''}`}>
+                              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                              {(session as any).session_templates?.title || formatTimeShort(session.scheduled_at)}
+                            </div>
+                            <div className="truncate leading-tight opacity-80 text-[11px]">
+                              {formatTimeRange(session.scheduled_at, session.duration_minutes)}
+                            </div>
+                            {durationRows > 1 && (
+                              <div className="truncate leading-tight opacity-70 text-[11px]">
+                                {session.venue}{session.court_number ? ` · Court No.${session.court_number}` : ''}
+                              </div>
+                            )}
+                            {confirmedCount !== undefined && (
+                              <div className="text-[10px] text-muted-foreground mt-0.5 opacity-90">
+                                {confirmedCount}/{sessionCapacity}
+                              </div>
+                            )}
+                          </Link>
                         </div>
-                        <div className="truncate leading-tight opacity-80">
-                          {formatTimeRange(session.scheduled_at, session.duration_minutes)}
+                      )
+                    })}
+
+                    {/* Event blocks */}
+                    {dayEvents.map((evt) => {
+                      const block = blockMap.get(evt.id)
+                      const col = block?.col ?? 0
+                      const totalCols = block?.totalCols ?? 1
+                      const duration = evt.duration_minutes ?? 60
+                      const startFrac = getGridRowFraction(evt.starts_at)
+                      const topPx = HEADER_HEIGHT + (startFrac - 2) * ROW_HEIGHT
+                      const heightPx = (duration / 30) * ROW_HEIGHT
+
+                      return (
+                        <div
+                          key={evt.id}
+                          style={{
+                            position: 'absolute',
+                            top: `${topPx}px`,
+                            height: `${heightPx}px`,
+                            left: `calc((100% - 72px) / 7 * ${colIdx} + 72px + ((100% - 72px) / 7 - 4px) * ${col} / ${totalCols} + 2px)`,
+                            width: `calc(((100% - 72px) / 7 - 4px) / ${totalCols})`,
+                            zIndex: 4,
+                            padding: '1px',
+                          }}
+                        >
+                          <Link
+                            href={`/events/${evt.id}`}
+                            className="block h-full w-full rounded-lg text-[13px] p-1 overflow-hidden cursor-pointer transition-opacity hover:opacity-90 bg-amber-500 text-white"
+                          >
+                            <div className="font-medium truncate leading-tight">
+                              {evt.title}
+                            </div>
+                            <div className="truncate leading-tight opacity-80 text-[11px]">
+                              {formatTimeRange(evt.starts_at, duration)}
+                            </div>
+                            {(duration / 30) > 1 && evt.venue && (
+                              <div className="truncate leading-tight opacity-70 text-[11px]">
+                                {evt.venue}
+                              </div>
+                            )}
+                          </Link>
                         </div>
-                        {durationRows > 1 && (
-                          <div className="truncate leading-tight opacity-70 text-[11px]">
-                            {session.venue}{session.court_number ? ` · Court No.${session.court_number}` : ''}
-                          </div>
-                        )}
-                        {confirmedCount !== undefined && (
-                          <div className="text-[10px] text-muted-foreground mt-0.5 opacity-90">
-                            {confirmedCount}/{sessionCapacity}
-                          </div>
-                        )}
-                      </Link>
-                    </div>
-                  )
-                })
+                      )
+                    })}
+                  </React.Fragment>
+                )
               })}
             </div>
           </div>
