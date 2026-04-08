@@ -3,7 +3,6 @@ import { CalendarDays, MapPin, Pencil } from 'lucide-react'
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { EventRsvpButton } from '@/components/events/EventRsvpButton'
-import { DrawImageUpload } from '@/components/events/DrawImageUpload'
 import { EVENT_TYPE_LABELS } from '@/lib/types/events'
 import type { EventRsvp, EventType } from '@/lib/types/events'
 
@@ -206,14 +205,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               ) : (
                 <div className="p-4">
                   <h2 className="font-heading font-bold text-base mb-2">Tournament Draw</h2>
-                  <p className="text-sm text-muted-foreground mb-3">No draw posted yet.</p>
-                  {isAdminOrCreator && communityId && (
-                    <DrawImageUpload
-                      eventId={eventId}
-                      communityId={communityId}
-                      onUpload={() => {}}
-                    />
-                  )}
+                  <p className="text-sm text-muted-foreground">No draw posted yet.</p>
                 </div>
               )}
             </div>

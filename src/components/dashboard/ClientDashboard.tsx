@@ -120,7 +120,7 @@ export function ClientDashboard({
       >
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-heading font-bold text-base">Upcoming Sessions</h2>
-          <Link href="/sessions/calendar" className="text-sm text-primary flex items-center gap-1">
+          <Link href="/sessions/all" className="text-sm text-primary flex items-center gap-1">
             See all <ChevronRight className="w-4 h-4" />
           </Link>
         </div>

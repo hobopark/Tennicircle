@@ -3,6 +3,8 @@ import { AppNav } from '@/components/nav/AppNav'
 import { ClientDashboard } from '@/components/dashboard/ClientDashboard'
 import type { EventWithRsvpStatus, EventRsvp } from '@/lib/types/events'
 
+export const dynamic = 'force-dynamic'
+
 export default async function SessionsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

@@ -46,10 +46,10 @@ function addDays(date: Date, days: number): Date {
 }
 
 function formatTime(hour: number, minute: number): string {
-  const period = hour >= 12 ? 'PM' : 'AM'
+  const period = hour >= 12 ? 'pm' : 'am'
   const h = hour % 12 === 0 ? 12 : hour % 12
-  const m = minute === 0 ? '00' : '30'
-  return `${h}:${m} ${period}`
+  if (minute === 0) return `${h}${period}`
+  return `${h}:${minute}${period}`
 }
 
 function formatTimeShort(isoString: string): string {
@@ -391,10 +391,10 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
           <div className="w-full overflow-x-auto rounded-lg border border-border">
             {/* Desktop: 7 columns; Mobile: 3 columns */}
             <div
-              className="min-w-[600px] relative bg-background"
+              className="min-w-[640px] relative bg-background"
               style={{
                 display: 'grid',
-                gridTemplateColumns: '60px repeat(7, 1fr)',
+                gridTemplateColumns: '72px repeat(7, 1fr)',
                 gridTemplateRows: `40px repeat(${TOTAL_TIME_ROWS}, 48px)`,
               }}
             >
@@ -474,8 +474,8 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                         position: 'absolute',
                         top: `${topPx}px`,
                         height: `${heightPx}px`,
-                        left: `calc((100% - 60px) / 7 * ${colIdx} + 60px + 2px)`,
-                        width: `calc((100% - 60px) / 7 - 4px)`,
+                        left: `calc((100% - 72px) / 7 * ${colIdx} + 72px + 2px)`,
+                        width: `calc((100% - 72px) / 7 - 4px)`,
                         zIndex: 5,
                         padding: '2px',
                       }}

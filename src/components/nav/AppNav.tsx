@@ -3,11 +3,11 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { ShieldCheck, CalendarDays, Calendar, Users, User } from 'lucide-react'
+import { ShieldCheck, LayoutDashboard, CalendarDays, Calendar, Users, User, Trophy } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { UserRole } from '@/lib/types/auth'
 
-// Role-based nav tab definitions per D-14
+// Role-based nav tab definitions
 const NAV_TABS: {
   href: string
   label: string
@@ -22,15 +22,27 @@ const NAV_TABS: {
   },
   {
     href: '/coach',
+    label: 'Dashboard',
+    icon: <LayoutDashboard className="w-5 h-5" />,
+    roles: ['coach'],
+  },
+  {
+    href: '/coach/schedule',
     label: 'Schedule',
     icon: <CalendarDays className="w-5 h-5" />,
     roles: ['admin', 'coach'],
   },
   {
     href: '/sessions',
+    label: 'Dashboard',
+    icon: <LayoutDashboard className="w-5 h-5" />,
+    roles: ['client'],
+  },
+  {
+    href: '/sessions/all',
     label: 'Sessions',
     icon: <Calendar className="w-5 h-5" />,
-    roles: ['client', 'admin'],
+    roles: ['client'],
   },
   {
     href: '/coach/clients',
@@ -41,7 +53,7 @@ const NAV_TABS: {
   {
     href: '/events',
     label: 'Events',
-    icon: <CalendarDays className="w-5 h-5" />,
+    icon: <Trophy className="w-5 h-5" />,
     roles: ['admin', 'coach', 'client'],
   },
   {

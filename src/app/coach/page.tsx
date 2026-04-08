@@ -1,22 +1,30 @@
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { redirect } from 'next/navigation'
+import { ChevronRight, Plus, Calendar, MapPin } from 'lucide-react'
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
-import { WeekCalendarGrid } from '@/components/calendar/WeekCalendarGrid'
 import { AppNav } from '@/components/nav/AppNav'
 import { AnnouncementCard } from '@/components/events/AnnouncementCard'
+import type { EventWithRsvpStatus } from '@/lib/types/events'
 
-export default async function CoachPage() {
+function formatSessionDateTime(scheduledAt: string): string {
+  const date = new Date(scheduledAt)
+  return date.toLocaleDateString('en-AU', {
+    weekday: 'short', day: 'numeric', month: 'short',
+  }) + ' · ' + date.toLocaleTimeString('en-AU', {
+    hour: 'numeric', minute: '2-digit', hour12: true,
+  })
+}
+
+export default async function CoachDashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return null
-  }
+  if (!user) return null
 
   const claims = await getJWTClaims(supabase)
   const communityId = claims.community_id
+  const userRole = claims.user_role ?? 'pending'
+  if (userRole !== 'coach' && userRole !== 'admin') redirect('/sessions')
 
-  // Get member ID and display_name for this coach
   const { data: member } = await supabase
     .from('community_members')
     .select('id, display_name')
@@ -34,87 +42,32 @@ export default async function CoachPage() {
     )
   }
 
-  // Two-query strategy: template-owned sessions + co-coached sessions (merged in JS)
-  // Query 1: Sessions from templates this coach owns
+  const coachName = member.display_name ?? user.email?.split('@')[0] ?? 'Coach'
+  const firstName = coachName.split(' ')[0]
+  const now = new Date().toISOString()
+
+  // Stats: sessions this month
   const { data: templateIds } = await supabase
     .from('session_templates')
     .select('id')
     .eq('coach_id', member.id)
 
-  const { data: ownedSessions } = templateIds && templateIds.length > 0
+  const currentMonthStart = new Date()
+  currentMonthStart.setDate(1)
+  currentMonthStart.setHours(0, 0, 0, 0)
+  const nextMonthStart = new Date(currentMonthStart)
+  nextMonthStart.setMonth(nextMonthStart.getMonth() + 1)
+
+  const { count: sessionsThisMonth } = templateIds && templateIds.length > 0
     ? await supabase
         .from('sessions')
-        .select('*, session_rsvps(count), session_templates(title)')
+        .select('*', { count: 'exact', head: true })
         .in('template_id', templateIds.map(t => t.id))
-        .order('scheduled_at', { ascending: true })
-    : { data: [] }
+        .gte('scheduled_at', currentMonthStart.toISOString())
+        .lt('scheduled_at', nextMonthStart.toISOString())
+    : { count: 0 }
 
-  // Query 2: Sessions where this coach is a co-coach via session_coaches
-  const { data: coCoachSessionIds } = await supabase
-    .from('session_coaches')
-    .select('session_id')
-    .eq('member_id', member.id)
-
-  const coCoachIds = coCoachSessionIds?.map(sc => sc.session_id) ?? []
-  const { data: coCoachedSessions } = coCoachIds.length > 0
-    ? await supabase
-        .from('sessions')
-        .select('*, session_rsvps(count), session_templates(title)')
-        .in('id', coCoachIds)
-        .order('scheduled_at', { ascending: true })
-    : { data: [] }
-
-  // Merge and deduplicate by session id
-  const sessionMap = new Map<string, Record<string, unknown>>()
-  for (const s of [...(ownedSessions ?? []), ...(coCoachedSessions ?? [])]) {
-    if (!sessionMap.has(s.id)) sessionMap.set(s.id, s)
-  }
-  const sessions = Array.from(sessionMap.values()).sort(
-    (a, b) => new Date(a.scheduled_at as string).getTime() - new Date(b.scheduled_at as string).getTime()
-  )
-
-  // Fetch attendee previews for all sessions (Query 3: session_rsvps with member join)
-  const sessionIds = sessions.map(s => s.id as string)
-  const attendeeDataMap: Record<string, {
-    confirmedCount: number
-    capacity: number | null
-    attendeePreview: Array<{ display_name: string | null; avatar_url: string | null }>
-  }> = {}
-
-  if (sessionIds.length > 0) {
-    const { data: attendees } = await supabase
-      .from('session_rsvps')
-      .select('session_id, rsvp_type, member:community_members(display_name)')
-      .in('session_id', sessionIds)
-      .eq('rsvp_type', 'confirmed')
-      .is('cancelled_at', null)
-      .order('created_at', { ascending: true })
-
-    // Group attendees by session_id and compute confirmedCount + attendeePreview
-    for (const session of sessions) {
-      const id = session.id as string
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const sessionAttendees = (attendees ?? []).filter((a: any) => a.session_id === id)
-      const confirmedCount = sessionAttendees.length
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const attendeePreview = sessionAttendees.slice(0, 5).map((a: any) => ({
-        display_name: a.member?.display_name ?? null,
-        avatar_url: null,
-      }))
-
-      attendeeDataMap[id] = {
-        confirmedCount,
-        capacity: (session.capacity as number) ?? null,
-        attendeePreview,
-      }
-    }
-  }
-
-  // Coach dashboard stats
-  const coachName = member.display_name ?? user.email?.split('@')[0] ?? 'Coach'
-  const firstName = coachName.split(' ')[0]
-
-  // Count total players (clients with profiles in the community)
+  // Stats: total players
   const { count: playerCount } = communityId
     ? await supabase
         .from('community_members')
@@ -123,20 +76,7 @@ export default async function CoachPage() {
         .in('role', ['client', 'member'])
     : { count: 0 }
 
-  // Sessions this month
-  const currentMonthStart = new Date()
-  currentMonthStart.setDate(1)
-  currentMonthStart.setHours(0, 0, 0, 0)
-  const nextMonthStart = new Date(currentMonthStart)
-  nextMonthStart.setMonth(nextMonthStart.getMonth() + 1)
-
-  const sessionsThisMonth = sessions.filter(s => {
-    const d = new Date(s.scheduled_at as string)
-    return d >= currentMonthStart && d < nextMonthStart
-  }).length
-
-  // Upcoming events count
-  const now = new Date().toISOString()
+  // Stats: upcoming events
   const { count: upcomingEventCount } = communityId
     ? await supabase
         .from('events')
@@ -146,7 +86,31 @@ export default async function CoachPage() {
         .gte('starts_at', now)
     : { count: 0 }
 
-  // Fetch latest announcements
+  // Upcoming sessions (next 5)
+  const { data: upcomingSessionRows } = templateIds && templateIds.length > 0
+    ? await supabase
+        .from('sessions')
+        .select('id, scheduled_at, duration_minutes, venue, capacity, session_templates(title)')
+        .in('template_id', templateIds.map(t => t.id))
+        .gte('scheduled_at', now)
+        .is('cancelled_at', null)
+        .order('scheduled_at', { ascending: true })
+        .limit(5)
+    : { data: [] }
+
+  // Upcoming events (next 3)
+  const { data: upcomingEvents } = communityId
+    ? await supabase
+        .from('events')
+        .select('*, creator:community_members!created_by(display_name)')
+        .eq('community_id', communityId)
+        .is('cancelled_at', null)
+        .gte('starts_at', now)
+        .order('starts_at', { ascending: true })
+        .limit(3)
+    : { data: [] }
+
+  // Announcements
   const { data: announcements } = communityId
     ? await supabase
         .from('announcements')
@@ -160,7 +124,7 @@ export default async function CoachPage() {
     <>
       <AppNav />
       <div className="min-h-screen bg-background">
-        <div className="max-w-6xl mx-auto px-5 pt-14 pb-24">
+        <div className="max-w-[640px] mx-auto px-5 pt-14 pb-24">
           {/* Greeting */}
           <p className="text-sm text-muted-foreground">G&apos;day, {firstName}</p>
           <div className="flex items-center justify-between mb-4">
@@ -176,7 +140,7 @@ export default async function CoachPage() {
           {/* Stats strip */}
           <div className="grid grid-cols-3 gap-3 mb-6">
             <div className="bg-primary/10 rounded-2xl border border-primary/20 p-4 text-center">
-              <p className="font-heading font-bold text-2xl text-primary">{sessionsThisMonth}</p>
+              <p className="font-heading font-bold text-2xl text-primary">{sessionsThisMonth ?? 0}</p>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Sessions this month</p>
             </div>
             <div className="bg-emerald-500/10 rounded-2xl border border-emerald-500/20 p-4 text-center">
@@ -189,14 +153,83 @@ export default async function CoachPage() {
             </div>
           </div>
 
-          {/* Schedule */}
-          <h2 className="font-heading font-bold text-base mb-3">Schedule</h2>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <WeekCalendarGrid sessions={sessions as any} attendeeData={attendeeDataMap} />
+          {/* Upcoming Sessions */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-heading font-bold text-base">Upcoming Sessions</h2>
+              <Link href="/coach/schedule" className="text-sm text-primary flex items-center gap-1">
+                Schedule <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+            {(upcomingSessionRows ?? []).length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {(upcomingSessionRows ?? []).map((s: any) => (
+                  <Link
+                    key={s.id}
+                    href={`/coach/sessions/${s.id}`}
+                    className="bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer block"
+                  >
+                    <h3 className="font-heading font-bold text-base mb-1">
+                      {s.session_templates?.title ?? 'Session'}
+                    </h3>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground mb-0.5">
+                      <Calendar className="w-3 h-3 flex-shrink-0" />
+                      <span>{formatSessionDateTime(s.scheduled_at)}</span>
+                    </div>
+                    {s.venue && (
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <MapPin className="w-3 h-3 flex-shrink-0" />
+                        <span>{s.venue}</span>
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-card rounded-3xl border border-border/50 p-6 text-center">
+                <p className="font-heading font-bold text-base mb-1">No upcoming sessions</p>
+                <p className="text-sm text-muted-foreground">Create a session to get started.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Upcoming Events */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-heading font-bold text-base">Upcoming Events</h2>
+              <Link href="/events" className="text-sm text-primary flex items-center gap-1">
+                See all <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+            {(upcomingEvents ?? []).length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {(upcomingEvents ?? []).map((e: any) => (
+                  <Link
+                    key={e.id}
+                    href={`/events/${e.id}`}
+                    className="bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer block"
+                  >
+                    <h3 className="font-heading font-bold text-base">{e.title}</h3>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Calendar className="w-3 h-3 flex-shrink-0" />
+                      <span>{formatSessionDateTime(e.starts_at)}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-card rounded-3xl border border-border/50 p-6 text-center">
+                <p className="font-heading font-bold text-base mb-1">Nothing coming up</p>
+                <p className="text-sm text-muted-foreground">Events will appear here.</p>
+              </div>
+            )}
+          </div>
 
           {/* Announcements */}
           {(announcements ?? []).length > 0 && (
-            <div className="mt-6">
+            <div className="mb-6">
               <h2 className="font-heading font-bold text-base mb-3">Announcements</h2>
               <div className="flex flex-col gap-3">
                 {(announcements ?? []).map((announcement) => (

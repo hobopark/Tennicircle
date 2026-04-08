@@ -60,7 +60,7 @@ export const ROLE_HOME_ROUTES: Record<Exclude<UserRole, 'pending'>, string> = {
 
 export const ROLE_ALLOWED_ROUTES: Record<Exclude<UserRole, 'pending'>, string[]> = {
   admin: ['/admin', '/coach', '/sessions', '/welcome', '/profile', '/events'],
-  coach: ['/coach', '/sessions', '/welcome', '/profile', '/events'],
+  coach: ['/coach', '/welcome', '/profile', '/events'],
   client: ['/sessions', '/welcome', '/profile', '/events'],
 } as const
 
