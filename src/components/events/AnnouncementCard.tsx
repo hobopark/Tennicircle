@@ -5,8 +5,6 @@ import { Pencil, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { updateAnnouncement } from '@/lib/actions/announcements'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import type { AnnouncementWithAuthor, AnnouncementActionResult } from '@/lib/types/events'
 
 function formatAnnouncementDate(createdAt: string): string {
@@ -59,20 +57,20 @@ export function AnnouncementCard({ announcement, canEdit }: AnnouncementCardProp
           {state.error && (
             <p className="text-destructive text-sm">{state.error}</p>
           )}
-          <Input
+          <input
             name="title"
             defaultValue={announcement.title}
             required
             maxLength={80}
-            className="h-10 rounded-xl"
+            className="h-10 rounded-xl w-full border border-border bg-input px-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-ring"
             placeholder="Title"
           />
-          <Textarea
+          <textarea
             name="body"
             defaultValue={announcement.body}
             required
             maxLength={400}
-            className="min-h-20 rounded-xl"
+            className="min-h-20 rounded-xl w-full border border-border bg-input px-3 py-2 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-ring resize-y"
             placeholder="Announcement body"
           />
           <button
