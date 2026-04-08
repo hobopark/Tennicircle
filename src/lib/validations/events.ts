@@ -9,8 +9,14 @@ export const CreateEventSchema = z.object({
   venue: z.string().min(1, { error: 'Venue is required' }).max(200, { error: 'Venue must be under 200 characters' }),
   starts_at_date: z.string().min(1, { error: 'Date is required' }),
   starts_at_time: z.string().min(1, { error: 'Start time is required' }),
-  duration_minutes: z.coerce.number().int().min(15, { error: 'Duration must be at least 15 minutes' }).max(720, { error: 'Duration must be under 12 hours' }).optional().or(z.literal(0)),
-  capacity: z.coerce.number().int().min(1, { error: 'Capacity must be at least 1' }).max(500, { error: 'Capacity must be under 500' }).optional().or(z.literal(0)),
+  duration_minutes: z.preprocess(
+    (v) => (v === '' || v === undefined || v === null ? undefined : Number(v)),
+    z.number().int().min(15, { error: 'Duration must be at least 15 minutes' }).max(720, { error: 'Duration must be under 12 hours' }).optional()
+  ),
+  capacity: z.preprocess(
+    (v) => (v === '' || v === undefined || v === null || v === '0' || v === 0 ? undefined : Number(v)),
+    z.number().int().min(1, { error: 'Capacity must be at least 1' }).max(500, { error: 'Capacity must be under 500' }).optional()
+  ),
 })
 
 export const CreateAnnouncementSchema = z.object({
