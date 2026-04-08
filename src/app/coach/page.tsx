@@ -76,12 +76,20 @@ export default async function CoachDashboardPage() {
         .in('role', ['client', 'member'])
     : { count: 0 }
 
-  // Stats: upcoming events
-  const { count: upcomingEventCount } = communityId
+  // Stats: upcoming events I'm attending (RSVP'd)
+  const { data: myEventRsvps } = await supabase
+    .from('event_rsvps')
+    .select('event_id')
+    .eq('member_id', member.id)
+    .eq('rsvp_type', 'confirmed')
+    .is('cancelled_at', null)
+
+  const myEventIds = (myEventRsvps ?? []).map(r => r.event_id)
+  const { count: upcomingEventCount } = myEventIds.length > 0
     ? await supabase
         .from('events')
         .select('*', { count: 'exact', head: true })
-        .eq('community_id', communityId)
+        .in('id', myEventIds)
         .is('cancelled_at', null)
         .gte('starts_at', now)
     : { count: 0 }
