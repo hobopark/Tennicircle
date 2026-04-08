@@ -544,22 +544,25 @@ function resolveDeepLink(n: Notification): string {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Cron timing: Hobby vs Pro plan**
    - What we know: Hobby = once/day max, ±59 min precision. Pro = once/minute, per-minute precision. [VERIFIED: vercel.com/docs/cron-jobs/usage-and-pricing]
    - What's unclear: Whether the project is currently on Hobby or Pro Vercel plan.
    - Recommendation: Use once-daily schedule with 25h window for Hobby; if Pro, switch to hourly. Add a comment in `vercel.json`.
+   - RESOLVED: Using once-daily `0 20 * * *` schedule with 25h look-ahead window for Hobby plan compatibility (Plan 05-02 Task 2).
 
 2. **Service role key in Vercel env vars**
    - What we know: `SUPABASE_SERVICE_ROLE_KEY` is required for the cron handler to bypass RLS. It is not in the current `.env.local` structure (only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are documented).
    - What's unclear: Whether it has been added to the Vercel project secrets already.
    - Recommendation: Wave 0 task should verify and add `SUPABASE_SERVICE_ROLE_KEY` to `.env.local` (gitignored) and Vercel project env vars.
+   - RESOLVED: Plan 05-02 `user_setup` block instructs user to add `SUPABASE_SERVICE_ROLE_KEY` to Vercel env vars before execution.
 
 3. **Fanout strategy for announcement notifications**
    - What we know: `createAnnouncement` runs for a single community. Jaden's community is small (MVP).
    - What's unclear: Upper bound on community size.
    - Recommendation: Direct fanout (one notification row per member) is acceptable for MVP. Flag for background job if community exceeds ~500 members.
+   - RESOLVED: Direct fire-and-forget fanout accepted for MVP (Plan 05-02 Task 1). Flagged for background job if community exceeds ~500 members.
 
 ---
 
