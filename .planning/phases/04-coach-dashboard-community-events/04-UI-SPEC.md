@@ -60,8 +60,8 @@ Standard 8-point scale. All spacing uses Tailwind utilities mapped to this scale
 | 3xl | 64px | `py-16` | Full-page empty state vertical padding |
 
 Exceptions:
-- Day/week toggle button group: 2px internal gap between segments (design system internal)
-- Touch targets on mobile: minimum 44px height for all tappable row items (roster rows, event card RSVP button)
+- Day/week toggle button group: 4px internal gap between segments (`gap-1`) — design system internal
+- Touch targets on mobile: minimum 48px height for all tappable row items (roster rows, event card RSVP button) — `min-h-12` — exceeds Apple's 44px minimum and is a multiple of 4
 - Attendance avatar stack: -8px negative margin overlap between stacked avatars (`-ml-2`)
 
 ---
@@ -76,11 +76,6 @@ Source: `src/app/layout.tsx` (Space Grotesk 700, Inter 400), `src/app/globals.cs
 | Label | 14px | 400 (regular) | 1.4 | `text-sm` — nav links, helper text, secondary metadata, badge text |
 | Heading | 20px | 700 (bold) | 1.3 | `text-[20px] font-bold font-heading` — section headings, card titles, empty state headings |
 | Display | 28px | 700 (bold) | 1.2 | `text-[28px] font-bold font-heading` — page-level titles ("Schedule", "Events", "Your Dashboard") |
-
-Additional sizes in use (existing, do not change):
-- 13px (`text-[13px]`): Calendar session block titles — keep for grid space constraints
-- 12px (`text-[12px]`): Calendar time labels — keep for grid space constraints
-- 11px (`text-[11px]`): Inline attendee count within session blocks — keep
 
 Muted text: always `text-muted-foreground` (never custom opacity hacks).
 
@@ -123,6 +118,8 @@ Source: `src/app/globals.css` CSS custom properties.
 
 ### Coach Dashboard (`/coach`)
 
+**Focal point:** The primary focal point on the coach dashboard is the "Today's Sessions" card stack — placed at the top of the content area, above the calendar. On days with no sessions, focal point shifts to the calendar with the "Create session" CTA.
+
 **Day/Week Toggle**
 - Use `ToggleGroup` from shadcn with two segments: "Day" | "Week"
 - Default: "Week" on desktop (≥768px), "Day" on mobile (<768px) — detect via `useMediaQuery` or CSS-only approach with hidden/shown variants
@@ -138,6 +135,7 @@ Source: `src/app/globals.css` CSS custom properties.
 **Week View** (existing `WeekCalendarGrid` — extend, do not rewrite)
 - Add day/week toggle prop; no other changes to grid rendering
 - Inline attendance preview already present (attendeeCount / capacity) — keep
+- Implementation note: WeekCalendarGrid internally uses compact sizes 11px, 12px, and 13px for session block titles, time labels, and inline attendee counts respectively — these are implementation details of the existing component and must not be applied to any new components built in this phase
 
 **Today's Sessions Card Stack** (D-03)
 - Shown above the calendar in both day and week views when there are sessions today
@@ -151,6 +149,8 @@ Source: `src/app/globals.css` CSS custom properties.
 - Empty state: "No players yet. Invite clients to get started." + "Invite client" CTA
 
 ### Events Page (`/events`) (D-07, D-08)
+
+**Focal point:** The primary focal point on the Events page is the active tab's event list. The "Create Event" CTA (top right) is the secondary focal point.
 
 **Top-level tabs: "Official" | "Community"**
 - Use shadcn `Tabs` component (already installed)
@@ -192,6 +192,8 @@ Source: `src/app/globals.css` CSS custom properties.
 - Announcements do not have RSVP or capacity fields
 
 ### Client Dashboard (`/sessions`) (D-11, D-12, D-13)
+
+**Focal point:** The primary focal point on the client dashboard is the personalised greeting + "Your upcoming sessions" section immediately below it.
 
 **Personalized Greeting**
 - `"Good morning, {first_name}"` — time-of-day greeting (morning/afternoon/evening)
@@ -297,7 +299,7 @@ Mobile breakpoint: Tailwind `md` (768px). Below 768px:
 ### Announcement Cards
 - Pinned at top of Official tab — always above event cards
 - Not tappable as a full card link; body text is fully visible inline
-- Coach/admin sees "Edit" icon button (pencil, lucide `Pencil`) top-right of card
+- Coach/admin sees "Edit" icon button (lucide `Pencil`) top-right of card — must carry `aria-label="Edit announcement"` for screen reader accessibility
 - Edit opens same dialog pre-filled
 
 ### Skeleton Loading States
