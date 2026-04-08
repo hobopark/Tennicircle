@@ -87,12 +87,13 @@ Plans:
   3. A coach can view their full player roster with attendance patterns for each player
   4. Any member can create a tournament, social event, or open session and other members can RSVP
   5. Coach and admin announcements are visible to all members; community-created events are separated into a distinct tab from official coaching sessions
-**Plans:** 5 plans
+**Plans:** 6 plans
 Plans:
+- [ ] 04-00-PLAN.md — Wave 0 test stubs for events actions, announcements, calendar, and event card
 - [ ] 04-01-PLAN.md — Database schema (events, event_rsvps, announcements), RLS, types, validations, shadcn installs
 - [ ] 04-02-PLAN.md — Server actions (events CRUD, RSVP, announcements) and event UI components
 - [ ] 04-03-PLAN.md — Coach schedule day/week toggle, day view, player roster attendance dates
-- [ ] 04-04-PLAN.md — Events page, event detail page, client dashboard redesign, bottom nav conversion
+- [ ] 04-04-PLAN.md — Events page, event detail page, client dashboard with calendar secondary view, bottom nav conversion
 - [ ] 04-05-PLAN.md — Schema push to Supabase and end-to-end verification checkpoint
 **UI hint**: yes
 
@@ -104,13 +105,7 @@ Plans:
   1. A client receives an in-app notification before their upcoming session (session reminder)
   2. A client receives an in-app notification when a coach or admin posts an announcement
   3. A client receives an in-app confirmation notification when their RSVP is accepted or when they are promoted from the waitlist
-**Plans:** 5 plans
-Plans:
-- [ ] 04-01-PLAN.md — Database schema (events, event_rsvps, announcements), RLS, types, validations, shadcn installs
-- [ ] 04-02-PLAN.md — Server actions (events CRUD, RSVP, announcements) and event UI components
-- [ ] 04-03-PLAN.md — Coach schedule day/week toggle, day view, player roster attendance dates
-- [ ] 04-04-PLAN.md — Events page, event detail page, client dashboard redesign, bottom nav conversion
-- [ ] 04-05-PLAN.md — Schema push to Supabase and end-to-end verification checkpoint
+**Plans:** [To be planned]
 **UI hint**: yes
 
 ### Phase 6: Polish & Launch Readiness
@@ -122,13 +117,7 @@ Plans:
   2. The calendar defaults to week view on desktop and day view on mobile; all session times display the correct timezone
   3. Attempting to RSVP to a full session from two browser tabs simultaneously results in one success and one waitlist placement — not two RSVPs
   4. An RLS audit confirms every database table has row-level security enabled with correct community-scoping policies
-**Plans:** 5 plans
-Plans:
-- [ ] 04-01-PLAN.md — Database schema (events, event_rsvps, announcements), RLS, types, validations, shadcn installs
-- [ ] 04-02-PLAN.md — Server actions (events CRUD, RSVP, announcements) and event UI components
-- [ ] 04-03-PLAN.md — Coach schedule day/week toggle, day view, player roster attendance dates
-- [ ] 04-04-PLAN.md — Events page, event detail page, client dashboard redesign, bottom nav conversion
-- [ ] 04-05-PLAN.md — Schema push to Supabase and end-to-end verification checkpoint
+**Plans:** [To be planned]
 **UI hint**: yes
 
 ## Progress
@@ -141,6 +130,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Foundation & Auth | 4/4 | Complete   | 2026-04-07 |
 | 2. Session Management | 0/7 | Planning complete | - |
 | 3. Player Profiles | 0/4 | Planning complete | - |
-| 4. Coach Dashboard & Community Events | 0/? | Not started | - |
+| 4. Coach Dashboard & Community Events | 0/6 | Planning complete | - |
 | 5. Notifications | 0/? | Not started | - |
 | 6. Polish & Launch Readiness | 0/? | Not started | - |
