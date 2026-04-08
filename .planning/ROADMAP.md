@@ -105,7 +105,12 @@ Plans:
   1. A client receives an in-app notification before their upcoming session (session reminder)
   2. A client receives an in-app notification when a coach or admin posts an announcement
   3. A client receives an in-app confirmation notification when their RSVP is accepted or when they are promoted from the waitlist
-**Plans:** [To be planned]
+**Plans:** 4 plans
+Plans:
+- [ ] 05-01-PLAN.md — Database schema (notifications table), RLS, types, mark-as-read server actions
+- [ ] 05-02-PLAN.md — Wire notification inserts into announcement/RSVP actions, Vercel Cron session reminders
+- [ ] 05-03-PLAN.md — Notification feed page with Realtime subscription, bell icon with unread badge in AppNav
+- [ ] 05-04-PLAN.md — Schema push to Supabase and end-to-end verification checkpoint
 **UI hint**: yes
 
 ### Phase 6: Polish & Launch Readiness
@@ -131,5 +136,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Session Management | 0/7 | Planning complete | - |
 | 3. Player Profiles | 0/4 | Planning complete | - |
 | 4. Coach Dashboard & Community Events | 0/6 | Planning complete | - |
-| 5. Notifications | 0/? | Not started | - |
+| 5. Notifications | 0/4 | Planning complete | - |
 | 6. Polish & Launch Readiness | 0/? | Not started | - |
