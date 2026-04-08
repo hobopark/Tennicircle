@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { ShieldCheck, LayoutDashboard, CalendarDays, Calendar, Users, User, Trophy, Bell } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ShieldCheck, LayoutDashboard, CalendarDays, Calendar, Users, User, Trophy, Bell, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { UserRole } from '@/lib/types/auth'
 
@@ -72,6 +73,7 @@ const NAV_TABS: {
 
 export function AppNav() {
   const pathname = usePathname()
+  const router = useRouter()
   const [role, setRole] = useState<UserRole>('pending')
   const [unreadCount, setUnreadCount] = useState(0)
   const [memberId, setMemberId] = useState<string | null>(null)
@@ -151,7 +153,25 @@ export function AppNav() {
 
   const visibleTabs = NAV_TABS.filter(tab => tab.roles.includes(role))
 
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/auth')
+    router.refresh()
+  }
+
   return (
+    <>
+      {/* Logout button — fixed top right */}
+      <button
+        type="button"
+        onClick={handleLogout}
+        aria-label="Log out"
+        className="fixed top-4 right-4 z-50 w-9 h-9 rounded-xl bg-muted/80 backdrop-blur-sm flex items-center justify-center hover:bg-muted transition-colors"
+      >
+        <LogOut className="w-4 h-4 text-muted-foreground" />
+      </button>
+
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-t border-border pb-[env(safe-area-inset-bottom)]"
       aria-label="Bottom navigation"
@@ -206,5 +226,6 @@ export function AppNav() {
         })}
       </div>
     </nav>
+    </>
   )
 }
