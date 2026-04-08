@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { ShieldCheck, LayoutDashboard, CalendarDays, Calendar, Users, User, Trophy } from 'lucide-react'
+import { ShieldCheck, LayoutDashboard, CalendarDays, Calendar, Users, User, Trophy, Bell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { UserRole } from '@/lib/types/auth'
 
@@ -57,6 +57,12 @@ const NAV_TABS: {
     roles: ['admin', 'coach', 'client'],
   },
   {
+    href: '/notifications',
+    label: 'Notifications',
+    icon: <Bell className="w-5 h-5" />,
+    roles: ['admin', 'coach', 'client'] as UserRole[],
+  },
+  {
     href: '/profile',
     label: 'Profile',
     icon: <User className="w-5 h-5" />,
@@ -67,18 +73,81 @@ const NAV_TABS: {
 export function AppNav() {
   const pathname = usePathname()
   const [role, setRole] = useState<UserRole>('pending')
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [memberId, setMemberId] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.access_token) {
         try {
           const payload = JSON.parse(atob(session.access_token.split('.')[1]))
           setRole((payload.user_role as UserRole) || 'pending')
         } catch { /* fall through */ }
+
+        // Fetch member_id for notification queries
+        const { data: memberData } = await supabase
+          .from('community_members')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .maybeSingle()
+
+        if (memberData) {
+          setMemberId(memberData.id)
+          // Fetch unread notification count
+          const { count } = await supabase
+            .from('notifications')
+            .select('*', { count: 'exact', head: true })
+            .eq('member_id', memberData.id)
+            .is('read_at', null)
+
+          setUnreadCount(count ?? 0)
+        }
       }
     })
   }, [])
+
+  // Realtime subscription for live badge updates
+  useEffect(() => {
+    if (!memberId) return
+
+    const supabase = createClient()
+    const channel = supabase
+      .channel('nav-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `member_id=eq.${memberId}`,
+        },
+        () => {
+          setUnreadCount(prev => prev + 1)
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `member_id=eq.${memberId}`,
+        },
+        () => {
+          // Re-fetch count on any update (mark-as-read)
+          supabase
+            .from('notifications')
+            .select('*', { count: 'exact', head: true })
+            .eq('member_id', memberId)
+            .is('read_at', null)
+            .then(({ count }) => setUnreadCount(count ?? 0))
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [memberId])
 
   const visibleTabs = NAV_TABS.filter(tab => tab.roles.includes(role))
 
@@ -112,7 +181,18 @@ export function AppNav() {
                     : 'p-1.5 transition-all duration-300'
                 }
               >
-                {tab.icon}
+                {tab.href === '/notifications' ? (
+                  <span className="relative">
+                    <Bell className="w-5 h-5" aria-hidden="true" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  tab.icon
+                )}
               </span>
               <span className={`text-[10px] ${isActive ? 'font-bold text-primary' : ''}`}>
                 {tab.label}
