@@ -1,18 +1,12 @@
 import { redirect } from 'next/navigation'
+import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronRight, Users } from 'lucide-react'
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { InitialsAvatar } from '@/components/profile/InitialsAvatar'
 import type { UserRole } from '@/lib/types/auth'
-
-function formatAttendanceDate(isoString: string): string {
-  return new Date(isoString).toLocaleDateString('en-AU', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
+import { formatAttendanceDate } from '@/lib/utils/dates'
 
 export default async function ClientsPage() {
   const supabase = await createClient()
@@ -109,12 +103,12 @@ export default async function ClientsPage() {
     if (!existing) {
       attendanceMap.set(rsvp.member_id, {
         firstLesson: scheduledAt,
-        lastSession: scheduledAt,
+        lastSession: scheduledAt < now ? scheduledAt : null,
         nextSession: scheduledAt >= now ? scheduledAt : null,
       })
     } else {
       if (scheduledAt < existing.firstLesson!) existing.firstLesson = scheduledAt
-      if (scheduledAt > existing.lastSession!) existing.lastSession = scheduledAt
+      if (scheduledAt < now && (!existing.lastSession || scheduledAt > existing.lastSession)) existing.lastSession = scheduledAt
       if (scheduledAt >= now && (!existing.nextSession || scheduledAt < existing.nextSession)) {
         existing.nextSession = scheduledAt
       }
@@ -168,10 +162,13 @@ export default async function ClientsPage() {
                 >
                   {/* Avatar */}
                   {player.avatarUrl ? (
-                    <img
+                    <Image
                       src={player.avatarUrl}
+                      width={40}
+                      height={40}
                       className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
                       alt={`${player.displayName}'s avatar`}
+                      unoptimized
                     />
                   ) : (
                     <div className="flex-shrink-0">

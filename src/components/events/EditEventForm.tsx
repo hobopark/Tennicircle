@@ -5,9 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { updateEvent } from '@/lib/actions/events'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
 import type { Event, EventActionResult } from '@/lib/types/events'
 
 interface EditEventFormProps {
@@ -30,10 +27,10 @@ export function EditEventForm({ event, eventId }: EditEventFormProps) {
     }
   }, [state.success, router, eventId])
 
-  // Parse existing date/time for default values
+  // Parse existing date/time for default values — use local time, not UTC
   const startsAt = new Date(event.starts_at)
-  const dateStr = startsAt.toISOString().split('T')[0]
-  const timeStr = startsAt.toTimeString().slice(0, 5)
+  const dateStr = `${startsAt.getFullYear()}-${String(startsAt.getMonth() + 1).padStart(2, '0')}-${String(startsAt.getDate()).padStart(2, '0')}`
+  const timeStr = `${String(startsAt.getHours()).padStart(2, '0')}:${String(startsAt.getMinutes()).padStart(2, '0')}`
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -46,13 +43,13 @@ export function EditEventForm({ event, eventId }: EditEventFormProps) {
       )}
 
       <div>
-        <Label htmlFor="edit-title">Title</Label>
-        <Input
+        <label htmlFor="edit-title" className="text-sm font-medium text-foreground">Title</label>
+        <input
           id="edit-title"
           name="title"
           defaultValue={event.title}
           required
-          className="h-12 rounded-2xl mt-1"
+          className="w-full h-12 rounded-2xl mt-1 border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
         {state.fieldErrors?.title && (
           <p className="text-destructive text-sm mt-1">{state.fieldErrors.title[0]}</p>
@@ -60,59 +57,59 @@ export function EditEventForm({ event, eventId }: EditEventFormProps) {
       </div>
 
       <div>
-        <Label htmlFor="edit-date">Date</Label>
-        <Input
+        <label htmlFor="edit-date" className="text-sm font-medium text-foreground">Date</label>
+        <input
           id="edit-date"
           name="starts_at_date"
           type="date"
           defaultValue={dateStr}
           required
-          className="h-12 rounded-2xl mt-1"
+          className="w-full h-12 rounded-2xl mt-1 border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 
       <div>
-        <Label htmlFor="edit-time">Start time</Label>
-        <Input
+        <label htmlFor="edit-time" className="text-sm font-medium text-foreground">Start time</label>
+        <input
           id="edit-time"
           name="starts_at_time"
           type="time"
           defaultValue={timeStr}
           required
-          className="h-12 rounded-2xl mt-1"
+          className="w-full h-12 rounded-2xl mt-1 border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 
       <div>
-        <Label htmlFor="edit-venue">Venue</Label>
-        <Input
+        <label htmlFor="edit-venue" className="text-sm font-medium text-foreground">Venue</label>
+        <input
           id="edit-venue"
           name="venue"
           defaultValue={event.venue}
           required
-          className="h-12 rounded-2xl mt-1"
+          className="w-full h-12 rounded-2xl mt-1 border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 
       <div>
-        <Label htmlFor="edit-description">Description (optional)</Label>
-        <Textarea
+        <label htmlFor="edit-description" className="text-sm font-medium text-foreground">Description (optional)</label>
+        <textarea
           id="edit-description"
           name="description"
           defaultValue={event.description ?? ''}
-          className="min-h-20 rounded-2xl mt-1"
+          className="w-full min-h-20 rounded-2xl mt-1 border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-y"
         />
       </div>
 
       <div>
-        <Label htmlFor="edit-capacity">Max attendees (optional)</Label>
-        <Input
+        <label htmlFor="edit-capacity" className="text-sm font-medium text-foreground">Max attendees (optional)</label>
+        <input
           id="edit-capacity"
           name="capacity"
           type="number"
           min="1"
           defaultValue={event.capacity ?? ''}
-          className="h-12 rounded-2xl mt-1"
+          className="w-full h-12 rounded-2xl mt-1 border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 

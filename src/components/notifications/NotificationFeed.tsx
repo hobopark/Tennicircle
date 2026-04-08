@@ -8,36 +8,70 @@ import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { markAllNotificationsRead, markNotificationRead } from '@/lib/actions/notifications'
 import type { NotificationRow, NotificationType } from '@/lib/types/notifications'
+import type { UserRole } from '@/lib/types/auth'
 import { NotificationRow as NotificationRowComponent } from './NotificationRow'
 
 interface Props {
   initialNotifications: NotificationRow[]
   memberId: string
+  userRole: UserRole
 }
 
-function resolveDeepLink(n: NotificationRow): string {
-  const meta = n.metadata as Record<string, string>
+function resolveDeepLink(n: NotificationRow, userRole: UserRole): string {
+  const meta = n.metadata as Record<string, string> | null
+  const isCoachOrAdmin = userRole === 'coach' || userRole === 'admin'
+
+  function sessionLink(id: string | undefined) {
+    if (!id) return isCoachOrAdmin ? '/coach' : '/sessions'
+    return isCoachOrAdmin ? `/coach/sessions/${id}` : `/sessions/${id}`
+  }
+
+  if (!meta) return '/notifications'
+
   switch (n.notification_type as NotificationType) {
     case 'session_reminder':
-      return `/sessions/${meta.session_id}`
+      return sessionLink(meta.session_id)
     case 'announcement':
       return '/events'
     case 'rsvp_confirmed':
     case 'waitlist_promoted':
-      return meta.resource_type === 'event'
-        ? `/events/${meta.resource_id}`
-        : `/sessions/${meta.resource_id}`
+    case 'event_updated':
+    case 'session_updated':
+    case 'session_cancelled':
+    case 'rsvp_cancelled':
+      if (meta.resource_type === 'event') {
+        return meta.resource_id ? `/events/${meta.resource_id}` : '/events'
+      }
+      return sessionLink(meta.resource_id)
     default:
       return '/notifications'
   }
 }
 
-export function NotificationFeed({ initialNotifications, memberId }: Props) {
+export function NotificationFeed({ initialNotifications, memberId, userRole: serverRole }: Props) {
   const router = useRouter()
   const [notifications, setNotifications] = useState<NotificationRow[]>(initialNotifications)
   const [unreadCount, setUnreadCount] = useState(
     initialNotifications.filter(n => n.read_at === null).length
   )
+  const [role, setRole] = useState<UserRole>(serverRole || 'pending')
+
+  // Client-side role resolution fallback (handles client-side navigation where server props may be stale)
+  useEffect(() => {
+    if (serverRole && serverRole !== 'pending') {
+      setRole(serverRole)
+      return
+    }
+    const supabase = createClient()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.access_token) {
+        try {
+          const payload = JSON.parse(atob(session.access_token.split('.')[1]))
+          if (payload.user_role) setRole(payload.user_role as UserRole)
+        } catch { /* ignore */ }
+      }
+    })
+  }, [serverRole])
 
   useEffect(() => {
     if (!memberId) return
@@ -85,7 +119,8 @@ export function NotificationFeed({ initialNotifications, memberId }: Props) {
       // Fire-and-forget server update
       markNotificationRead(notification.id)
     }
-    router.push(resolveDeepLink(notification))
+    const link = resolveDeepLink(notification, role)
+    router.push(link)
   }
 
   return (

@@ -2,28 +2,16 @@
 
 import Link from 'next/link'
 import { CalendarDays, MapPin } from 'lucide-react'
-import type { EventWithRsvpStatus, EventType } from '@/lib/types/events'
+import type { EventWithRsvpStatus } from '@/lib/types/events'
 import { EVENT_TYPE_LABELS } from '@/lib/types/events'
+import { formatEventDate } from '@/lib/utils/dates'
+import { EVENT_TYPE_BADGE_CLASSES as TYPE_BADGE_CLASSES, EVENT_TYPE_COLORS } from '@/lib/constants/events'
 import { EventRsvpButton } from './EventRsvpButton'
 
-function formatEventDate(startsAt: string): string {
-  const date = new Date(startsAt)
-  return date.toLocaleDateString('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  }) + ' · ' + date.toLocaleTimeString('en-AU', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  })
-}
-
-// Grand Slam inspired: AO blue, RG orange, Wimbledon green
-const TYPE_BADGE_CLASSES: Record<EventType, string> = {
-  tournament: 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400',
-  social: 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-orange-500/15 text-orange-600 dark:text-orange-400',
-  open_session: 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-primary/10 text-primary',
+const CARD_BORDER_COLORS: Record<string, string> = {
+  tournament: 'border-l-blue-500',
+  social: 'border-l-[#c8e030]',
+  open_session: 'border-l-orange-500',
 }
 
 interface EventCardProps {
@@ -34,11 +22,12 @@ export function EventCard({ event }: EventCardProps) {
   const spotsLeft = event.capacity !== null ? event.capacity - event.rsvp_count : null
   const isFull = spotsLeft !== null && spotsLeft <= 0
   const userRsvp = event.user_rsvp
+  const borderColor = CARD_BORDER_COLORS[event.event_type] ?? 'border-l-primary'
 
   return (
     <Link
       href={`/events/${event.id}`}
-      className="block bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer"
+      className={`block bg-card rounded-2xl border border-border/50 border-l-[3px] ${borderColor} p-4 active:scale-[0.98] transition-transform cursor-pointer`}
     >
       {/* Top row: type badge + spots pill */}
       <div className="flex items-center justify-between mb-2">
@@ -46,17 +35,13 @@ export function EventCard({ event }: EventCardProps) {
           {EVENT_TYPE_LABELS[event.event_type]}
         </span>
 
-        {event.capacity !== null && (
-          isFull ? (
-            <span className="text-[10px] font-bold bg-muted text-muted-foreground px-3 py-1 rounded-full">
-              Full
-            </span>
-          ) : (
-            <span className="text-[10px] font-bold bg-card/90 backdrop-blur-sm px-3 py-1 rounded-full text-primary">
-              {spotsLeft} spots left
-            </span>
-          )
-        )}
+        <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${
+          isFull
+            ? 'bg-muted text-muted-foreground'
+            : 'bg-card/90 backdrop-blur-sm text-muted-foreground'
+        }`}>
+          {event.rsvp_count}/{event.capacity !== null ? event.capacity : 'unlimited'}
+        </span>
       </div>
 
       {/* Title */}
@@ -95,7 +80,9 @@ export function EventCard({ event }: EventCardProps) {
           )}
         </div>
       ) : (
-        <EventRsvpButton eventId={event.id} userRsvp={userRsvp} />
+        <div onClick={(e) => { e.preventDefault(); e.stopPropagation() }} role="group">
+          <EventRsvpButton eventId={event.id} userRsvp={userRsvp} />
+        </div>
       )}
     </Link>
   )

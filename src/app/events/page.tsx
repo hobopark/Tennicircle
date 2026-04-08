@@ -1,7 +1,7 @@
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { EventsPageClient } from '@/components/events/EventsPageClient'
-import type { EventWithRsvpStatus, EventRsvp } from '@/lib/types/events'
+import type { EventWithRsvpStatus, EventRsvp, RawEventRow, RawAnnouncementRow } from '@/lib/types/events'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,16 +85,18 @@ export default async function EventsPage() {
   }
 
   // Merge events with RSVP data
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const eventsWithStatus: EventWithRsvpStatus[] = (events ?? []).map((e: any) => ({
+  const eventsWithStatus: EventWithRsvpStatus[] = (events ?? []).map((e: RawEventRow) => ({
     ...e,
     rsvp_count: rsvpCountMap.get(e.id) ?? 0,
     user_rsvp: userRsvpMap.get(e.id) ?? null,
   }))
 
-  // Split by is_official
-  const officialEvents = eventsWithStatus.filter(e => e.is_official)
-  const communityEvents = eventsWithStatus.filter(e => !e.is_official)
+  // Split by is_official and upcoming/past
+  const now = new Date().toISOString()
+  const officialEvents = eventsWithStatus.filter(e => e.is_official && e.starts_at >= now)
+  const communityEvents = eventsWithStatus.filter(e => !e.is_official && e.starts_at >= now)
+  const pastOfficialEvents = eventsWithStatus.filter(e => e.is_official && e.starts_at < now).reverse()
+  const pastCommunityEvents = eventsWithStatus.filter(e => !e.is_official && e.starts_at < now).reverse()
 
   // Fetch announcements (explicit community_id filter)
   const { data: rawAnnouncements } = await supabase
@@ -105,15 +107,13 @@ export default async function EventsPage() {
     .limit(10)
 
   // Resolve author names from player_profiles
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const annAuthorUserIds = (rawAnnouncements ?? []).map((a: any) => a.author?.user_id).filter(Boolean)
+  const annAuthorUserIds = (rawAnnouncements ?? []).map((a: RawAnnouncementRow) => a.author?.user_id).filter(Boolean)
   const { data: annAuthorProfiles } = annAuthorUserIds.length > 0
     ? await supabase.from('player_profiles').select('user_id, display_name').in('user_id', annAuthorUserIds)
     : { data: [] }
   const annProfileMap = new Map((annAuthorProfiles ?? []).map(p => [p.user_id, p.display_name]))
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const announcements = (rawAnnouncements ?? []).map((a: any) => ({
+  const announcements = (rawAnnouncements ?? []).map((a: RawAnnouncementRow) => ({
     ...a,
     author: {
       ...a.author,
@@ -129,6 +129,8 @@ export default async function EventsPage() {
           <EventsPageClient
             officialEvents={officialEvents}
             communityEvents={communityEvents}
+            pastOfficialEvents={pastOfficialEvents}
+            pastCommunityEvents={pastCommunityEvents}
             announcements={announcements ?? []}
             userRole={userRole}
             communityId={communityId}

@@ -1,11 +1,25 @@
 'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, MapPin, CalendarX } from 'lucide-react'
 import { motion } from 'framer-motion'
-import type { Session } from '@/lib/types/sessions'
 import { InitialsAvatar } from '@/components/profile/InitialsAvatar'
+
+/** Session shape accepted by the calendar grid — includes joined template data and optional user flags */
+interface CalendarSession {
+  id: string
+  scheduled_at: string
+  duration_minutes: number
+  venue: string
+  capacity: number
+  cancelled_at?: string | null
+  court_number?: string | null
+  session_templates?: { title: string } | null
+  _userConfirmed?: boolean
+  _coachName?: string | null
+}
 
 interface AttendeeInfo {
   display_name: string | null
@@ -28,7 +42,7 @@ interface CalendarEvent {
 }
 
 interface WeekCalendarGridProps {
-  sessions: Session[]
+  sessions: CalendarSession[]
   linkPrefix?: string // e.g. '/coach/sessions' or '/sessions'
   initialDate?: string
   loading?: boolean
@@ -155,15 +169,14 @@ function toMinutes(isoString: string): number {
   return d.getHours() * 60 + d.getMinutes()
 }
 
-// Grand Slam colors for event types
-const EVENT_TYPE_COLORS: Record<string, { bg: string; border: string; text: string; badge: string; block: string }> = {
-  tournament: { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-600 dark:text-blue-400', badge: 'bg-blue-500/20', block: 'bg-blue-500' },
-  social: { bg: 'bg-orange-500/10', border: 'border-orange-500/30', text: 'text-orange-600 dark:text-orange-400', badge: 'bg-orange-500/20', block: 'bg-orange-500' },
-  open_session: { bg: 'bg-primary/5', border: 'border-primary/30', text: 'text-primary', badge: 'bg-primary/20', block: 'bg-emerald-500' },
-}
+import { EVENT_TYPE_COLORS, EVENT_TYPE_HEX } from '@/lib/constants/events'
 
 function getEventColors(eventType: string) {
   return EVENT_TYPE_COLORS[eventType] ?? EVENT_TYPE_COLORS.social
+}
+
+function getEventHex(eventType: string) {
+  return EVENT_TYPE_HEX[eventType] ?? EVENT_TYPE_HEX.social
 }
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -187,17 +200,33 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
     return getWeekStart(new Date())
   })
 
-  // View toggle state — default 'week' to avoid SSR hydration mismatch
+  // Defer rendering until client-side to avoid hydration mismatches from Date/localStorage
+  const [mounted, setMounted] = useState(false)
   const [view, setView] = useState<'day' | 'week'>('week')
+  const [hideCancelled, setHideCancelled] = useState(false)
   useEffect(() => {
     const saved = localStorage.getItem('tennis-schedule-view')
     if (saved === 'day' || saved === 'week') setView(saved)
+    const savedHide = localStorage.getItem('tennis-hide-cancelled')
+    if (savedHide === 'true') setHideCancelled(true)
+    setMounted(true)
   }, [])
 
   const handleViewChange = (v: 'day' | 'week') => {
     setView(v)
     localStorage.setItem('tennis-schedule-view', v)
   }
+
+  const handleHideCancelledChange = () => {
+    const next = !hideCancelled
+    setHideCancelled(next)
+    localStorage.setItem('tennis-hide-cancelled', String(next))
+  }
+
+  // Filter cancelled sessions if toggle is on
+  const filteredSessions = hideCancelled
+    ? sessions.filter(s => s.cancelled_at === null || s.cancelled_at === undefined)
+    : sessions
 
   // Day view: selected date state
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date())
@@ -207,10 +236,10 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
   }, [currentWeekStart])
 
   const sessionsByDay = useMemo(() => {
-    const map = new Map<number, Session[]>()
+    const map = new Map<number, CalendarSession[]>()
     for (let i = 0; i < 7; i++) map.set(i, [])
 
-    for (const session of sessions) {
+    for (const session of filteredSessions) {
       const sessionDate = new Date(session.scheduled_at)
       for (let i = 0; i < 7; i++) {
         if (isSameDay(sessionDate, weekDays[i])) {
@@ -220,7 +249,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
       }
     }
     return map
-  }, [sessions, weekDays])
+  }, [filteredSessions, weekDays])
 
   const goToPrevWeek = () => setCurrentWeekStart(d => addDays(d, -7))
   const goToNextWeek = () => setCurrentWeekStart(d => addDays(d, 7))
@@ -236,10 +265,10 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
 
   // Day view: sessions for selected date
   const dayViewSessions = useMemo(() => {
-    return sessions
+    return filteredSessions
       .filter(s => isSameDay(new Date(s.scheduled_at), selectedDate))
       .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())
-  }, [sessions, selectedDate])
+  }, [filteredSessions, selectedDate])
 
   // Day view: events for selected date
   const dayViewEvents = useMemo(() => {
@@ -264,7 +293,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
     return map
   }, [events, weekDays])
 
-  if (loading) {
+  if (loading || !mounted) {
     return (
       <div className="w-full overflow-x-auto rounded-lg border border-border">
         <div className="min-w-[600px]">
@@ -277,7 +306,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
             <div key={row} className="grid grid-cols-8 gap-px bg-border">
               {Array.from({ length: 8 }).map((_, col) => (
                 <div key={col} className={`bg-card h-12 ${col > 0 && row % 4 === 0 ? 'relative' : ''}`}>
-                  {col > 0 && row % 4 === 0 && Math.random() > 0.7 && (
+                  {col > 0 && row % 4 === 0 && (col + row) % 3 === 0 && (
                     <div className="absolute inset-1 bg-muted animate-pulse rounded" />
                   )}
                 </div>
@@ -291,8 +320,8 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
 
   return (
     <div className="flex flex-col">
-      {/* View toggle pill */}
-      <div className="flex items-center gap-2 mb-4">
+      {/* View toggle pill + hide cancelled */}
+      <div className="flex items-center gap-3 mb-4">
         <div className="bg-muted/50 rounded-2xl p-1 flex gap-1 h-10">
           {(['day', 'week'] as const).map((v) => (
             <button
@@ -308,6 +337,17 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          onClick={handleHideCancelledChange}
+          className={`text-xs px-3 py-1.5 rounded-full transition-all cursor-pointer ${
+            hideCancelled
+              ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400 font-bold'
+              : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {hideCancelled ? 'Cancelled hidden' : 'Hide cancelled'}
+        </button>
       </div>
 
       {view === 'day' ? (
@@ -348,8 +388,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                 const capacity = sessionAttendees?.capacity ?? session.capacity
                 const attendeePreview = sessionAttendees?.attendeePreview ?? []
                 const isCancelled = session.cancelled_at !== null
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const title = (session as any).session_templates?.title ?? ''
+                const title = session.session_templates?.title ?? ''
 
                 return (
                   <motion.div
@@ -381,12 +420,19 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
 
                       {/* Venue */}
                       {session.venue && (
-                        <div className="flex items-center gap-1 mb-3">
+                        <div className="flex items-center gap-1 mb-0.5">
                           <MapPin className="w-3 h-3 text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">
                             {session.venue}{session.court_number ? ` · Court No.${session.court_number}` : ''}
                           </span>
                         </div>
+                      )}
+
+                      {/* Coach name */}
+                      {session._coachName && (
+                        <p className="text-[10px] text-muted-foreground mb-3">
+                          Coach: {session._coachName}
+                        </p>
                       )}
 
                       {/* Attendee avatar strip */}
@@ -395,10 +441,13 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                           {attendeePreview.slice(0, 5).map((attendee, i) => (
                             <div key={i} className="w-6 h-6 rounded-full ring-2 ring-background overflow-hidden">
                               {attendee.avatar_url ? (
-                                <img
+                                <Image
                                   src={attendee.avatar_url}
+                                  width={24}
+                                  height={24}
                                   alt={attendee.display_name ?? ''}
                                   className="w-full h-full object-cover"
+                                  unoptimized
                                 />
                               ) : (
                                 <InitialsAvatar
@@ -423,7 +472,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
               {/* Event cards in day view */}
               {dayViewEvents.map((evt, index) => {
                 const duration = evt.duration_minutes ?? 60
-                const colors = getEventColors(evt.event_type)
+                const hex = getEventHex(evt.event_type)
                 return (
                   <motion.div
                     key={evt.id}
@@ -433,13 +482,17 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                   >
                     <Link
                       href={`/events/${evt.id}`}
-                      className={`block ${colors.bg} border ${colors.border} rounded-3xl p-4 active:scale-[0.98] transition-transform cursor-pointer`}
+                      className="block rounded-3xl p-4 active:scale-[0.98] transition-transform cursor-pointer"
+                      style={{ backgroundColor: hex.bg, borderWidth: 1, borderColor: hex.border }}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-bold text-foreground">
                           {formatTimeRange(evt.starts_at, duration)}
                         </span>
-                        <span className={`text-[10px] font-bold ${colors.text} ${colors.badge} px-2 py-0.5 rounded-full uppercase`}>
+                        <span
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase"
+                          style={{ color: hex.text, backgroundColor: hex.border }}
+                        >
                           {evt.event_type === 'tournament' ? 'Tournament' : evt.event_type === 'social' ? 'Social' : 'Open'}
                         </span>
                       </div>
@@ -615,13 +668,11 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                       const durationRows = session.duration_minutes / 30
                       const heightPx = durationRows * ROW_HEIGHT
                       const isCancelled = session.cancelled_at !== null
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      const isUserConfirmed = (session as any)._userConfirmed !== false
+                      const isUserConfirmed = session._userConfirmed !== false
                       const sessionAttendees = attendeeData[session.id]
                       const confirmedCount = sessionAttendees?.confirmedCount
                       const sessionCapacity = sessionAttendees?.capacity ?? session.capacity
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      const hasUserTag = '_userConfirmed' in (session as any)
+                      const hasUserTag = '_userConfirmed' in session
                       const isNotAttending = hasUserTag && !isUserConfirmed
 
                       return (
@@ -648,13 +699,17 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                             }`}
                           >
                             <div className={`font-medium truncate leading-tight ${isCancelled ? 'line-through' : ''}`}>
-                              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                              {(session as any).session_templates?.title || formatTimeShort(session.scheduled_at)}
+                                {session.session_templates?.title || formatTimeShort(session.scheduled_at)}
                             </div>
                             <div className="truncate leading-tight opacity-80 text-[11px]">
                               {formatTimeRange(session.scheduled_at, session.duration_minutes)}
                             </div>
-                            {durationRows > 1 && (
+                            {durationRows > 1 && session._coachName && (
+                              <div className="truncate leading-tight opacity-70 text-[11px]">
+                                {session._coachName}
+                              </div>
+                            )}
+                            {durationRows > 2 && (
                               <div className="truncate leading-tight opacity-70 text-[11px]">
                                 {session.venue}{session.court_number ? ` · Court No.${session.court_number}` : ''}
                               </div>
@@ -695,7 +750,8 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                         >
                           <Link
                             href={`/events/${evt.id}`}
-                            className={`block h-full w-full rounded-lg text-[13px] p-1 overflow-hidden cursor-pointer transition-opacity hover:opacity-90 ${evtColors.block} text-white`}
+                            className="block h-full w-full rounded-lg text-[13px] p-1 overflow-hidden cursor-pointer transition-opacity hover:opacity-90 text-white"
+                            style={{ backgroundColor: evtColors.blockHex }}
                           >
                             <div className="font-medium truncate leading-tight">
                               {evt.title}

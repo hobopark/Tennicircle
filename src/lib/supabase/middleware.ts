@@ -30,7 +30,8 @@ export async function updateSession(request: NextRequest) {
 
   // Route protection: unauthenticated users redirected to /auth (D-12)
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
-  const isPublicPath = isAuthPage || request.nextUrl.pathname === '/'
+  const isApiCron = request.nextUrl.pathname.startsWith('/api/cron')
+  const isPublicPath = isAuthPage || isApiCron || request.nextUrl.pathname === '/'
 
   if (!user && !isPublicPath) {
     const redirectUrl = request.nextUrl.clone()
@@ -72,9 +73,9 @@ export async function updateSession(request: NextRequest) {
 
     // Role-route mapping per D-10
     const roleRoutes: Record<string, string[]> = {
-      admin: ['/admin', '/coach', '/sessions', '/welcome', '/profile', '/events'],
-      coach: ['/coach', '/welcome', '/profile', '/events'],
-      client: ['/sessions', '/welcome', '/profile', '/events'],
+      admin: ['/admin', '/coach', '/sessions', '/welcome', '/profile', '/events', '/notifications'],
+      coach: ['/coach', '/welcome', '/profile', '/events', '/notifications'],
+      client: ['/sessions', '/welcome', '/profile', '/events', '/notifications'],
     }
 
     const roleHome: Record<string, string> = {

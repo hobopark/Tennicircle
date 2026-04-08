@@ -1,13 +1,19 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { Plus, ChevronLeft } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { WeekCalendarGrid } from '@/components/calendar/WeekCalendarGrid'
 import { AppNav } from '@/components/nav/AppNav'
+import type { SessionWithTemplate, RsvpWithMember } from '@/lib/types/sessions'
 
 export default async function CoachSchedulePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  if (!user) redirect('/auth')
+
+  const claims = await getJWTClaims(supabase)
+  const userRole = claims.user_role ?? 'pending'
+  if (userRole !== 'coach' && userRole !== 'admin') redirect('/sessions')
 
   const { data: member } = await supabase
     .from('community_members')
@@ -56,16 +62,16 @@ export default async function CoachSchedulePage() {
     : { data: [] }
 
   // Merge and deduplicate
-  const sessionMap = new Map<string, Record<string, unknown>>()
-  for (const s of [...(ownedSessions ?? []), ...(coCoachedSessions ?? [])]) {
+  const sessionMap = new Map<string, SessionWithTemplate>()
+  for (const s of [...(ownedSessions ?? []), ...(coCoachedSessions ?? [])] as SessionWithTemplate[]) {
     if (!sessionMap.has(s.id)) sessionMap.set(s.id, s)
   }
   const sessions = Array.from(sessionMap.values()).sort(
-    (a, b) => new Date(a.scheduled_at as string).getTime() - new Date(b.scheduled_at as string).getTime()
+    (a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()
   )
 
   // Attendee previews
-  const sessionIds = sessions.map(s => s.id as string)
+  const sessionIds = sessions.map(s => s.id)
   const attendeeDataMap: Record<string, {
     confirmedCount: number
     capacity: number | null
@@ -73,17 +79,17 @@ export default async function CoachSchedulePage() {
   }> = {}
 
   if (sessionIds.length > 0) {
-    const { data: attendees } = await supabase
+    const { data: rawAttendees } = await supabase
       .from('session_rsvps')
       .select('session_id, rsvp_type, member:community_members(display_name, user_id)')
       .in('session_id', sessionIds)
       .eq('rsvp_type', 'confirmed')
       .is('cancelled_at', null)
       .order('created_at', { ascending: true })
+    const attendees = (rawAttendees ?? []) as unknown as RsvpWithMember[]
 
     // Look up player_profiles for avatar URLs
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const attendeeUserIds = [...new Set((attendees ?? []).map((a: any) => a.member?.user_id).filter(Boolean))]
+    const attendeeUserIds = [...new Set(attendees.map(a => a.member?.user_id).filter(Boolean))]
     const { data: profiles } = attendeeUserIds.length > 0
       ? await supabase
           .from('player_profiles')
@@ -96,11 +102,9 @@ export default async function CoachSchedulePage() {
     )
 
     for (const session of sessions) {
-      const id = session.id as string
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const sessionAttendees = (attendees ?? []).filter((a: any) => a.session_id === id)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const attendeePreview = sessionAttendees.slice(0, 5).map((a: any) => {
+      const id = session.id
+      const sessionAttendees = attendees.filter(a => a.session_id === id)
+      const attendeePreview = sessionAttendees.slice(0, 5).map(a => {
         const profile = profileByUserId.get(a.member?.user_id)
         return {
           display_name: profile?.display_name ?? a.member?.display_name ?? null,
@@ -110,7 +114,7 @@ export default async function CoachSchedulePage() {
 
       attendeeDataMap[id] = {
         confirmedCount: sessionAttendees.length,
-        capacity: (session.capacity as number) ?? null,
+        capacity: session.capacity ?? null,
         attendeePreview,
       }
     }
@@ -162,8 +166,7 @@ export default async function CoachSchedulePage() {
               <Plus className="w-4 h-4" /> Create session
             </Link>
           </div>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <WeekCalendarGrid sessions={sessions as any} attendeeData={attendeeDataMap} events={calendarEvents} />
+          <WeekCalendarGrid sessions={sessions} attendeeData={attendeeDataMap} events={calendarEvents} />
         </div>
       </div>
     </>

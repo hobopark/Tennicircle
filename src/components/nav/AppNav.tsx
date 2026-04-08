@@ -39,8 +39,8 @@ const NAV_TABS: {
     roles: ['client'],
   },
   {
-    href: '/sessions/all',
-    label: 'Sessions',
+    href: '/sessions/calendar',
+    label: 'Calendar',
     icon: <Calendar className="w-5 h-5" />,
     roles: ['client'],
   },
@@ -185,7 +185,11 @@ export function AppNav() {
                   <span className="relative">
                     <Bell className="w-5 h-5" aria-hidden="true" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                      <span
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm"
+                        style={{ backgroundColor: '#c8e030', color: '#1a1a1a' }}
+                        aria-label={`${unreadCount > 9 ? '9+' : unreadCount} unread notifications`}
+                      >
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}

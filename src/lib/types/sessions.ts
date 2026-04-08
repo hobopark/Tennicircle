@@ -67,6 +67,33 @@ export interface SessionWithDetails extends Session {
   user_rsvp?: SessionRsvp | null
 }
 
+// Supabase join result types (for eliminating `any` casts in page components)
+
+/** Session with joined template title — returned by `.select('..., session_templates(title)')`.
+ *  Supabase SDK can't infer the join shape, so we use Record to accept the raw result
+ *  and cast at the query boundary. */
+export interface SessionWithTemplate {
+  id: string
+  scheduled_at: string
+  duration_minutes: number
+  venue: string
+  capacity: number
+  cancelled_at?: string | null
+  court_number?: string | null
+  session_templates?: { title: string } | null
+  // Allow additional fields from `select('*')` or `select('id, ...')`
+  [key: string]: unknown
+}
+
+/** RSVP attendee with joined member info.
+ *  Supabase returns the FK join as an object at runtime (single row), but SDK types it as array. */
+export interface RsvpWithMember {
+  session_id: string
+  rsvp_type: string
+  member?: { display_name: string | null; user_id: string } | null
+  [key: string]: unknown
+}
+
 // Server action return types
 export interface SessionActionResult {
   success: boolean

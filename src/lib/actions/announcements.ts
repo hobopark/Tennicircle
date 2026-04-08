@@ -116,3 +116,27 @@ export async function updateAnnouncement(
 
   return { success: true, data: updated }
 }
+
+// Delete an announcement (coach or admin only)
+export async function deleteAnnouncement(announcementId: string): Promise<AnnouncementActionResult> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const claims = await getJWTClaims(supabase)
+  if (claims.user_role !== 'coach' && claims.user_role !== 'admin') {
+    return { success: false, error: 'Only coaches and admins can delete announcements' }
+  }
+
+  const { error } = await supabase
+    .from('announcements')
+    .delete()
+    .eq('id', announcementId)
+
+  if (error) return { success: false, error: error.message }
+
+  revalidatePath('/events')
+
+  return { success: true }
+}

@@ -2,8 +2,25 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { CancelSessionSchema, SessionTemplateSchema, EditSessionSchema } from '@/lib/validations/sessions'
 import type { SessionActionResult } from '@/lib/types/sessions'
+
+// Returns Sydney UTC offset string like "+10:00" or "+11:00" (handles AEST/AEDT)
+// Uses Intl.DateTimeFormat parts comparison — works on any server timezone
+function getSydneyOffsetString(date: Date): string {
+  const utcParts = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', hour: 'numeric', hour12: false, day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(date)
+  const sydParts = new Intl.DateTimeFormat('en-US', { timeZone: 'Australia/Sydney', hour: 'numeric', hour12: false, day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(date)
+
+  const utcHour = Number(utcParts.find(p => p.type === 'hour')?.value ?? 0)
+  const utcDay = Number(utcParts.find(p => p.type === 'day')?.value ?? 0)
+  const sydHour = Number(sydParts.find(p => p.type === 'hour')?.value ?? 0)
+  const sydDay = Number(sydParts.find(p => p.type === 'day')?.value ?? 0)
+
+  const offsetHours = (sydDay - utcDay) * 24 + (sydHour - utcHour)
+  const sign = offsetHours >= 0 ? '+' : '-'
+  return `${sign}${String(Math.abs(offsetHours)).padStart(2, '0')}:00`
+}
 
 // D-01, D-03, D-04, D-16: Coach creates a recurring session template
 export async function createSessionTemplate(
@@ -186,10 +203,12 @@ export async function editSession(
         .single()
 
       if (currentSession) {
-        // Parse session date in local time, then convert to ISO UTC
-        const sessionDate = new Date(currentSession.scheduled_at).toLocaleDateString('en-CA') // YYYY-MM-DD
-        const localDateTime = new Date(`${sessionDate}T${parsed.data.start_time}:00`)
-        updates.scheduled_at = localDateTime.toISOString()
+        // Extract the date in AEST/AEDT — safe on UTC servers (Vercel)
+        const dtf = new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney', year: 'numeric', month: '2-digit', day: '2-digit' })
+        const sessionDate = dtf.format(new Date(currentSession.scheduled_at)) // YYYY-MM-DD in Sydney tz
+        // Build a Sydney-local datetime string with correct UTC offset
+        const offset = getSydneyOffsetString(new Date(currentSession.scheduled_at))
+        updates.scheduled_at = new Date(`${sessionDate}T${parsed.data.start_time}:00${offset}`).toISOString()
         delete updates.start_time
       }
     }
@@ -290,6 +309,37 @@ export async function editSession(
     }
   }
 
+  // Notify RSVP'd members about session update (fire-and-forget)
+  {
+    const { data: rsvps } = await supabase
+      .from('session_rsvps')
+      .select('member_id')
+      .eq('session_id', sessionId)
+      .is('cancelled_at', null)
+
+    if (rsvps && rsvps.length > 0) {
+      const { data: sessionInfo } = await supabase
+        .from('sessions')
+        .select('scheduled_at, venue, community_id')
+        .eq('id', sessionId)
+        .single()
+
+      if (sessionInfo) {
+        const serviceClient = createServiceClient()
+        const { formatDateTime } = await import('@/lib/utils/dates')
+        const notificationRows = rsvps.map(r => ({
+          community_id: sessionInfo.community_id,
+          member_id: r.member_id,
+          notification_type: 'session_updated' as const,
+          title: 'Session updated',
+          body: `The session on ${formatDateTime(sessionInfo.scheduled_at)} has been updated`,
+          metadata: { resource_type: 'session' as const, resource_id: sessionId },
+        }))
+        serviceClient.from('notifications').insert(notificationRows).then(() => {})
+      }
+    }
+  }
+
   revalidatePath('/sessions')
   revalidatePath('/coach')
 
@@ -330,6 +380,37 @@ export async function cancelSession(
     .eq('id', sessionId)
 
   if (error) return { success: false, error: error.message }
+
+  // Notify all active RSVP'd members about cancellation before cascade
+  {
+    const { data: rsvps } = await supabase
+      .from('session_rsvps')
+      .select('member_id')
+      .eq('session_id', sessionId)
+      .is('cancelled_at', null)
+
+    if (rsvps && rsvps.length > 0) {
+      const { data: sessionInfo } = await supabase
+        .from('sessions')
+        .select('scheduled_at, venue, community_id')
+        .eq('id', sessionId)
+        .single()
+
+      if (sessionInfo) {
+        const serviceClient = createServiceClient()
+        const { formatDateTime } = await import('@/lib/utils/dates')
+        const notificationRows = rsvps.map(r => ({
+          community_id: sessionInfo.community_id,
+          member_id: r.member_id,
+          notification_type: 'session_cancelled' as const,
+          title: 'Session cancelled',
+          body: `The session on ${formatDateTime(sessionInfo.scheduled_at)} has been cancelled: ${parsed.data.cancellation_reason}`,
+          metadata: { resource_type: 'session' as const, resource_id: sessionId },
+        }))
+        serviceClient.from('notifications').insert(notificationRows).then(() => {})
+      }
+    }
+  }
 
   // Cascade: cancel all active RSVPs for this session
   await supabase

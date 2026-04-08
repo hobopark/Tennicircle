@@ -1,27 +1,23 @@
 'use client'
 
 import Link from 'next/link'
-import { ChevronRight, MapPin, Calendar } from 'lucide-react'
-import type { EventType } from '@/lib/types/events'
-
-const EVENT_TYPE_BADGE: Record<string, { label: string; className: string }> = {
-  tournament: { label: 'Tournament', className: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
-  social: { label: 'Social', className: 'bg-orange-500/15 text-orange-600 dark:text-orange-400' },
-  open_session: { label: 'Open Session', className: 'bg-primary/10 text-primary' },
-}
+import { ChevronRight, MapPin, Calendar, User } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { AnnouncementCard } from '@/components/events/AnnouncementCard'
 import type { AnnouncementWithAuthor, EventWithRsvpStatus } from '@/lib/types/events'
+import { formatSessionDateTime, formatEventDate } from '@/lib/utils/dates'
+import { EVENT_TYPE_BADGE } from '@/lib/constants/events'
 
 interface UpcomingSession {
   id: string
-  title: string
+  title: string | null
   scheduled_at: string
   duration_minutes: number | null
   venue: string | null
   capacity: number | null
   rsvp_type: string
   template_title: string | null
+  coach_name?: string | null
 }
 
 interface ClientDashboardStats {
@@ -40,32 +36,6 @@ interface ClientDashboardProps {
   userRole: string
 }
 
-function formatSessionDateTime(scheduledAt: string): string {
-  const date = new Date(scheduledAt)
-  return date.toLocaleDateString('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  }) + ' · ' + date.toLocaleTimeString('en-AU', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  })
-}
-
-function formatEventDate(startsAt: string): string {
-  const date = new Date(startsAt)
-  return date.toLocaleDateString('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  }) + ' · ' + date.toLocaleTimeString('en-AU', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  })
-}
-
 export function ClientDashboard({
   firstName,
   displayName,
@@ -75,14 +45,6 @@ export function ClientDashboard({
   announcements,
   userRole,
 }: ClientDashboardProps) {
-  const sections = [
-    'greeting',
-    'stats',
-    'upcoming-sessions',
-    'upcoming-events',
-    ...(announcements.length > 0 ? ['announcements'] : []),
-  ]
-
   return (
     <div className="px-5 pt-14 pb-24 max-w-[640px] mx-auto">
       {/* Greeting */}
@@ -127,8 +89,8 @@ export function ClientDashboard({
       >
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-heading font-bold text-base">Upcoming Sessions</h2>
-          <Link href="/sessions/all" className="text-sm text-primary flex items-center gap-1">
-            See all <ChevronRight className="w-4 h-4" />
+          <Link href="/sessions/calendar" className="text-sm text-primary flex items-center gap-1">
+            Calendar <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
 
@@ -156,6 +118,12 @@ export function ClientDashboard({
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <MapPin className="w-3 h-3 flex-shrink-0" />
                     <span>{session.venue}</span>
+                  </div>
+                )}
+                {session.coach_name && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
+                    <User className="w-3 h-3 flex-shrink-0" />
+                    <span>{session.coach_name}</span>
                   </div>
                 )}
               </Link>

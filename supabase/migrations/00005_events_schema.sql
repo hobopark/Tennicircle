@@ -91,13 +91,14 @@ create policy "Creator or admin can update events"
   );
 
 -- DELETE: creator or admin only
-create policy "Creator or admin can delete events"
+create policy "Creator, coach, or admin can delete events"
   on public.events for delete
   using (
     community_id = ((select auth.jwt()) ->> 'community_id')::uuid
     and (
       created_by = (select id from public.community_members where user_id = auth.uid() limit 1)
       or ((select auth.jwt()) ->> 'user_role') = 'admin'
+      or ((select auth.jwt()) ->> 'user_role') = 'coach'
     )
   );
 
@@ -151,6 +152,17 @@ create policy "Creator or admin can update announcements"
     and (
       created_by = (select id from public.community_members where user_id = auth.uid() limit 1)
       or ((select auth.jwt()) ->> 'user_role') = 'admin'
+    )
+  );
+
+-- DELETE: coach or admin
+create policy "Coach or admin can delete announcements"
+  on public.announcements for delete
+  using (
+    community_id = ((select auth.jwt()) ->> 'community_id')::uuid
+    and (
+      ((select auth.jwt()) ->> 'user_role') = 'admin'
+      or ((select auth.jwt()) ->> 'user_role') = 'coach'
     )
   );
 

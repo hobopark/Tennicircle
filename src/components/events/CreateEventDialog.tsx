@@ -156,7 +156,7 @@ export function CreateEventDialog({
                     setSelectedType(option.type)
                     setStep('form')
                   }}
-                  className="bg-muted rounded-2xl p-4 h-16 flex items-center gap-4 border border-border cursor-pointer transition-colors active:scale-[0.98] hover:border-primary hover:bg-primary/5 text-left"
+                  className="bg-muted rounded-2xl p-4 h-16 flex items-center gap-4 border border-border cursor-pointer transition-colors active:scale-[0.98] hover:border-primary hover:bg-primary/5 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                 >
                   {option.icon}
                   <div>
@@ -232,7 +232,7 @@ export function CreateEventDialog({
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="w-full h-12 rounded-2xl font-heading font-bold bg-primary text-primary-foreground flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full h-12 rounded-2xl font-heading font-bold bg-primary text-primary-foreground flex items-center justify-center gap-2 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                 >
                   {isPending && <Loader2 className="animate-spin" size={16} />}
                   Post Announcement
@@ -357,7 +357,7 @@ export function CreateEventDialog({
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="w-full h-12 rounded-2xl font-heading font-bold bg-primary text-primary-foreground flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full h-12 rounded-2xl font-heading font-bold bg-primary text-primary-foreground flex items-center justify-center gap-2 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                 >
                   {isPending && <Loader2 className="animate-spin" size={16} />}
                   Create Event

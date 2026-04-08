@@ -1,18 +1,14 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { CalendarDays, MapPin, Pencil, ChevronLeft } from 'lucide-react'
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { EventRsvpButton } from '@/components/events/EventRsvpButton'
+import { DeleteEventButton } from '@/components/events/DeleteEventButton'
 import { EVENT_TYPE_LABELS } from '@/lib/types/events'
 import type { EventRsvp, EventType } from '@/lib/types/events'
-
-// Grand Slam inspired: AO blue, RG orange, Wimbledon green
-const TYPE_BADGE_CLASSES: Record<EventType, string> = {
-  tournament: 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400',
-  social: 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-orange-500/15 text-orange-600 dark:text-orange-400',
-  open_session: 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-primary/10 text-primary',
-}
+import { EVENT_TYPE_BADGE_CLASSES as TYPE_BADGE_CLASSES } from '@/lib/constants/events'
 
 function formatEventDate(startsAt: string): string {
   const date = new Date(startsAt)
@@ -26,11 +22,6 @@ function formatEventDate(startsAt: string): string {
     minute: '2-digit',
     hour12: true,
   })
-}
-
-function formatMemberSince(createdAt: string): string {
-  const date = new Date(createdAt)
-  return date.toLocaleDateString('en-AU', { month: 'short', year: 'numeric' })
 }
 
 interface EventDetailPageProps {
@@ -120,7 +111,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   const spotsLeft = event.capacity !== null ? event.capacity - confirmedCount : null
 
   const isCreator = event.created_by === member.id
-  const isAdminOrCreator = userRole === 'admin' || isCreator
+  const canEdit = userRole === 'admin' || isCreator
+  const canDelete = userRole === 'admin' || userRole === 'coach' || isCreator
 
   return (
     <>
@@ -140,15 +132,20 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               <span className={TYPE_BADGE_CLASSES[event.event_type as EventType]}>
                 {EVENT_TYPE_LABELS[event.event_type as EventType]}
               </span>
-              {isAdminOrCreator && (
-                <Link
-                  href={`/events/${eventId}/edit`}
-                  aria-label="Edit event"
-                  className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center"
-                >
-                  <Pencil size={16} className="text-muted-foreground" />
-                </Link>
-              )}
+              <div className="flex items-center gap-2">
+                {canEdit && (
+                  <Link
+                    href={`/events/${eventId}/edit`}
+                    aria-label="Edit event"
+                    className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center"
+                  >
+                    <Pencil size={16} className="text-muted-foreground" />
+                  </Link>
+                )}
+                {canDelete && (
+                  <DeleteEventButton eventId={eventId} />
+                )}
+              </div>
             </div>
 
             <h1 className="font-heading font-bold text-2xl mb-3">{event.title}</h1>
@@ -200,10 +197,13 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                 {confirmedRsvps.map((rsvp: any) => (
                   <div key={rsvp.id} className="flex items-center gap-3">
                     {rsvp._avatarUrl ? (
-                      <img
+                      <Image
                         src={rsvp._avatarUrl}
+                        width={32}
+                        height={32}
                         alt={rsvp._displayName}
                         className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                        unoptimized
                       />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary flex-shrink-0">

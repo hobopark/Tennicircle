@@ -55,14 +55,15 @@ Source: DESIGN-REF.md + globals.css confirmed
 
 | Role | Size | Weight | Line Height | Font |
 |------|------|--------|-------------|------|
-| Meta / micro (timestamps, badge text) | 12px (`text-xs`) | 400 | 1.4 | Inter (`font-sans`) |
+| Micro (badge overflow "9+", nav labels) | 10px (`text-[10px]`) | 500–700 | 1.2 | Inter (`font-sans`) |
+| Meta (timestamps, secondary copy) | 12px (`text-xs`) | 400 | 1.4 | Inter (`font-sans`) |
 | Body | 14px (`text-sm`) | 400 | 1.5 | Inter (`font-sans`) |
 | Notification title | 16px (`text-base`) | 600 (`font-semibold`) | 1.4 | Space Grotesk (`font-heading`) |
 | Page heading | 20px (`text-xl`) | 700 (`font-bold`) | 1.2 | Space Grotesk (`font-heading`) |
 
 Notes:
-- Timestamps, badge overflow text ("9+"), and all micro-labels use `text-xs` (12px). No sub-12px sizes permitted.
-- Two weights only: 400 (regular body/meta) and 600–700 (headings/titles).
+- 5 sizes — matches the AceHub design system established in DESIGN-REF.md. The `text-[10px]` micro tier is used project-wide for nav labels, badge pills, and stat labels (see AppNav.tsx, card badges).
+- Two weight tiers: 400 (regular body/meta) and 500–700 (headings/titles/badges).
 
 ---
 
@@ -153,7 +154,7 @@ roles: ['admin', 'coach', 'client']
 Unread badge:
 - Position: absolute, top-right corner of icon container, `-top-1 -right-1`
 - Size: `w-5 h-5` (20px diameter)
-- Style: `bg-primary text-primary-foreground text-xs font-bold rounded-full`
+- Style: `bg-primary text-primary-foreground text-[10px] font-bold rounded-full`
 - Cap: shows "9+" when count exceeds 9
 - Visibility: hidden when count is 0 (do not render empty badge)
 

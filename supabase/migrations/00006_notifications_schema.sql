@@ -9,7 +9,7 @@ create table public.notifications (
   community_id uuid references public.communities(id) on delete cascade not null,
   member_id uuid references public.community_members(id) on delete cascade not null,
   notification_type text not null check (
-    notification_type in ('session_reminder', 'announcement', 'rsvp_confirmed', 'waitlist_promoted')
+    notification_type in ('session_reminder', 'announcement', 'rsvp_confirmed', 'waitlist_promoted', 'event_updated', 'session_updated', 'session_cancelled', 'rsvp_cancelled')
   ),
   title text not null,
   body text not null,

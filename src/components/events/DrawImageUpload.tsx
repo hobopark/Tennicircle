@@ -82,15 +82,23 @@ export function DrawImageUpload({ eventId, communityId, onUpload }: DrawImageUpl
         <img
           src={previewUrl}
           alt="Draw preview"
-          className="h-24 rounded-2xl object-cover w-full cursor-pointer"
+          role="button"
+          tabIndex={0}
+          className="h-24 rounded-2xl object-cover w-full cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
           onClick={handleClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              handleClick()
+            }
+          }}
         />
       ) : (
         <button
           type="button"
           onClick={handleClick}
           disabled={isUploading}
-          className="w-full h-24 rounded-2xl border-2 border-dashed border-border bg-muted flex items-center justify-center cursor-pointer disabled:pointer-events-none"
+          className="w-full h-24 rounded-2xl border-2 border-dashed border-border bg-muted flex items-center justify-center cursor-pointer disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           <span className="text-sm text-muted-foreground">
             {isUploading ? 'Uploading...' : 'Upload draw image (optional)'}

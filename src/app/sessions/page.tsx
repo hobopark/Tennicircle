@@ -1,7 +1,8 @@
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { ClientDashboard } from '@/components/dashboard/ClientDashboard'
-import type { EventWithRsvpStatus, EventRsvp } from '@/lib/types/events'
+import type { EventWithRsvpStatus, EventRsvp, RawEventRow, RawAnnouncementRow } from '@/lib/types/events'
+import type { SessionWithTemplate } from '@/lib/types/sessions'
 
 export const dynamic = 'force-dynamic'
 
@@ -83,15 +84,23 @@ export default async function SessionsPage() {
   const upcomingSessionIds = (upcomingRsvpRows ?? []).map((r: { session_id: string }) => r.session_id)
 
   // Fetch those sessions, filter to future ones, sort, take 5
-  const { data: allSessionRows } = upcomingSessionIds.length > 0
+  const { data: rawSessionRows } = upcomingSessionIds.length > 0
     ? await supabase
         .from('sessions')
-        .select('id, scheduled_at, duration_minutes, venue, capacity, session_templates(title)')
+        .select('id, scheduled_at, duration_minutes, venue, capacity, session_templates(title, coach:community_members!coach_id(user_id))')
         .in('id', upcomingSessionIds)
         .gte('scheduled_at', now)
         .order('scheduled_at', { ascending: true })
         .limit(5)
     : { data: [] }
+  const allSessionRows = (rawSessionRows ?? []) as unknown as SessionWithTemplate[]
+
+  // Resolve coach names from player_profiles
+  const coachUserIds = [...new Set(allSessionRows.map(s => (s.session_templates as { coach?: { user_id?: string } })?.coach?.user_id).filter(Boolean))] as string[]
+  const { data: coachProfiles } = coachUserIds.length > 0
+    ? await supabase.from('player_profiles').select('user_id, display_name').in('user_id', coachUserIds)
+    : { data: [] }
+  const coachNameMap = new Map((coachProfiles ?? []).map(p => [p.user_id, p.display_name]))
 
   // Build rsvp type map
   const rsvpTypeMap = new Map<string, string>()
@@ -99,17 +108,20 @@ export default async function SessionsPage() {
     rsvpTypeMap.set(r.session_id, r.rsvp_type)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const upcomingSessions = (allSessionRows ?? []).map((s: any) => ({
-    id: s.id,
-    title: s.session_templates?.title ?? null,
-    scheduled_at: s.scheduled_at,
-    duration_minutes: s.duration_minutes,
-    venue: s.venue,
-    capacity: s.capacity,
-    rsvp_type: rsvpTypeMap.get(s.id) ?? 'confirmed',
-    template_title: s.session_templates?.title ?? null,
-  }))
+  const upcomingSessions = allSessionRows.map(s => {
+    const coachUserId = (s.session_templates as { coach?: { user_id?: string } })?.coach?.user_id
+    return {
+      id: s.id,
+      title: s.session_templates?.title ?? null,
+      scheduled_at: s.scheduled_at,
+      duration_minutes: s.duration_minutes,
+      venue: s.venue,
+      capacity: s.capacity,
+      rsvp_type: rsvpTypeMap.get(s.id) ?? 'confirmed',
+      template_title: s.session_templates?.title ?? null,
+      coach_name: coachUserId ? coachNameMap.get(coachUserId) ?? null : null,
+    }
+  })
 
   // Compute stats
   // Sessions this month: count confirmed RSVPs where session is in current month
@@ -142,13 +154,21 @@ export default async function SessionsPage() {
   const memberSinceDate = new Date(member.joined_at ?? new Date().toISOString())
   const memberSince = memberSinceDate.toLocaleDateString('en-AU', { month: 'short', year: 'numeric' })
 
-  // Fetch upcoming events (next 5) — explicit community_id filter as RLS backup
+  // Fetch events the user has RSVP'd to (only show RSVP'd events on dashboard)
   const communityId = claims.community_id
-  const { data: events } = communityId
+  const { data: myEventRsvps } = await supabase
+    .from('event_rsvps')
+    .select('event_id, rsvp_type, id, community_id, member_id, waitlist_position, cancelled_at, created_at')
+    .eq('member_id', member.id)
+    .is('cancelled_at', null)
+
+  const myEventIds = (myEventRsvps ?? []).map(r => r.event_id)
+
+  const { data: events } = myEventIds.length > 0
     ? await supabase
         .from('events')
         .select('*, creator:community_members!created_by(display_name)')
-        .eq('community_id', communityId)
+        .in('id', myEventIds)
         .is('cancelled_at', null)
         .gte('starts_at', now)
         .order('starts_at', { ascending: true })
@@ -157,17 +177,7 @@ export default async function SessionsPage() {
 
   const eventIds = (events ?? []).map((e: { id: string }) => e.id)
 
-  // Fetch user's RSVPs for upcoming events
-  const { data: eventRsvps } = eventIds.length > 0
-    ? await supabase
-        .from('event_rsvps')
-        .select('*')
-        .in('event_id', eventIds)
-        .eq('member_id', member.id)
-        .is('cancelled_at', null)
-    : { data: [] }
-
-  // Fetch confirmed RSVP counts for events
+  // Fetch confirmed RSVP counts for those events
   const { data: allEventRsvps } = eventIds.length > 0
     ? await supabase
         .from('event_rsvps')
@@ -178,7 +188,7 @@ export default async function SessionsPage() {
     : { data: [] }
 
   const userEventRsvpMap = new Map<string, EventRsvp>()
-  for (const rsvp of (eventRsvps ?? [])) {
+  for (const rsvp of (myEventRsvps ?? [])) {
     userEventRsvpMap.set(rsvp.event_id, rsvp as EventRsvp)
   }
 
@@ -188,8 +198,7 @@ export default async function SessionsPage() {
     eventRsvpCountMap.set(rsvp.event_id, cur + 1)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const upcomingEvents: EventWithRsvpStatus[] = (events ?? []).map((e: any) => ({
+  const upcomingEvents: EventWithRsvpStatus[] = (events ?? []).map((e: RawEventRow) => ({
     ...e,
     rsvp_count: eventRsvpCountMap.get(e.id) ?? 0,
     user_rsvp: userEventRsvpMap.get(e.id) ?? null,
@@ -205,21 +214,19 @@ export default async function SessionsPage() {
         .limit(2)
     : { data: [] }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const annUserIds = (rawAnnouncements ?? []).map((a: any) => a.author?.user_id).filter(Boolean)
+  const annUserIds = (rawAnnouncements ?? []).map((a: RawAnnouncementRow) => a.author?.user_id).filter(Boolean)
   const { data: annProfiles } = annUserIds.length > 0
     ? await supabase.from('player_profiles').select('user_id, display_name').in('user_id', annUserIds)
     : { data: [] }
   const annNameMap = new Map((annProfiles ?? []).map(p => [p.user_id, p.display_name]))
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const announcements = (rawAnnouncements ?? []).map((a: any) => ({
+  const announcements = (rawAnnouncements ?? []).map((a: RawAnnouncementRow) => ({
     ...a,
     author: { ...a.author, display_name: annNameMap.get(a.author?.user_id) ?? a.author?.display_name ?? null },
   }))
 
-  // Count all upcoming confirmed RSVPs (sessions + events)
+  // Count all upcoming confirmed RSVPs (sessions + events user actually RSVP'd to)
   const upcomingSessionRsvpCount = upcomingSessions.length
-  const upcomingEventRsvpCount = upcomingEvents.length
+  const upcomingEventRsvpCount = upcomingEvents.filter(e => e.user_rsvp && e.user_rsvp.cancelled_at === null).length
 
   const stats = {
     sessionsThisMonth,

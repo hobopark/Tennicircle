@@ -74,9 +74,10 @@ export async function GET(request: NextRequest) {
   })
 }
 
-// Format time portion of ISO string for notification body copy
+// Format time portion of ISO string for notification body copy — always in Sydney time
 function formatTime(isoString: string): string {
   return new Date(isoString).toLocaleTimeString('en-AU', {
+    timeZone: 'Australia/Sydney',
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,

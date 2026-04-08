@@ -2,29 +2,18 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ChevronRight, Plus, Calendar, MapPin } from 'lucide-react'
 
-const EVENT_TYPE_BADGE: Record<string, { label: string; className: string }> = {
-  tournament: { label: 'Tournament', className: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
-  social: { label: 'Social', className: 'bg-orange-500/15 text-orange-600 dark:text-orange-400' },
-  open_session: { label: 'Open Session', className: 'bg-primary/10 text-primary' },
-}
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { AnnouncementCard } from '@/components/events/AnnouncementCard'
-import type { EventWithRsvpStatus } from '@/lib/types/events'
-
-function formatSessionDateTime(scheduledAt: string): string {
-  const date = new Date(scheduledAt)
-  return date.toLocaleDateString('en-AU', {
-    weekday: 'short', day: 'numeric', month: 'short',
-  }) + ' · ' + date.toLocaleTimeString('en-AU', {
-    hour: 'numeric', minute: '2-digit', hour12: true,
-  })
-}
+import type { EventWithRsvpStatus, RawEventRow, RawAnnouncementRow } from '@/lib/types/events'
+import type { SessionWithTemplate } from '@/lib/types/sessions'
+import { formatSessionDateTime } from '@/lib/utils/dates'
+import { EVENT_TYPE_BADGE } from '@/lib/constants/events'
 
 export default async function CoachDashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  if (!user) redirect('/auth')
 
   const claims = await getJWTClaims(supabase)
   const communityId = claims.community_id
@@ -52,11 +41,12 @@ export default async function CoachDashboardPage() {
   const firstName = coachName.split(' ')[0]
   const now = new Date().toISOString()
 
-  // Stats: sessions this month
-  const { data: templateIds } = await supabase
-    .from('session_templates')
-    .select('id')
-    .eq('coach_id', member.id)
+  // Fetch coach's templates and co-coached sessions
+  const [{ data: templateIds }, { data: coCoachRows }] = await Promise.all([
+    supabase.from('session_templates').select('id').eq('coach_id', member.id),
+    supabase.from('session_coaches').select('session_id').eq('member_id', member.id),
+  ])
+  const coCoachSessionIds = (coCoachRows ?? []).map(r => r.session_id)
 
   const currentMonthStart = new Date()
   currentMonthStart.setDate(1)
@@ -64,84 +54,111 @@ export default async function CoachDashboardPage() {
   const nextMonthStart = new Date(currentMonthStart)
   nextMonthStart.setMonth(nextMonthStart.getMonth() + 1)
 
-  const { count: sessionsThisMonth } = templateIds && templateIds.length > 0
-    ? await supabase
-        .from('sessions')
-        .select('*', { count: 'exact', head: true })
-        .in('template_id', templateIds.map(t => t.id))
-        .gte('scheduled_at', currentMonthStart.toISOString())
-        .lt('scheduled_at', nextMonthStart.toISOString())
-    : { count: 0 }
+  // Parallelize independent queries — all depend only on templateIds, communityId, or member.id
+  const [
+    { data: ownedSessionsThisMonth },
+    { data: coCoachSessionsThisMonth },
+    { count: playerCount },
+    { data: myEventRsvps },
+    { data: rawSessionRows },
+    { data: rawAnnouncements },
+  ] = await Promise.all([
+    // Stats: sessions this month — owned templates (exclude cancelled)
+    templateIds && templateIds.length > 0
+      ? supabase
+          .from('sessions')
+          .select('id')
+          .in('template_id', templateIds.map(t => t.id))
+          .gte('scheduled_at', currentMonthStart.toISOString())
+          .lt('scheduled_at', nextMonthStart.toISOString())
+          .is('cancelled_at', null)
+      : Promise.resolve({ data: [], error: null }),
+    // Stats: co-coached sessions this month
+    coCoachSessionIds.length > 0
+      ? supabase
+          .from('sessions')
+          .select('id')
+          .in('id', coCoachSessionIds)
+          .gte('scheduled_at', currentMonthStart.toISOString())
+          .lt('scheduled_at', nextMonthStart.toISOString())
+          .is('cancelled_at', null)
+      : Promise.resolve({ data: [], error: null }),
+    // Stats: total players
+    communityId
+      ? supabase
+          .from('community_members')
+          .select('*', { count: 'exact', head: true })
+          .eq('community_id', communityId)
+          .in('role', ['client', 'member'])
+      : Promise.resolve({ count: 0, data: null, error: null }),
+    // Events I'm attending (RSVP'd) — needed for both stats and event list
+    supabase
+      .from('event_rsvps')
+      .select('event_id')
+      .eq('member_id', member.id)
+      .eq('rsvp_type', 'confirmed')
+      .is('cancelled_at', null),
+    // Upcoming sessions (next 5)
+    templateIds && templateIds.length > 0
+      ? supabase
+          .from('sessions')
+          .select('id, scheduled_at, duration_minutes, venue, capacity, session_templates(title)')
+          .in('template_id', templateIds.map(t => t.id))
+          .gte('scheduled_at', now)
+          .is('cancelled_at', null)
+          .order('scheduled_at', { ascending: true })
+          .limit(5)
+      : Promise.resolve({ data: [], error: null }),
+    // Announcements
+    communityId
+      ? supabase
+          .from('announcements')
+          .select('*, author:community_members!created_by(display_name, user_id)')
+          .eq('community_id', communityId)
+          .order('created_at', { ascending: false })
+          .limit(3)
+      : Promise.resolve({ data: [], error: null }),
+  ])
 
-  // Stats: total players
-  const { count: playerCount } = communityId
-    ? await supabase
-        .from('community_members')
-        .select('*', { count: 'exact', head: true })
-        .eq('community_id', communityId)
-        .in('role', ['client', 'member'])
-    : { count: 0 }
+  // Deduplicate owned + co-coached sessions this month
+  const allSessionIdsThisMonth = new Set([
+    ...(ownedSessionsThisMonth ?? []).map(s => s.id),
+    ...(coCoachSessionsThisMonth ?? []).map(s => s.id),
+  ])
+  const sessionsThisMonth = allSessionIdsThisMonth.size
 
-  // Stats: upcoming events I'm attending (RSVP'd)
-  const { data: myEventRsvps } = await supabase
-    .from('event_rsvps')
-    .select('event_id')
-    .eq('member_id', member.id)
-    .eq('rsvp_type', 'confirmed')
-    .is('cancelled_at', null)
-
+  // Fetch only events I've RSVP'd to (depends on myEventRsvps)
   const myEventIds = (myEventRsvps ?? []).map(r => r.event_id)
-  const { count: upcomingEventCount } = myEventIds.length > 0
-    ? await supabase
-        .from('events')
-        .select('*', { count: 'exact', head: true })
-        .in('id', myEventIds)
-        .is('cancelled_at', null)
-        .gte('starts_at', now)
-    : { count: 0 }
+  const [{ count: upcomingEventCount }, { data: upcomingEvents }] = await Promise.all([
+    myEventIds.length > 0
+      ? supabase
+          .from('events')
+          .select('*', { count: 'exact', head: true })
+          .in('id', myEventIds)
+          .is('cancelled_at', null)
+          .gte('starts_at', now)
+      : Promise.resolve({ count: 0, data: null, error: null }),
+    myEventIds.length > 0
+      ? supabase
+          .from('events')
+          .select('*, creator:community_members!created_by(display_name)')
+          .in('id', myEventIds)
+          .is('cancelled_at', null)
+          .gte('starts_at', now)
+          .order('starts_at', { ascending: true })
+          .limit(3)
+      : Promise.resolve({ data: [], error: null }),
+  ])
 
-  // Upcoming sessions (next 5)
-  const { data: upcomingSessionRows } = templateIds && templateIds.length > 0
-    ? await supabase
-        .from('sessions')
-        .select('id, scheduled_at, duration_minutes, venue, capacity, session_templates(title)')
-        .in('template_id', templateIds.map(t => t.id))
-        .gte('scheduled_at', now)
-        .is('cancelled_at', null)
-        .order('scheduled_at', { ascending: true })
-        .limit(5)
-    : { data: [] }
+  // Supabase SDK types FK joins as arrays; at runtime they're single objects. Cast at boundary.
+  const upcomingSessionRows = (rawSessionRows ?? []) as unknown as SessionWithTemplate[]
 
-  // Upcoming events (next 3)
-  const { data: upcomingEvents } = communityId
-    ? await supabase
-        .from('events')
-        .select('*, creator:community_members!created_by(display_name)')
-        .eq('community_id', communityId)
-        .is('cancelled_at', null)
-        .gte('starts_at', now)
-        .order('starts_at', { ascending: true })
-        .limit(3)
-    : { data: [] }
-
-  // Announcements
-  const { data: rawAnnouncements } = communityId
-    ? await supabase
-        .from('announcements')
-        .select('*, author:community_members!created_by(display_name, user_id)')
-        .eq('community_id', communityId)
-        .order('created_at', { ascending: false })
-        .limit(3)
-    : { data: [] }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const annUserIds = (rawAnnouncements ?? []).map((a: any) => a.author?.user_id).filter(Boolean)
+  const annUserIds = (rawAnnouncements ?? []).map((a: RawAnnouncementRow) => a.author?.user_id).filter(Boolean)
   const { data: annProfiles } = annUserIds.length > 0
     ? await supabase.from('player_profiles').select('user_id, display_name').in('user_id', annUserIds)
     : { data: [] }
   const annNameMap = new Map((annProfiles ?? []).map(p => [p.user_id, p.display_name]))
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const announcements = (rawAnnouncements ?? []).map((a: any) => ({
+  const announcements = (rawAnnouncements ?? []).map((a: RawAnnouncementRow) => ({
     ...a,
     author: { ...a.author, display_name: annNameMap.get(a.author?.user_id) ?? a.author?.display_name ?? null },
   }))
@@ -166,7 +183,7 @@ export default async function CoachDashboardPage() {
           {/* Stats strip */}
           <div className="grid grid-cols-3 gap-3 mb-6">
             <div className="bg-primary/10 rounded-2xl border border-primary/20 p-4 text-center">
-              <p className="font-heading font-bold text-2xl text-primary">{sessionsThisMonth ?? 0}</p>
+              <p className="font-heading font-bold text-2xl text-primary">{sessionsThisMonth}</p>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Sessions this month</p>
             </div>
             <div className="bg-emerald-500/10 rounded-2xl border border-emerald-500/20 p-4 text-center">
@@ -187,10 +204,9 @@ export default async function CoachDashboardPage() {
                 Schedule <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
-            {(upcomingSessionRows ?? []).length > 0 ? (
+            {upcomingSessionRows.length > 0 ? (
               <div className="flex flex-col gap-3">
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {(upcomingSessionRows ?? []).map((s: any) => (
+                {upcomingSessionRows.map((s) => (
                   <Link
                     key={s.id}
                     href={`/coach/sessions/${s.id}`}
@@ -230,8 +246,7 @@ export default async function CoachDashboardPage() {
             </div>
             {(upcomingEvents ?? []).length > 0 ? (
               <div className="flex flex-col gap-3">
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {(upcomingEvents ?? []).map((e: any) => {
+                {(upcomingEvents ?? []).map((e: RawEventRow) => {
                   const badge = EVENT_TYPE_BADGE[e.event_type]
                   return (
                     <Link

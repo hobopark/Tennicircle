@@ -61,7 +61,7 @@ export function EventRsvpButton({ eventId, userRsvp, onRsvpChange }: EventRsvpBu
         <button
           type="button"
           onClick={() => setCancelDialogOpen(true)}
-          className="text-sm text-destructive hover:underline mt-3"
+          className="text-sm text-orange-600 dark:text-orange-400 hover:underline mt-3"
         >
           Cancel RSVP
         </button>
@@ -79,19 +79,19 @@ export function EventRsvpButton({ eventId, userRsvp, onRsvpChange }: EventRsvpBu
             <DialogFooter>
               <button
                 type="button"
-                onClick={handleCancelConfirm}
-                disabled={isCancelling}
-                className="w-full h-12 rounded-2xl bg-destructive text-destructive-foreground font-heading font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                onClick={() => setCancelDialogOpen(false)}
+                className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-heading font-bold text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
               >
-                {isCancelling && <Loader2 className="animate-spin" size={16} />}
-                Yes, cancel
+                Keep my spot
               </button>
               <button
                 type="button"
-                onClick={() => setCancelDialogOpen(false)}
-                className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-heading font-bold text-sm"
+                onClick={handleCancelConfirm}
+                disabled={isCancelling}
+                className="w-full h-12 rounded-2xl bg-orange-500 text-white font-heading font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
               >
-                Keep my spot
+                {isCancelling && <Loader2 className="animate-spin" size={16} />}
+                Yes, cancel
               </button>
             </DialogFooter>
           </DialogContent>

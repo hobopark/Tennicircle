@@ -6,6 +6,29 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { CreateEventSchema } from '@/lib/validations/events'
 import type { EventActionResult, EventRsvpActionResult } from '@/lib/types/events'
 
+/**
+ * Convert a date + time (user input in Sydney local time) to a UTC ISO string.
+ * Works correctly regardless of server timezone (localhost, Vercel, etc).
+ */
+function toSydneyIso(dateStr: string, timeStr: string): string {
+  // Use Intl to get the UTC offset for Sydney on the target date
+  // by comparing formatted parts in UTC vs Sydney
+  const refDate = new Date(`${dateStr}T12:00:00Z`)
+  const utcParts = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', hour: 'numeric', hour12: false, day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(refDate)
+  const sydParts = new Intl.DateTimeFormat('en-US', { timeZone: 'Australia/Sydney', hour: 'numeric', hour12: false, day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(refDate)
+
+  const utcHour = Number(utcParts.find(p => p.type === 'hour')?.value ?? 0)
+  const utcDay = Number(utcParts.find(p => p.type === 'day')?.value ?? 0)
+  const sydHour = Number(sydParts.find(p => p.type === 'hour')?.value ?? 0)
+  const sydDay = Number(sydParts.find(p => p.type === 'day')?.value ?? 0)
+
+  const offsetHours = (sydDay - utcDay) * 24 + (sydHour - utcHour)
+  const sign = offsetHours >= 0 ? '+' : '-'
+  const offset = `${sign}${String(Math.abs(offsetHours)).padStart(2, '0')}:00`
+
+  return new Date(`${dateStr}T${timeStr}${offset}`).toISOString()
+}
+
 // EVNT-01: Create a community event
 export async function createEvent(
   _prevState: EventActionResult,
@@ -38,10 +61,8 @@ export async function createEvent(
   // T-04-02: is_official is derived from JWT role — NEVER from formData
   const isOfficial = claims.user_role === 'coach' || claims.user_role === 'admin'
 
-  // Combine date + time into ISO string
-  const startsAt = new Date(
-    `${parsed.data.starts_at_date}T${parsed.data.starts_at_time}`
-  ).toISOString()
+  // Combine date + time into ISO string (Sydney timezone-aware)
+  const startsAt = toSydneyIso(parsed.data.starts_at_date, parsed.data.starts_at_time)
 
   // Convert empty/zero optional fields to null
   const durationMinutes =
@@ -209,20 +230,19 @@ export async function cancelEventRsvp(eventId: string): Promise<EventRsvpActionR
   // Get the active RSVP to determine its type before cancelling
   const { data: existingRsvp, error: rsvpFetchError } = await supabase
     .from('event_rsvps')
-    .select('rsvp_type')
+    .select('id, rsvp_type, member_id')
     .eq('event_id', eventId)
     .eq('member_id', member.id)
     .is('cancelled_at', null)
-    .single()
+    .maybeSingle()
 
-  if (rsvpFetchError || !existingRsvp) return { success: false, error: 'Active RSVP not found' }
+  if (rsvpFetchError) return { success: false, error: rsvpFetchError.message }
+  if (!existingRsvp) return { success: false, error: 'No active RSVP found for this event' }
 
   const { error: cancelError } = await supabase
     .from('event_rsvps')
     .update({ cancelled_at: new Date().toISOString() })
-    .eq('event_id', eventId)
-    .eq('member_id', member.id)
-    .is('cancelled_at', null)
+    .eq('id', existingRsvp.id)
 
   if (cancelError) return { success: false, error: cancelError.message }
 
@@ -236,7 +256,7 @@ export async function cancelEventRsvp(eventId: string): Promise<EventRsvpActionR
       .is('cancelled_at', null)
       .order('waitlist_position', { ascending: true })
       .limit(1)
-      .single()
+      .maybeSingle()
 
     if (nextWaitlisted) {
       await supabase
@@ -264,6 +284,46 @@ export async function cancelEventRsvp(eventId: string): Promise<EventRsvpActionR
           metadata: { resource_type: 'event' as const, resource_id: eventId },
         }).then(() => {})
       }
+    }
+  }
+
+  // Notify event creator about the RSVP cancellation (fire-and-forget)
+  {
+    const { data: eventInfo } = await supabase
+      .from('events')
+      .select('title, starts_at, created_by, community_id')
+      .eq('id', eventId)
+      .single()
+
+    // Resolve member display name: community_members → player_profiles → fallback
+    const { data: memberRec } = await supabase
+      .from('community_members')
+      .select('display_name, user_id')
+      .eq('id', member.id)
+      .single()
+
+    let memberName = memberRec?.display_name || ''
+    if (!memberName && memberRec?.user_id) {
+      const { data: profile } = await supabase
+        .from('player_profiles')
+        .select('display_name')
+        .eq('user_id', memberRec.user_id)
+        .maybeSingle()
+      memberName = profile?.display_name || ''
+    }
+    if (!memberName) memberName = 'A member'
+
+    if (eventInfo && eventInfo.created_by !== member.id) {
+      const serviceClient = createServiceClient()
+      const { formatDateTime } = await import('@/lib/utils/dates')
+      serviceClient.from('notifications').insert({
+        community_id: eventInfo.community_id,
+        member_id: eventInfo.created_by,
+        notification_type: 'rsvp_cancelled' as const,
+        title: 'RSVP cancelled',
+        body: `${memberName} cancelled their RSVP for ${eventInfo.title} on ${formatDateTime(eventInfo.starts_at)}`,
+        metadata: { resource_type: 'event' as const, resource_id: eventId },
+      }).then(() => {})
     }
   }
 
@@ -311,9 +371,8 @@ export async function updateEvent(
     return { success: false, fieldErrors: parsed.error.flatten().fieldErrors }
   }
 
-  const startsAt = new Date(
-    `${parsed.data.starts_at_date}T${parsed.data.starts_at_time}`
-  ).toISOString()
+  // Combine date + time into ISO string (Sydney timezone-aware)
+  const startsAt = toSydneyIso(parsed.data.starts_at_date, parsed.data.starts_at_time)
 
   const durationMinutes = parsed.data.duration_minutes && parsed.data.duration_minutes > 0
     ? parsed.data.duration_minutes : null
@@ -338,6 +397,30 @@ export async function updateEvent(
     .single()
 
   if (updateError) return { success: false, error: updateError.message }
+
+  // Notify RSVP'd members about event update (fire-and-forget)
+  {
+    const { data: rsvps } = await supabase
+      .from('event_rsvps')
+      .select('member_id')
+      .eq('event_id', eventId)
+      .is('cancelled_at', null)
+
+    if (rsvps && rsvps.length > 0) {
+      const serviceClient = createServiceClient()
+      const { formatDateTime } = await import('@/lib/utils/dates')
+      const communityId = claims.community_id!
+      const notificationRows = rsvps.map(r => ({
+        community_id: communityId,
+        member_id: r.member_id,
+        notification_type: 'event_updated' as const,
+        title: 'Event updated',
+        body: `${parsed.data.title} on ${formatDateTime(startsAt)} has been updated`,
+        metadata: { resource_type: 'event' as const, resource_id: eventId },
+      }))
+      serviceClient.from('notifications').insert(notificationRows).then(() => {})
+    }
+  }
 
   revalidatePath('/events')
   revalidatePath(`/events/${eventId}`)
@@ -372,7 +455,7 @@ export async function deleteEvent(eventId: string): Promise<EventActionResult> {
 
   if (eventError || !event) return { success: false, error: 'Event not found' }
 
-  if (event.created_by !== member.id && claims.user_role !== 'admin') {
+  if (event.created_by !== member.id && claims.user_role !== 'admin' && claims.user_role !== 'coach') {
     return { success: false, error: 'You can only delete your own events' }
   }
 

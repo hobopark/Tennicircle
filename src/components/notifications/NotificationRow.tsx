@@ -1,4 +1,4 @@
-import { CalendarDays, Megaphone, CheckCircle2 } from 'lucide-react'
+import { CalendarDays, Megaphone, CheckCircle2, PenLine, XCircle, UserX } from 'lucide-react'
 import type { NotificationRow, NotificationType } from '@/lib/types/notifications'
 
 interface Props {
@@ -15,6 +15,15 @@ function getIcon(type: NotificationType) {
     case 'rsvp_confirmed':
     case 'waitlist_promoted':
       return <CheckCircle2 className="w-4 h-4 text-primary" aria-hidden="true" />
+    case 'event_updated':
+    case 'session_updated':
+      return <PenLine className="w-4 h-4 text-primary" aria-hidden="true" />
+    case 'session_cancelled':
+      return <XCircle className="w-4 h-4 text-orange-600 dark:text-orange-400" aria-hidden="true" />
+    case 'rsvp_cancelled':
+      return <UserX className="w-4 h-4 text-primary" aria-hidden="true" />
+    default:
+      return <CalendarDays className="w-4 h-4 text-primary" aria-hidden="true" />
   }
 }
 
@@ -24,6 +33,11 @@ function getAriaLabel(type: NotificationType): string {
     case 'announcement': return 'Announcement'
     case 'rsvp_confirmed': return 'RSVP confirmed'
     case 'waitlist_promoted': return 'RSVP confirmed'
+    case 'event_updated': return 'Event updated'
+    case 'session_updated': return 'Session updated'
+    case 'session_cancelled': return 'Session cancelled'
+    case 'rsvp_cancelled': return 'RSVP cancelled'
+    default: return 'Notification'
   }
 }
 

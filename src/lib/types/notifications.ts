@@ -4,12 +4,16 @@ export type NotificationType =
   | 'announcement'
   | 'rsvp_confirmed'
   | 'waitlist_promoted'
+  | 'event_updated'
+  | 'session_updated'
+  | 'session_cancelled'
+  | 'rsvp_cancelled'
 
 // Metadata shapes per notification type
 export type NotificationMetadata =
   | { session_id: string; scheduled_at: string }                          // session_reminder
   | { announcement_id: string }                                            // announcement
-  | { resource_type: 'session' | 'event'; resource_id: string }          // rsvp_confirmed, waitlist_promoted
+  | { resource_type: 'session' | 'event'; resource_id: string }          // rsvp_confirmed, waitlist_promoted, event_updated, session_updated, session_cancelled, rsvp_cancelled
 
 // Database row shape
 export interface NotificationRow {

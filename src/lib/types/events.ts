@@ -20,8 +20,8 @@ export interface Event {
 export interface EventWithCreator extends Event {
   creator: {
     display_name: string | null
-    avatar_url: string | null
-  }
+    avatar_url?: string | null
+  } | null
 }
 
 export interface EventWithRsvpStatus extends EventWithCreator {
@@ -60,8 +60,19 @@ export interface Announcement {
 export interface AnnouncementWithAuthor extends Announcement {
   author: {
     display_name: string | null
-    avatar_url: string | null
-  }
+    avatar_url?: string | null
+    user_id?: string
+  } | null
+}
+
+/** Raw announcement from Supabase join: `.select('*, author:community_members!created_by(display_name, user_id)')` */
+export interface RawAnnouncementRow extends Announcement {
+  author: { display_name: string | null; user_id: string } | null
+}
+
+/** Raw event from Supabase join: `.select('*, creator:community_members!created_by(display_name)')` */
+export interface RawEventRow extends Event {
+  creator: { display_name: string | null } | null
 }
 
 export interface EventActionResult {

@@ -4,6 +4,7 @@ import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { CancelRsvpButton } from '@/components/sessions/CancelRsvpButton'
+import { RsvpSessionButton } from '@/components/sessions/RsvpSessionButton'
 
 interface PageProps {
   params: Promise<{ sessionId: string }>
@@ -54,6 +55,17 @@ export default async function ClientSessionDetailPage({ params }: PageProps) {
         .is('cancelled_at', null)
         .single()
     : { data: null }
+
+  // Check if user is on the invitation list for this template
+  const isInvited = member && session.template_id
+    ? !!(await supabase
+        .from('session_invitations')
+        .select('id')
+        .eq('template_id', session.template_id)
+        .eq('member_id', member.id)
+        .maybeSingle()
+      ).data
+    : false
 
   const isCancelled = session.cancelled_at !== null
   const title = (session as Record<string, unknown>).session_templates
@@ -109,6 +121,18 @@ export default async function ClientSessionDetailPage({ params }: PageProps) {
                     </p>
                   </div>
                   <CancelRsvpButton sessionId={sessionId} />
+                </div>
+              ) : isInvited ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[14px] font-medium text-foreground">
+                      You&apos;re not attending
+                    </p>
+                    <p className="text-[13px] text-muted-foreground mt-0.5">
+                      You&apos;re invited — join if there&apos;s space.
+                    </p>
+                  </div>
+                  <RsvpSessionButton sessionId={sessionId} />
                 </div>
               ) : (
                 <p className="text-[14px] text-muted-foreground">

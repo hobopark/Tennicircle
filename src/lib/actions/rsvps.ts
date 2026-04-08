@@ -47,6 +47,17 @@ export async function rsvpSession(sessionId: string): Promise<RsvpActionResult> 
     if (!invitation) return { success: false, error: 'You are not invited to this session' }
   }
 
+  // Check for existing active RSVP
+  const { data: activeRsvp } = await supabase
+    .from('session_rsvps')
+    .select('id')
+    .eq('session_id', sessionId)
+    .eq('member_id', member.id)
+    .is('cancelled_at', null)
+    .maybeSingle()
+
+  if (activeRsvp) return { success: false, error: 'You already have an active RSVP for this session' }
+
   // Count confirmed RSVPs (non-cancelled)
   const { count: confirmedCount, error: confirmedError } = await supabase
     .from('session_rsvps')
@@ -77,43 +88,106 @@ export async function rsvpSession(sessionId: string): Promise<RsvpActionResult> 
     waitlistPosition = (waitlistCount ?? 0) + 1
   }
 
-  const { error: insertError } = await supabase
+  // Check for an existing cancelled RSVP — reactivate instead of inserting
+  const { data: existingRsvp } = await supabase
     .from('session_rsvps')
-    .insert({
-      session_id: sessionId,
-      member_id: member.id,
-      community_id: communityId,
-      rsvp_type: rsvpType,
-      waitlist_position: waitlistPosition,
-    })
+    .select('id')
+    .eq('session_id', sessionId)
+    .eq('member_id', member.id)
+    .not('cancelled_at', 'is', null)
+    .maybeSingle()
 
-  if (insertError) {
-    // DB trigger check_session_capacity raises exception at capacity
-    if (insertError.message.includes('capacity')) {
-      return { success: false, error: "This session is now full. You've been added to the waitlist." }
+  if (existingRsvp) {
+    // Reactivate the cancelled RSVP
+    const { error: updateError } = await supabase
+      .from('session_rsvps')
+      .update({
+        rsvp_type: rsvpType,
+        waitlist_position: waitlistPosition,
+        cancelled_at: null,
+      })
+      .eq('id', existingRsvp.id)
+
+    if (updateError) return { success: false, error: updateError.message }
+  } else {
+    // First-time RSVP — insert new row
+    const { error: insertError } = await supabase
+      .from('session_rsvps')
+      .insert({
+        session_id: sessionId,
+        member_id: member.id,
+        community_id: communityId,
+        rsvp_type: rsvpType,
+        waitlist_position: waitlistPosition,
+      })
+
+    if (insertError) {
+      if (insertError.message.includes('capacity')) {
+        return { success: false, error: "This session is now full. You've been added to the waitlist." }
+      }
+      return { success: false, error: insertError.message }
     }
-    return { success: false, error: insertError.message }
   }
 
-  // NOTF-03: Notify member of RSVP confirmation (fire-and-forget)
-  if (rsvpType === 'confirmed') {
+  // NOTF-03: Notify member of RSVP confirmation + notify coach(es) of new RSVP (fire-and-forget)
+  {
     const { data: sessionInfo } = await supabase
       .from('sessions')
-      .select('scheduled_at, venue')
+      .select('scheduled_at, venue, community_id')
       .eq('id', sessionId)
       .single()
 
     if (sessionInfo) {
       const serviceClient = createServiceClient()
       const { formatDateTime } = await import('@/lib/utils/dates')
-      serviceClient.from('notifications').insert({
-        community_id: communityId,
-        member_id: member.id,
-        notification_type: 'rsvp_confirmed' as const,
-        title: "You're confirmed",
-        body: `You're confirmed for the session on ${formatDateTime(sessionInfo.scheduled_at)}`,
-        metadata: { resource_type: 'session' as const, resource_id: sessionId },
-      }).then(() => {})
+
+      // Notify the member if confirmed
+      if (rsvpType === 'confirmed') {
+        serviceClient.from('notifications').insert({
+          community_id: communityId,
+          member_id: member.id,
+          notification_type: 'rsvp_confirmed' as const,
+          title: "You're confirmed",
+          body: `You're confirmed for the session on ${formatDateTime(sessionInfo.scheduled_at)}`,
+          metadata: { resource_type: 'session' as const, resource_id: sessionId },
+        }).then(() => {})
+      }
+
+      // Notify session coach(es) about the new RSVP
+      const { data: coaches } = await supabase
+        .from('session_coaches')
+        .select('member_id')
+        .eq('session_id', sessionId)
+
+      // Resolve member display name: community_members → player_profiles → fallback
+      const { data: memberRec } = await supabase
+        .from('community_members')
+        .select('display_name, user_id')
+        .eq('id', member.id)
+        .single()
+
+      let memberName = memberRec?.display_name || ''
+      if (!memberName && memberRec?.user_id) {
+        const { data: profile } = await supabase
+          .from('player_profiles')
+          .select('display_name')
+          .eq('user_id', memberRec.user_id)
+          .maybeSingle()
+        memberName = profile?.display_name || ''
+      }
+      if (!memberName) memberName = 'A member'
+
+      if (coaches && coaches.length > 0) {
+        const coachNotifications = coaches.map(c => ({
+          community_id: sessionInfo.community_id,
+          member_id: c.member_id,
+          notification_type: 'rsvp_confirmed' as const,
+          title: 'New RSVP',
+          body: `${memberName} has RSVP'd for the session on ${formatDateTime(sessionInfo.scheduled_at)}`,
+          metadata: { resource_type: 'session' as const, resource_id: sessionId },
+        }))
+        serviceClient.from('notifications').insert(coachNotifications).then(() => {})
+      }
     }
   }
 
@@ -159,6 +233,52 @@ export async function cancelRsvp(sessionId: string): Promise<SessionActionResult
     .is('cancelled_at', null)
 
   if (cancelError) return { success: false, error: cancelError.message }
+
+  // Notify session coach(es) about the RSVP cancellation (fire-and-forget)
+  {
+    const { data: sessionInfo } = await supabase
+      .from('sessions')
+      .select('scheduled_at, community_id')
+      .eq('id', sessionId)
+      .single()
+
+    const { data: coaches } = await supabase
+      .from('session_coaches')
+      .select('member_id')
+      .eq('session_id', sessionId)
+
+    // Resolve member display name: community_members → player_profiles → fallback
+    const { data: memberRec2 } = await supabase
+      .from('community_members')
+      .select('display_name, user_id')
+      .eq('id', member.id)
+      .single()
+
+    let cancelMemberName = memberRec2?.display_name || ''
+    if (!cancelMemberName && memberRec2?.user_id) {
+      const { data: profile2 } = await supabase
+        .from('player_profiles')
+        .select('display_name')
+        .eq('user_id', memberRec2.user_id)
+        .maybeSingle()
+      cancelMemberName = profile2?.display_name || ''
+    }
+    if (!cancelMemberName) cancelMemberName = 'A member'
+
+    if (sessionInfo && coaches && coaches.length > 0) {
+      const serviceClient = createServiceClient()
+      const { formatDateTime } = await import('@/lib/utils/dates')
+      const notificationRows = coaches.map(c => ({
+        community_id: sessionInfo.community_id,
+        member_id: c.member_id,
+        notification_type: 'rsvp_cancelled' as const,
+        title: 'RSVP cancelled',
+        body: `${cancelMemberName} cancelled their RSVP for the session on ${formatDateTime(sessionInfo.scheduled_at)}`,
+        metadata: { resource_type: 'session' as const, resource_id: sessionId },
+      }))
+      serviceClient.from('notifications').insert(notificationRows).then(() => {})
+    }
+  }
 
   // If the cancelled RSVP was waitlisted, resequence remaining waitlist positions
   if (rsvp.rsvp_type === 'waitlisted') {

@@ -7,7 +7,15 @@ export const CreateEventSchema = z.object({
   title: z.string().min(1, { error: 'Title is required' }).max(100, { error: 'Title must be under 100 characters' }),
   description: z.string().max(1000, { error: 'Description must be under 1000 characters' }).optional().or(z.literal('')),
   venue: z.string().min(1, { error: 'Venue is required' }).max(200, { error: 'Venue must be under 200 characters' }),
-  starts_at_date: z.string().min(1, { error: 'Date is required' }),
+  starts_at_date: z.string().min(1, { error: 'Date is required' }).refine(
+    (val) => {
+      // Compare date strings directly (YYYY-MM-DD) to avoid timezone issues
+      // Get today's date in Sydney timezone for server-safe comparison
+      const sydneyToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+      return val >= sydneyToday
+    },
+    { error: 'Event date cannot be in the past' }
+  ),
   starts_at_time: z.string().min(1, { error: 'Start time is required' }),
   duration_minutes: z.preprocess(
     (v) => (v === '' || v === undefined || v === null ? undefined : Number(v)),

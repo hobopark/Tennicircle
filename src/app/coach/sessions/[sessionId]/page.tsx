@@ -1,8 +1,11 @@
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { SessionDetailPanel } from '@/components/sessions/SessionDetailPanel'
+import { InvitationManager } from '@/components/sessions/InvitationManager'
 import { AppNav } from '@/components/nav/AppNav'
 import { InitialsAvatar } from '@/components/profile/InitialsAvatar'
 import { ProgressNoteForm } from '@/components/profile/ProgressNoteForm'
@@ -141,6 +144,68 @@ export default async function SessionDetailPage({ params }: PageProps) {
     r => r.rsvp_type === 'confirmed' && !r.cancelled_at
   )
 
+  // Fetch invitation list for this template
+  const templateId = session.template_id
+  const { data: invitationRows } = templateId
+    ? await supabase
+        .from('session_invitations')
+        .select('member_id')
+        .eq('template_id', templateId)
+    : { data: [] }
+
+  const invitedMemberIds = new Set((invitationRows ?? []).map(i => i.member_id))
+
+  // Get community_id from session
+  const sessionCommunityId = (session as { community_id?: string }).community_id
+
+  // Fetch all client members in the community for the player picker
+  const { data: allClients } = sessionCommunityId
+    ? await supabase
+        .from('community_members')
+        .select('id, user_id')
+        .eq('community_id', sessionCommunityId)
+        .in('role', ['client', 'member'])
+    : { data: [] }
+
+  // Fetch player profiles for display names + avatars
+  const clientUserIds = (allClients ?? []).map(c => c.user_id)
+  const { data: clientProfiles } = clientUserIds.length > 0
+    ? await supabase
+        .from('player_profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', clientUserIds)
+    : { data: [] }
+
+  const clientProfileMap = new Map(
+    (clientProfiles ?? []).map(p => [p.user_id, p])
+  )
+
+  // Build invited and available player lists
+  const invitedPlayers = (allClients ?? [])
+    .filter(c => invitedMemberIds.has(c.id))
+    .map(c => {
+      const profile = clientProfileMap.get(c.user_id)
+      return {
+        memberId: c.id,
+        displayName: profile?.display_name ?? 'Player',
+        avatarUrl: profile?.avatar_url ?? null,
+      }
+    })
+    .sort((a, b) => a.displayName.localeCompare(b.displayName))
+
+  const availablePlayers = (allClients ?? [])
+    .filter(c => !invitedMemberIds.has(c.id))
+    .map(c => {
+      const profile = clientProfileMap.get(c.user_id)
+      return {
+        memberId: c.id,
+        displayName: profile?.display_name ?? 'Player',
+        avatarUrl: profile?.avatar_url ?? null,
+      }
+    })
+    .filter(p => p.displayName !== 'Player') // Only show players with profiles
+    .sort((a, b) => a.displayName.localeCompare(b.displayName))
+
   return (
     <>
       <AppNav />
@@ -160,6 +225,17 @@ export default async function SessionDetailPage({ params }: PageProps) {
             rsvps={rsvps}
             coaches={coaches}
           />
+
+          {/* Invitation list */}
+          {templateId && (
+            <div className="mt-8">
+              <InvitationManager
+                templateId={templateId}
+                invitedPlayers={invitedPlayers}
+                availablePlayers={availablePlayers}
+              />
+            </div>
+          )}
 
           {/* Progress Notes section */}
           {confirmedRsvps.length > 0 && (
