@@ -2,6 +2,13 @@
 
 import Link from 'next/link'
 import { ChevronRight, MapPin, Calendar } from 'lucide-react'
+import type { EventType } from '@/lib/types/events'
+
+const EVENT_TYPE_BADGE: Record<string, { label: string; className: string }> = {
+  tournament: { label: 'Tournament', className: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
+  social: { label: 'Social', className: 'bg-orange-500/15 text-orange-600 dark:text-orange-400' },
+  open_session: { label: 'Open Session', className: 'bg-primary/10 text-primary' },
+}
 import { motion } from 'framer-motion'
 import { AnnouncementCard } from '@/components/events/AnnouncementCard'
 import type { AnnouncementWithAuthor, EventWithRsvpStatus } from '@/lib/types/events'
@@ -186,14 +193,19 @@ export function ClientDashboard({
                 href={`/events/${event.id}`}
                 className="bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer block"
               >
-                <div className="flex items-start justify-between mb-1">
-                  <h3 className="font-heading font-bold text-base">{event.title}</h3>
+                <div className="flex items-center gap-2 mb-2">
+                  {EVENT_TYPE_BADGE[event.event_type] && (
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${EVENT_TYPE_BADGE[event.event_type].className}`}>
+                      {EVENT_TYPE_BADGE[event.event_type].label}
+                    </span>
+                  )}
                   {event.user_rsvp && event.user_rsvp.cancelled_at === null && (
-                    <span className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full ml-2 flex-shrink-0">
+                    <span className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full">
                       Going
                     </span>
                   )}
                 </div>
+                <h3 className="font-heading font-bold text-base mb-1">{event.title}</h3>
                 <div className="flex items-center gap-1 text-sm text-muted-foreground mb-0.5">
                   <Calendar className="w-3 h-3 flex-shrink-0" />
                   <span>{formatEventDate(event.starts_at)}</span>

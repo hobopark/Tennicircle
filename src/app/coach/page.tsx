@@ -1,6 +1,12 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ChevronRight, Plus, Calendar, MapPin } from 'lucide-react'
+
+const EVENT_TYPE_BADGE: Record<string, { label: string; className: string }> = {
+  tournament: { label: 'Tournament', className: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
+  social: { label: 'Social', className: 'bg-orange-500/15 text-orange-600 dark:text-orange-400' },
+  open_session: { label: 'Open Session', className: 'bg-primary/10 text-primary' },
+}
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { AnnouncementCard } from '@/components/events/AnnouncementCard'
@@ -225,19 +231,27 @@ export default async function CoachDashboardPage() {
             {(upcomingEvents ?? []).length > 0 ? (
               <div className="flex flex-col gap-3">
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {(upcomingEvents ?? []).map((e: any) => (
-                  <Link
-                    key={e.id}
-                    href={`/events/${e.id}`}
-                    className="bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer block"
-                  >
-                    <h3 className="font-heading font-bold text-base">{e.title}</h3>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Calendar className="w-3 h-3 flex-shrink-0" />
-                      <span>{formatSessionDateTime(e.starts_at)}</span>
-                    </div>
-                  </Link>
-                ))}
+                {(upcomingEvents ?? []).map((e: any) => {
+                  const badge = EVENT_TYPE_BADGE[e.event_type]
+                  return (
+                    <Link
+                      key={e.id}
+                      href={`/events/${e.id}`}
+                      className="bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer block"
+                    >
+                      {badge && (
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${badge.className} inline-block mb-2`}>
+                          {badge.label}
+                        </span>
+                      )}
+                      <h3 className="font-heading font-bold text-base mb-1">{e.title}</h3>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Calendar className="w-3 h-3 flex-shrink-0" />
+                        <span>{formatSessionDateTime(e.starts_at)}</span>
+                      </div>
+                    </Link>
+                  )
+                })}
               </div>
             ) : (
               <div className="bg-card rounded-3xl border border-border/50 p-6 text-center">
