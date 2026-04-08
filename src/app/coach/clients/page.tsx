@@ -163,7 +163,7 @@ export default async function ClientsPage() {
               {players.map(player => (
                 <Link
                   key={player.id}
-                  href={`/profile/${player.id}`}
+                  href={`/coach/clients/${player.id}`}
                   className="bg-card rounded-2xl border border-border/50 p-4 active:scale-[0.98] transition-colors flex items-center gap-3"
                 >
                   {/* Avatar */}
