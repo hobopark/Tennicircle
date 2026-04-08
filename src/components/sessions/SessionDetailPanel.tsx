@@ -12,6 +12,7 @@ import type { Session, SessionRsvp } from '@/lib/types/sessions'
 
 interface RsvpWithName extends SessionRsvp {
   member_name: string
+  member_avatar_url?: string | null
 }
 
 interface CoachInfo {
@@ -155,8 +156,19 @@ export function SessionDetailPanel({ session, rsvps, coaches }: SessionDetailPan
         ) : (
           <ul className="divide-y divide-border">
             {confirmedRsvps.map(rsvp => (
-              <li key={rsvp.id} className="py-2 text-base text-foreground">
-                {rsvp.member_name}
+              <li key={rsvp.id} className="py-2 flex items-center gap-3">
+                {rsvp.member_avatar_url ? (
+                  <img
+                    src={rsvp.member_avatar_url}
+                    alt={rsvp.member_name}
+                    className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary flex-shrink-0">
+                    {rsvp.member_name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-base text-foreground">{rsvp.member_name}</span>
               </li>
             ))}
           </ul>

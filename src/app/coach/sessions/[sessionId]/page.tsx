@@ -14,6 +14,7 @@ interface PageProps {
 
 interface RsvpWithName extends SessionRsvp {
   member_name: string
+  member_avatar_url: string | null
 }
 
 interface CoachInfo {
@@ -54,18 +55,19 @@ export default async function SessionDetailPage({ params }: PageProps) {
       .filter(Boolean) as string[]
   )]
 
-  // Build member ID -> display name map (prefer player_profiles over community_members)
+  // Build member ID -> display name + avatar map (prefer player_profiles over community_members)
   const memberNameMap = new Map<string, string>()
+  const memberAvatarMap = new Map<string, string | null>()
 
   if (uniqueUserIds.length > 0) {
-    // Fetch from player_profiles first (has the real display name)
+    // Fetch from player_profiles first (has the real display name + avatar)
     const { data: playerProfiles } = await supabase
       .from('player_profiles')
-      .select('user_id, display_name')
+      .select('user_id, display_name, avatar_url')
       .in('user_id', uniqueUserIds)
 
-    const profileNameByUserId = new Map(
-      (playerProfiles ?? []).map(p => [p.user_id, p.display_name])
+    const profileByUserId = new Map(
+      (playerProfiles ?? []).map(p => [p.user_id, p])
     )
 
     // Fetch community_members to map member_id -> user_id
@@ -75,19 +77,23 @@ export default async function SessionDetailPage({ params }: PageProps) {
       .in('user_id', uniqueUserIds)
 
     for (const m of memberRows ?? []) {
-      const name = profileNameByUserId.get(m.user_id) ?? m.display_name ?? 'Member'
+      const profile = profileByUserId.get(m.user_id)
+      const name = profile?.display_name ?? m.display_name ?? 'Member'
       memberNameMap.set(m.id as string, name as string)
+      memberAvatarMap.set(m.id as string, profile?.avatar_url ?? null)
     }
   }
 
-  // Map RSVPs to include member_name
+  // Map RSVPs to include member_name and avatar
   const rsvps: RsvpWithName[] = (rsvpRows ?? []).map((r: Record<string, unknown>) => {
     const cm = r.community_members as { id: string; user_id: string } | null
-    const memberName = cm ? (memberNameMap.get(cm.id) ?? cm.user_id ?? 'Unknown') : 'Unknown'
+    const memberName = cm ? (memberNameMap.get(cm.id) ?? 'Member') : 'Member'
+    const memberAvatar = cm ? (memberAvatarMap.get(cm.id) ?? null) : null
     const { community_members: _cm, ...rsvpData } = r
     return {
       ...(rsvpData as unknown as SessionRsvp),
       member_name: memberName,
+      member_avatar_url: memberAvatar,
     }
   })
 
@@ -97,10 +103,22 @@ export default async function SessionDetailPage({ params }: PageProps) {
     .select('member_id, is_primary, community_members!inner(id, user_id, display_name)')
     .eq('session_id', sessionId)
 
+  // Look up coach profiles for real names
+  const coachUserIds = (coachRows ?? []).map((c: Record<string, unknown>) => {
+    const cm = c.community_members as { user_id: string } | null
+    return cm?.user_id
+  }).filter(Boolean) as string[]
+
+  const { data: coachProfiles } = coachUserIds.length > 0
+    ? await supabase.from('player_profiles').select('user_id, display_name').in('user_id', coachUserIds)
+    : { data: [] }
+  const coachProfileMap = new Map((coachProfiles ?? []).map(p => [p.user_id, p.display_name]))
+
   const coaches: CoachInfo[] = (coachRows ?? []).map((c: Record<string, unknown>) => {
     const cm = c.community_members as { display_name?: string; user_id: string } | null
+    const name = (cm?.user_id ? coachProfileMap.get(cm.user_id) : null) ?? cm?.display_name ?? 'Coach'
     return {
-      member_name: cm?.display_name ?? cm?.user_id ?? 'Coach',
+      member_name: name,
       is_primary: Boolean(c.is_primary),
     }
   })
@@ -162,11 +180,19 @@ export default async function SessionDetailPage({ params }: PageProps) {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-2">
-                          <InitialsAvatar
-                            name={rsvp.member_name}
-                            size={32}
-                            className="rounded-xl"
-                          />
+                          {rsvp.member_avatar_url ? (
+                            <img
+                              src={rsvp.member_avatar_url}
+                              alt={rsvp.member_name}
+                              className="w-8 h-8 rounded-xl object-cover flex-shrink-0"
+                            />
+                          ) : (
+                            <InitialsAvatar
+                              name={rsvp.member_name}
+                              size={32}
+                              className="rounded-xl"
+                            />
+                          )}
                           <span className="text-sm font-bold text-foreground">
                             {rsvp.member_name}
                           </span>
