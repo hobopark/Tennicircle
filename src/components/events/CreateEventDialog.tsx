@@ -38,19 +38,19 @@ const EVENT_TYPE_OPTIONS: {
     type: 'tournament',
     label: 'Tournament',
     description: 'Post a bracket or competition',
-    icon: <Trophy size={20} className="text-secondary-foreground" />,
+    icon: <Trophy size={20} className="text-blue-500" />,
   },
   {
     type: 'social',
     label: 'Social Event',
     description: 'Drinks, dinners, casual meetups',
-    icon: <PartyPopper size={20} className="text-primary" />,
+    icon: <PartyPopper size={20} className="text-orange-500" />,
   },
   {
     type: 'open_session',
     label: 'Open Session',
     description: 'Court time anyone can join',
-    icon: <Zap size={20} className="text-muted-foreground" />,
+    icon: <Zap size={20} className="text-primary" />,
   },
 ]
 

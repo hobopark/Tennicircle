@@ -155,6 +155,17 @@ function toMinutes(isoString: string): number {
   return d.getHours() * 60 + d.getMinutes()
 }
 
+// Grand Slam colors for event types
+const EVENT_TYPE_COLORS: Record<string, { bg: string; border: string; text: string; badge: string; block: string }> = {
+  tournament: { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-600 dark:text-blue-400', badge: 'bg-blue-500/20', block: 'bg-blue-500' },
+  social: { bg: 'bg-orange-500/10', border: 'border-orange-500/30', text: 'text-orange-600 dark:text-orange-400', badge: 'bg-orange-500/20', block: 'bg-orange-500' },
+  open_session: { bg: 'bg-primary/5', border: 'border-primary/30', text: 'text-primary', badge: 'bg-primary/20', block: 'bg-emerald-500' },
+}
+
+function getEventColors(eventType: string) {
+  return EVENT_TYPE_COLORS[eventType] ?? EVENT_TYPE_COLORS.social
+}
+
 function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -412,6 +423,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
               {/* Event cards in day view */}
               {dayViewEvents.map((evt, index) => {
                 const duration = evt.duration_minutes ?? 60
+                const colors = getEventColors(evt.event_type)
                 return (
                   <motion.div
                     key={evt.id}
@@ -421,13 +433,13 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                   >
                     <Link
                       href={`/events/${evt.id}`}
-                      className="block bg-amber-500/10 border border-amber-500/30 rounded-3xl p-4 active:scale-[0.98] transition-transform cursor-pointer"
+                      className={`block ${colors.bg} border ${colors.border} rounded-3xl p-4 active:scale-[0.98] transition-transform cursor-pointer`}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-bold text-foreground">
                           {formatTimeRange(evt.starts_at, duration)}
                         </span>
-                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-full uppercase">
+                        <span className={`text-[10px] font-bold ${colors.text} ${colors.badge} px-2 py-0.5 rounded-full uppercase`}>
                           {evt.event_type === 'tournament' ? 'Tournament' : evt.event_type === 'social' ? 'Social' : 'Open'}
                         </span>
                       </div>
@@ -666,6 +678,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                       const startFrac = getGridRowFraction(evt.starts_at)
                       const topPx = HEADER_HEIGHT + (startFrac - 2) * ROW_HEIGHT
                       const heightPx = (duration / 30) * ROW_HEIGHT
+                      const evtColors = getEventColors(evt.event_type)
 
                       return (
                         <div
@@ -682,7 +695,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                         >
                           <Link
                             href={`/events/${evt.id}`}
-                            className="block h-full w-full rounded-lg text-[13px] p-1 overflow-hidden cursor-pointer transition-opacity hover:opacity-90 bg-amber-500 text-white"
+                            className={`block h-full w-full rounded-lg text-[13px] p-1 overflow-hidden cursor-pointer transition-opacity hover:opacity-90 ${evtColors.block} text-white`}
                           >
                             <div className="font-medium truncate leading-tight">
                               {evt.title}

@@ -7,10 +7,11 @@ import { EventRsvpButton } from '@/components/events/EventRsvpButton'
 import { EVENT_TYPE_LABELS } from '@/lib/types/events'
 import type { EventRsvp, EventType } from '@/lib/types/events'
 
+// Grand Slam inspired: AO blue, RG orange, Wimbledon green
 const TYPE_BADGE_CLASSES: Record<EventType, string> = {
-  tournament: 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-secondary/20 text-secondary-foreground',
-  social: 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-primary/10 text-primary',
-  open_session: 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent text-accent-foreground',
+  tournament: 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400',
+  social: 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-orange-500/15 text-orange-600 dark:text-orange-400',
+  open_session: 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-primary/10 text-primary',
 }
 
 function formatEventDate(startsAt: string): string {
