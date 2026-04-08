@@ -1,9 +1,18 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { ChevronRight, Users } from 'lucide-react'
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { InitialsAvatar } from '@/components/profile/InitialsAvatar'
 import type { UserRole } from '@/lib/types/auth'
+
+function formatAttendanceDate(isoString: string): string {
+  return new Date(isoString).toLocaleDateString('en-AU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
 
 export default async function ClientsPage() {
   const supabase = await createClient()
@@ -67,10 +76,48 @@ export default async function ClientsPage() {
     }
   }
 
+  // Fetch attendance data: two-step approach (established codebase pattern)
+  // Step 1: fetch confirmed RSVPs for all member IDs
+  const { data: rsvpData } = memberIds.length > 0
+    ? await supabase
+        .from('session_rsvps')
+        .select('member_id, session_id')
+        .in('member_id', memberIds)
+        .eq('rsvp_type', 'confirmed')
+        .is('cancelled_at', null)
+    : { data: [] }
+
+  // Step 2: fetch session scheduled_at for all RSVP session IDs
+  const rsvpSessionIds = [...new Set((rsvpData ?? []).map(r => r.session_id))]
+  const { data: sessionDates } = rsvpSessionIds.length > 0
+    ? await supabase
+        .from('sessions')
+        .select('id, scheduled_at')
+        .in('id', rsvpSessionIds)
+    : { data: [] }
+
+  const sessionDateMap = new Map((sessionDates ?? []).map(s => [s.id, s.scheduled_at]))
+
+  // Compute first lesson and last session per member
+  const attendanceMap = new Map<string, { firstLesson: string | null; lastSession: string | null }>()
+  for (const rsvp of (rsvpData ?? [])) {
+    const scheduledAt = sessionDateMap.get(rsvp.session_id)
+    if (!scheduledAt) continue
+
+    const existing = attendanceMap.get(rsvp.member_id)
+    if (!existing) {
+      attendanceMap.set(rsvp.member_id, { firstLesson: scheduledAt, lastSession: scheduledAt })
+    } else {
+      if (scheduledAt < existing.firstLesson!) existing.firstLesson = scheduledAt
+      if (scheduledAt > existing.lastSession!) existing.lastSession = scheduledAt
+    }
+  }
+
   const players = (members ?? [])
     .map(m => {
       const profile = profileMap.get(m.user_id)
       const assessment = assessmentMap.get(m.id)
+      const attendance = attendanceMap.get(m.id)
       return {
         id: m.id,
         displayName: profile?.display_name ?? m.display_name ?? 'Unnamed',
@@ -78,6 +125,8 @@ export default async function ClientsPage() {
         selfLevel: profile?.self_skill_level ?? null,
         coachLevel: assessment?.skill_level ?? null,
         hasProfile: !!profile,
+        firstLesson: attendance?.firstLesson ?? null,
+        lastSession: attendance?.lastSession ?? null,
       }
     })
     .filter(p => p.hasProfile)
@@ -87,53 +136,63 @@ export default async function ClientsPage() {
     <>
       <AppNav />
       <div className="min-h-screen bg-background">
-        <div className="max-w-[640px] mx-auto px-5 py-8">
-          <h1 className="font-heading font-bold text-2xl text-foreground mb-6">
-            Clients ({players.length})
+        <div className="max-w-[640px] mx-auto px-5 pt-14 pb-24">
+          <h1 className="font-heading font-bold text-2xl text-foreground mb-4">
+            Players ({players.length})
           </h1>
 
           {players.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No players have set up profiles yet.
-            </p>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Users className="w-8 h-8 text-muted mb-3" />
+              <p className="font-heading font-bold text-base mb-1">No players yet</p>
+              <p className="text-sm text-muted-foreground">
+                Players will appear here once they&apos;ve set up their profiles.
+              </p>
+            </div>
           ) : (
             <div className="flex flex-col gap-2">
               {players.map(player => (
                 <Link
                   key={player.id}
                   href={`/profile/${player.id}`}
-                  className="flex items-center gap-4 p-4 bg-card rounded-2xl border border-border/50 hover:bg-muted/50 transition-colors"
+                  className="bg-card rounded-2xl border border-border/50 p-4 active:scale-[0.98] transition-colors flex items-center gap-3"
                 >
+                  {/* Avatar */}
                   {player.avatarUrl ? (
                     <img
                       src={player.avatarUrl}
-                      className="w-10 h-10 rounded-xl object-cover"
+                      className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
                       alt={`${player.displayName}'s avatar`}
                     />
                   ) : (
-                    <InitialsAvatar name={player.displayName} size={40} />
+                    <div className="flex-shrink-0">
+                      <InitialsAvatar name={player.displayName} size={40} className="rounded-xl" />
+                    </div>
                   )}
+
+                  {/* Name + attendance */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
+                    <p className="text-sm font-bold text-foreground truncate">
                       {player.displayName}
                     </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {player.coachLevel && (
-                        <span className="text-xs text-primary font-medium">
-                          {player.coachLevel.charAt(0).toUpperCase() + player.coachLevel.slice(1)}
+                    {player.lastSession ? (
+                      <div className="flex flex-col mt-0.5">
+                        <span className="text-[10px] text-muted-foreground">
+                          Last session: {formatAttendanceDate(player.lastSession)}
                         </span>
-                      )}
-                      {!player.coachLevel && player.selfLevel && (
-                        <span className="text-xs text-muted-foreground">
-                          Self: {player.selfLevel.charAt(0).toUpperCase() + player.selfLevel.slice(1)}
-                        </span>
-                      )}
-                      {!player.coachLevel && !player.selfLevel && (
-                        <span className="text-xs text-muted-foreground">Not assessed</span>
-                      )}
-                    </div>
+                        {player.firstLesson && (
+                          <span className="text-[10px] text-muted-foreground">
+                            First lesson: {formatAttendanceDate(player.firstLesson)}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground italic">No sessions yet</span>
+                    )}
                   </div>
-                  <span className="text-muted-foreground text-xs">→</span>
+
+                  {/* Navigation affordance */}
+                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 </Link>
               ))}
             </div>
