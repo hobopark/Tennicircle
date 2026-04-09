@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronRight, MapPin, Calendar, User } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -7,6 +8,7 @@ import { AnnouncementCard } from '@/components/events/AnnouncementCard'
 import type { AnnouncementWithAuthor, EventWithRsvpStatus } from '@/lib/types/events'
 import { formatSessionDateTime, formatEventDate } from '@/lib/utils/dates'
 import { EVENT_TYPE_BADGE } from '@/lib/constants/events'
+import { getTimezoneLabel, isTodaySydney } from '@/lib/utils/timezone'
 
 interface UpcomingSession {
   id: string
@@ -38,6 +40,68 @@ interface ClientDashboardProps {
   userRole: string
 }
 
+function CapacityBadge({ confirmed, capacity }: { confirmed: number; capacity: number }) {
+  const isFull = confirmed >= capacity
+  const isAlmostFull = !isFull && confirmed / capacity >= 0.75
+  const colorClass = isFull
+    ? 'text-red-500 bg-red-500/10'
+    : isAlmostFull
+    ? 'text-orange-500 bg-orange-500/10'
+    : 'text-primary bg-primary/10'
+  return (
+    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${colorClass}`}>
+      {confirmed}/{capacity} spots
+    </span>
+  )
+}
+
+function SessionCard({ session, tzLabel }: { session: UpcomingSession; tzLabel: string | null }) {
+  const isWaitlisted = session.rsvp_type === 'waitlisted'
+  return (
+    <Link
+      href={`/sessions/${session.id}`}
+      className="bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer block"
+    >
+      <div className="flex items-start justify-between mb-1">
+        <h3 className="font-heading font-bold text-base">
+          {session.template_title ?? session.title}
+        </h3>
+        <div className="flex items-center gap-1.5 ml-2 flex-shrink-0 flex-wrap justify-end">
+          {isWaitlisted ? (
+            <span className="text-[10px] font-bold text-orange-500 px-2.5 py-1 rounded-full bg-orange-500/10">
+              Waitlisted &mdash; #{session.waitlist_position ?? '?'} in line
+            </span>
+          ) : (
+            <span className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+              Going
+            </span>
+          )}
+          {session.capacity != null && (
+            <CapacityBadge confirmed={session.confirmed_count} capacity={session.capacity} />
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-1 text-sm text-muted-foreground mb-0.5">
+        <Calendar className="w-3 h-3 flex-shrink-0" />
+        <span>{formatSessionDateTime(session.scheduled_at)}</span>
+        {tzLabel && <span className="text-muted-foreground ml-1">{tzLabel}</span>}
+      </div>
+      {session.venue && (
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <MapPin className="w-3 h-3 flex-shrink-0" />
+          <span>{session.venue}</span>
+        </div>
+      )}
+      {session.coach_name && (
+        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
+          <User className="w-3 h-3 flex-shrink-0" />
+          <span>{session.coach_name}</span>
+        </div>
+      )}
+    </Link>
+  )
+}
+
 export function ClientDashboard({
   firstName,
   displayName,
@@ -47,6 +111,12 @@ export function ClientDashboard({
   announcements,
   userRole,
 }: ClientDashboardProps) {
+  const [tzLabel, setTzLabel] = useState<string | null>(null)
+  useEffect(() => { setTzLabel(getTimezoneLabel()) }, [])
+
+  const todaySessions = upcomingSessions.filter(s => isTodaySydney(s.scheduled_at))
+  const thisWeekSessions = upcomingSessions.filter(s => !isTodaySydney(s.scheduled_at))
+
   return (
     <div className="px-5 pt-14 pb-24 max-w-[640px] mx-auto">
       {/* Greeting */}
@@ -98,38 +168,22 @@ export function ClientDashboard({
 
         {upcomingSessions.length > 0 ? (
           <div className="flex flex-col gap-3">
-            {upcomingSessions.map(session => (
-              <Link
-                key={session.id}
-                href={`/sessions/${session.id}`}
-                className="bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer block"
-              >
-                <div className="flex items-start justify-between mb-1">
-                  <h3 className="font-heading font-bold text-base">
-                    {session.template_title ?? session.title}
-                  </h3>
-                  <span className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full ml-2 flex-shrink-0">
-                    {session.rsvp_type === 'confirmed' ? 'Going' : 'Waitlisted'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground mb-0.5">
-                  <Calendar className="w-3 h-3 flex-shrink-0" />
-                  <span>{formatSessionDateTime(session.scheduled_at)}</span>
-                </div>
-                {session.venue && (
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <MapPin className="w-3 h-3 flex-shrink-0" />
-                    <span>{session.venue}</span>
-                  </div>
-                )}
-                {session.coach_name && (
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
-                    <User className="w-3 h-3 flex-shrink-0" />
-                    <span>{session.coach_name}</span>
-                  </div>
-                )}
-              </Link>
-            ))}
+            {todaySessions.length > 0 && (
+              <>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide px-1">Today</p>
+                {todaySessions.map(session => (
+                  <SessionCard key={session.id} session={session} tzLabel={tzLabel} />
+                ))}
+              </>
+            )}
+            {thisWeekSessions.length > 0 && (
+              <>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide px-1">This Week</p>
+                {thisWeekSessions.map(session => (
+                  <SessionCard key={session.id} session={session} tzLabel={tzLabel} />
+                ))}
+              </>
+            )}
           </div>
         ) : (
           <div className="bg-card rounded-3xl border border-border/50 p-6 text-center">
