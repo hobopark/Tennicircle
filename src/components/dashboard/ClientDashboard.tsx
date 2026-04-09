@@ -15,7 +15,9 @@ interface UpcomingSession {
   duration_minutes: number | null
   venue: string | null
   capacity: number | null
+  confirmed_count: number
   rsvp_type: string
+  waitlist_position: number | null
   template_title: string | null
   coach_name?: string | null
 }
