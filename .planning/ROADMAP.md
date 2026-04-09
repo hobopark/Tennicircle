@@ -124,8 +124,9 @@ Plans:
   2. The calendar defaults to week view on desktop and day view on mobile; all session times display the correct timezone
   3. Attempting to RSVP to a full session from two browser tabs simultaneously results in one success and one waitlist placement — not two RSVPs
   4. An RLS audit confirms every database table has row-level security enabled with correct community-scoping policies
-**Plans:** 4 plans
+**Plans:** 5 plans
 Plans:
+- [ ] 07-00-PLAN.md — Wave 0: test stub files for all Phase 7 requirements
 - [ ] 07-01-PLAN.md — Junction table migration, types, and assignment server actions
 - [ ] 07-02-PLAN.md — Open sign-up auto-join and processInviteSignup junction table update
 - [ ] 07-03-PLAN.md — Roster UI: invite button, member cards, role management, client assignment
