@@ -6,6 +6,8 @@ import { createClient, getUserRole } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { InitialsAvatar } from '@/components/profile/InitialsAvatar'
 import { formatAttendanceDate } from '@/lib/utils/dates'
+import { getPendingRequests } from '@/lib/actions/communities'
+import { RosterClientWrapper } from '@/app/c/[slug]/coach/clients/RosterClientWrapper'
 
 export default async function ClientsPage({
   params,
@@ -30,6 +32,9 @@ export default async function ClientsPage({
   const { role, memberId } = membership
 
   if (role !== 'coach' && role !== 'admin') redirect(`/c/${slug}/sessions`)
+
+  // Fetch pending join requests for coaches/admins
+  const { data: pendingRequests } = await getPendingRequests(community.id)
 
   // Fetch community members who are clients
   // Coaches see only their assigned clients; admins see all
@@ -149,6 +154,11 @@ export default async function ClientsPage({
           <h1 className="font-heading font-bold text-2xl text-foreground mb-4">
             Players ({players.length})
           </h1>
+
+          <RosterClientWrapper
+            pendingRequests={pendingRequests ?? []}
+            communitySlug={slug}
+          />
 
           {players.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">

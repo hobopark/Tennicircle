@@ -8,6 +8,7 @@ import { ShieldCheck, LayoutDashboard, CalendarDays, Calendar, Users, User, Trop
 import { createClient } from '@/lib/supabase/client'
 import { useMaybeCommunity } from '@/lib/context/community'
 import { CommunitySwitcherDropdown } from '@/components/nav/CommunitySwitcherDropdown'
+import { getPendingRequests } from '@/lib/actions/communities'
 import type { UserRole } from '@/lib/types/auth'
 
 // Role-based nav tab definitions — paths are relative sub-paths after /c/{slug}
@@ -72,6 +73,7 @@ export function AppNav() {
   const router = useRouter()
   const [unreadCount, setUnreadCount] = useState(0)
   const [memberId, setMemberId] = useState<string | null>(null)
+  const [pendingCount, setPendingCount] = useState(0)
 
   // Safe community context — null on global routes like /profile
   const community = useMaybeCommunity()
@@ -100,6 +102,18 @@ export function AppNav() {
         }
       })
   }, [community?.membershipId])
+
+  // Fetch pending join request count for Clients tab badge
+  useEffect(() => {
+    if (!community) {
+      setPendingCount(0)
+      return
+    }
+    if (community.role !== 'admin' && community.role !== 'coach') return
+    getPendingRequests(community.communityId).then(result => {
+      if (result.success && result.data) setPendingCount(result.data.length)
+    })
+  }, [community?.communityId, community?.role])
 
   // Realtime subscription for live badge updates
   useEffect(() => {
@@ -224,6 +238,18 @@ export function AppNav() {
                             aria-label={`${unreadCount > 9 ? '9+' : unreadCount} unread notifications`}
                           >
                             {unreadCount > 9 ? '9+' : unreadCount}
+                          </span>
+                        )}
+                      </span>
+                    ) : tab.subPath === '/coach/clients' ? (
+                      <span className="relative">
+                        <Users className="w-5 h-5" aria-hidden="true" />
+                        {pendingCount > 0 && (
+                          <span
+                            className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-bold min-w-[16px] h-4 rounded-full flex items-center justify-center px-0.5"
+                            aria-label={`${pendingCount} pending join request${pendingCount !== 1 ? 's' : ''}`}
+                          >
+                            {pendingCount > 9 ? '9+' : pendingCount}
                           </span>
                         )}
                       </span>
