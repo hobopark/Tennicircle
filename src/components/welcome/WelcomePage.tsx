@@ -36,27 +36,23 @@ export function WelcomePage() {
       setJoining(true)
       const result = await joinCommunityAsClient()
       if (result.success) {
-        // Refresh session to get new JWT with community claims
-        const supabase = createClient()
-        await supabase.auth.refreshSession()
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.access_token) {
-          try {
-            const payload = JSON.parse(atob(session.access_token.split('.')[1]))
-            const newRole = (payload.user_role as UserRole) || 'pending'
-            setRole(newRole)
-          } catch { /* fall through */ }
-        }
+        // JWT refresh may lag behind the DB insert — set role directly
+        // since we know the insert used role: 'client'
+        setRole('client')
       } else if (result.error === 'Already a community member') {
-        // Already joined — refresh to get correct role
+        // Already joined — try refreshing JWT, fall back to 'client'
         const supabase = createClient()
         await supabase.auth.refreshSession()
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.access_token) {
           try {
             const payload = JSON.parse(atob(session.access_token.split('.')[1]))
-            setRole((payload.user_role as UserRole) || 'pending')
-          } catch { /* fall through */ }
+            setRole((payload.user_role as UserRole) || 'client')
+          } catch {
+            setRole('client')
+          }
+        } else {
+          setRole('client')
         }
       } else {
         toast.error(result.error ?? 'Failed to join community')
