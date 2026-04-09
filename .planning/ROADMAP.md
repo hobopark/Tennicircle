@@ -124,7 +124,12 @@ Plans:
   2. The calendar defaults to week view on desktop and day view on mobile; all session times display the correct timezone
   3. Attempting to RSVP to a full session from two browser tabs simultaneously results in one success and one waitlist placement — not two RSVPs
   4. An RLS audit confirms every database table has row-level security enabled with correct community-scoping policies
-**Plans:** [To be planned]
+**Plans:** 4 plans
+Plans:
+- [ ] 07-01-PLAN.md — Junction table migration, types, and assignment server actions
+- [ ] 07-02-PLAN.md — Open sign-up auto-join and processInviteSignup junction table update
+- [ ] 07-03-PLAN.md — Roster UI: invite button, member cards, role management, client assignment
+- [ ] 07-04-PLAN.md — Schema push (manual) and end-to-end verification checkpoint
 **UI hint**: yes
 
 ### Phase 7: Member Management & Invite System
@@ -139,7 +144,12 @@ Plans:
   4. A coach can view all members in the community, with a filter toggle for "my clients" only
   5. A coach can assign any unassigned member to themselves and remove members from their own client list
   6. Members without completed profiles appear in the roster with a "profile pending" state (not silently hidden)
-**Plans:** [To be planned]
+**Plans:** 4 plans
+Plans:
+- [ ] 07-01-PLAN.md — Junction table migration, types, and assignment server actions
+- [ ] 07-02-PLAN.md — Open sign-up auto-join and processInviteSignup junction table update
+- [ ] 07-03-PLAN.md — Roster UI: invite button, member cards, role management, client assignment
+- [ ] 07-04-PLAN.md — Schema push (manual) and end-to-end verification checkpoint
 **UI hint**: yes
 
 ### Phase 8: Community Selector & Open Sign-Up
@@ -153,7 +163,12 @@ Plans:
   4. A join request requires coach or admin approval before the member gains access
   5. An admin can create a new community and becomes that community's first admin (future: paid feature for non-admins)
   6. Routing is restructured so community context is part of the navigation (dashboard loads after community selection, not directly after login)
-**Plans:** [To be planned]
+**Plans:** 4 plans
+Plans:
+- [ ] 07-01-PLAN.md — Junction table migration, types, and assignment server actions
+- [ ] 07-02-PLAN.md — Open sign-up auto-join and processInviteSignup junction table update
+- [ ] 07-03-PLAN.md — Roster UI: invite button, member cards, role management, client assignment
+- [ ] 07-04-PLAN.md — Schema push (manual) and end-to-end verification checkpoint
 **UI hint**: yes
 
 ## Progress
@@ -169,5 +184,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 4. Coach Dashboard & Community Events | 6/6 | Complete | - |
 | 5. Notifications | 4/4 | Complete | - |
 | 6. Polish & Launch Readiness | 5/5 | Complete | - |
-| 7. Member Management & Invite System | 0/? | Not started | - |
+| 7. Member Management & Invite System | 0/4 | Planning complete | - |
 | 8. Community Selector & Open Sign-Up | 0/? | Not started | - |
