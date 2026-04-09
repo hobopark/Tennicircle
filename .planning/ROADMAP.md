@@ -69,7 +69,7 @@ Plans:
   2. A coach can set or update a coach-assessed skill level on a player's profile, visible alongside the self-assessed level
   3. A player can view their lesson history showing all sessions attended and which coaches they worked with
   4. A coach can add a progress note after a session, and the player can see that note on their profile
-**Plans:** 4 plans
+**Plans:** 5 plans
 Plans:
 - [x] 03-01-PLAN.md — Database migration (3 tables + display_name), types, validations, server actions, test stubs, dependency installs
 - [x] 03-02-PLAN.md — Profile setup wizard (4-step), avatar upload with square crop, skill level selector
@@ -105,7 +105,7 @@ Plans:
   1. A client receives an in-app notification before their upcoming session (session reminder)
   2. A client receives an in-app notification when a coach or admin posts an announcement
   3. A client receives an in-app confirmation notification when their RSVP is accepted or when they are promoted from the waitlist
-**Plans:** 4 plans
+**Plans:** 5 plans
 Plans:
 - [x] 05-01-PLAN.md — Database schema (notifications table), RLS, types, mark-as-read server actions
 - [x] 05-02-PLAN.md — Wire notification inserts into announcement/RSVP actions, Vercel Cron session reminders
@@ -122,8 +122,9 @@ Plans:
   2. The calendar defaults to week view on desktop and day view on mobile; all session times display the correct timezone
   3. Attempting to RSVP to a full session from two browser tabs simultaneously results in one success and one waitlist placement — not two RSVPs
   4. An RLS audit confirms every database table has row-level security enabled with correct community-scoping policies
-**Plans:** 4 plans
+**Plans:** 5 plans
 Plans:
+- [ ] 06-00-PLAN.md — Wave 0 test stubs (capacity, waitlist, session grouping, timezone)
 - [ ] 06-01-PLAN.md — Session card capacity display, waitlist inline, Today/This Week grouping, timezone suffix
 - [ ] 06-02-PLAN.md — Atomic RSVP RPC function with FOR UPDATE lock, rsvps.ts refactor, schema push
 - [ ] 06-03-PLAN.md — Calendar frozen panes, view preference persistence, logout Dialog, profile cancel button
@@ -142,4 +143,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Player Profiles | 0/4 | Planning complete | - |
 | 4. Coach Dashboard & Community Events | 0/6 | Planning complete | - |
 | 5. Notifications | 0/4 | Planning complete | - |
-| 6. Polish & Launch Readiness | 0/4 | Planning complete | - |
+| 6. Polish & Launch Readiness | 0/5 | Planning complete | - |

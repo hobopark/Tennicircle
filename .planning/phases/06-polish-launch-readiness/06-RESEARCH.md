@@ -507,17 +507,19 @@ Note: `AppNav` is a client component — Dialog state works without any addition
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Where exactly does capacity data come from for session cards on the client dashboard?**
    - What we know: `upcomingSessions` in `ClientDashboard` includes `capacity: number | null` but NOT `confirmedCount`. The sessions page fetches RSVPs but doesn't count confirmed per session.
    - What's unclear: Is there an existing query to augment with confirmed counts, or does a new query need to join `session_rsvps`?
    - Recommendation: Add a batch confirmed-count query in `sessions/page.tsx` keyed by session_id, similar to how `eventRsvpCountMap` is built for events (lines 195–199 of `sessions/page.tsx`). This is already a proven pattern in the codebase.
+   - **Resolution:** Confirmed — capacity count uses the batch query pattern from `eventRsvpCountMap` in `sessions/page.tsx`. A parallel `sessionConfirmedCountMap` will be built the same way.
 
 2. **Does `ProfileSetupWizard` have multi-step internal state that makes a simple cancel non-trivial?**
    - What we know: The file exists at `src/components/profile/ProfileSetupWizard.tsx` but was not read in full.
    - What's unclear: Whether cancel from mid-wizard needs to reset state or simply navigate away.
    - Recommendation: Read before implementing; if multi-step, `router.push('/profile')` from any step is sufficient since the wizard is re-entrant.
+   - **Resolution:** Confirmed — `ProfileSetupWizard` cancel is a simple `Link href="/profile"`. The wizard is re-entrant; navigating away does not lose data that cannot be re-entered on return.
 
 ---
 
