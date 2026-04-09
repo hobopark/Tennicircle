@@ -14,7 +14,7 @@ describe('Waitlist inline display logic', () => {
   })
 
   it('shows "Going" when rsvp_type is confirmed', () => {
-    const rsvp_type = 'confirmed'
+    const rsvp_type: string = 'confirmed'
     const waitlist_position = null
     const display = rsvp_type === 'waitlisted'
       ? `Waitlisted \u2014 #${waitlist_position ?? '?'} in line`
