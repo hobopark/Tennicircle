@@ -11,7 +11,8 @@ export default async function ProfileSetupPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth')
 
-  // Get JWT claims for communityId
+  // Get JWT claims for communityId — refresh first in case user just joined
+  await supabase.auth.refreshSession()
   const claims = await getJWTClaims(supabase)
   if (!claims.community_id) redirect('/welcome')
 
