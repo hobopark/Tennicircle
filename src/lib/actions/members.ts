@@ -138,6 +138,87 @@ export async function joinCommunityAsClient(): Promise<{ success: boolean; error
   return { success: true }
 }
 
+// MGMT-06 + D-09: Coach assigns a client to themselves
+export async function assignClient(
+  clientMemberId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const claims = await getJWTClaims(supabase)
+  if (claims.user_role !== 'coach' && claims.user_role !== 'admin') {
+    return { success: false, error: 'Only coaches and admins can assign clients' }
+  }
+  if (!claims.community_id) {
+    return { success: false, error: 'No community associated with your account' }
+  }
+
+  // Get the current user's community_members record
+  const { data: selfMember } = await supabase
+    .from('community_members')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('community_id', claims.community_id)
+    .single()
+
+  if (!selfMember) return { success: false, error: 'Member record not found' }
+
+  const { error } = await supabase
+    .from('coach_client_assignments')
+    .insert({
+      community_id: claims.community_id,
+      coach_member_id: selfMember.id,
+      client_member_id: clientMemberId,
+    })
+
+  if (error) {
+    if (error.message.includes('duplicate') || error.message.includes('unique')) {
+      return { success: false, error: 'Client is already assigned to you' }
+    }
+    return { success: false, error: error.message }
+  }
+  return { success: true }
+}
+
+// MGMT-06 + D-09: Coach removes a client from their own list
+export async function removeClientAssignment(
+  clientMemberId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const claims = await getJWTClaims(supabase)
+  if (claims.user_role !== 'coach' && claims.user_role !== 'admin') {
+    return { success: false, error: 'Only coaches and admins can remove client assignments' }
+  }
+  if (!claims.community_id) {
+    return { success: false, error: 'No community associated with your account' }
+  }
+
+  // Get the current user's community_members record
+  const { data: selfMember } = await supabase
+    .from('community_members')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('community_id', claims.community_id)
+    .single()
+
+  if (!selfMember) return { success: false, error: 'Member record not found' }
+
+  const { error } = await supabase
+    .from('coach_client_assignments')
+    .delete()
+    .eq('coach_member_id', selfMember.id)
+    .eq('client_member_id', clientMemberId)
+
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}
+
 // Remove a member from the community (admin only)
 export async function removeMember(
   memberId: string
