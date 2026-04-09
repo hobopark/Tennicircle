@@ -19,7 +19,7 @@ import type { ProfileInput } from '@/lib/validations/profiles'
 interface ProfileSetupWizardProps {
   existingProfile: PlayerProfile | null
   email: string
-  communityId: string
+  communityId: string | null
   userId: string
   userRole: string
 }
@@ -114,7 +114,7 @@ export function ProfileSetupWizard({
         utr: utrValue && !isNaN(utrValue as number) ? utrValue : undefined,
       }
 
-      const result = await upsertProfile(submitData)
+      const result = await upsertProfile(communityId, submitData)
 
       if (result.success) {
         toast.success('Profile saved')

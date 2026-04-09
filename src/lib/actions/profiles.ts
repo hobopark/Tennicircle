@@ -1,12 +1,14 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, getJWTClaims } from '@/lib/supabase/server'
+import { createClient, getUserRole } from '@/lib/supabase/server'
 import { ProfileSchema, CoachAssessmentSchema, ProgressNoteSchema } from '@/lib/validations/profiles'
 import type { ProfileActionResult, PlayerProfile, CoachAssessment, LessonHistoryEntry, LessonHistorySummary } from '@/lib/types/profiles'
 
 // PROF-01: Fetch profile for given user or current user
+// Community-scoped: communityId required to scope profile and assessment lookup
 export async function getProfile(
+  communityId: string,
   userId?: string
 ): Promise<{ success: boolean; data?: { profile: PlayerProfile | null; latestAssessment: CoachAssessment | null }; error?: string }> {
   const supabase = await createClient()
@@ -14,9 +16,8 @@ export async function getProfile(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const claims = await getJWTClaims(supabase)
-  const communityId = claims.community_id
-  if (!communityId) return { success: false, error: 'No community associated with your account' }
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
 
   const targetUserId = userId ?? user.id
 
@@ -62,15 +63,15 @@ export async function getProfile(
 }
 
 // PROF-01: Upsert player profile
-export async function upsertProfile(input: unknown): Promise<ProfileActionResult> {
+// communityId is now explicit — null means global profile (open sign-up, pre-community-join)
+export async function upsertProfile(
+  communityId: string | null,
+  input: unknown
+): Promise<ProfileActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
-
-  const claims = await getJWTClaims(supabase)
-  const communityId = claims.community_id
-  if (!communityId) return { success: false, error: 'No community associated with your account' }
 
   let parsed
   try {
@@ -79,32 +80,59 @@ export async function upsertProfile(input: unknown): Promise<ProfileActionResult
     return { success: false, error: err instanceof Error ? err.message : 'Invalid input' }
   }
 
-  const { error: upsertError } = await supabase
-    .from('player_profiles')
-    .upsert(
-      {
-        community_id: communityId,
-        user_id: user.id,
-        display_name: parsed.displayName,
-        phone: parsed.phone ?? null,
-        bio: parsed.bio ?? null,
-        self_skill_level: parsed.skillLevel ?? null,
-        utr: parsed.utr ?? null,
-        avatar_url: parsed.avatarUrl ?? null,
-        coaching_bio: parsed.coachingBio ?? null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id,community_id' }
-    )
+  const profileData = {
+    user_id: user.id,
+    display_name: parsed.displayName,
+    phone: parsed.phone ?? null,
+    bio: parsed.bio ?? null,
+    self_skill_level: parsed.skillLevel ?? null,
+    utr: parsed.utr ?? null,
+    avatar_url: parsed.avatarUrl ?? null,
+    coaching_bio: parsed.coachingBio ?? null,
+    updated_at: new Date().toISOString(),
+  }
 
-  if (upsertError) return { success: false, error: upsertError.message }
+  if (communityId === null) {
+    // Global profile (open sign-up flow, no community yet)
+    // PostgREST upsert doesn't reliably handle partial unique indexes with NULL values,
+    // so we use select-then-insert-or-update pattern.
+    const { data: existing } = await supabase
+      .from('player_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .is('community_id', null)
+      .maybeSingle()
 
-  // Sync display_name to community_members
-  await supabase
-    .from('community_members')
-    .update({ display_name: parsed.displayName })
-    .eq('user_id', user.id)
-    .eq('community_id', communityId)
+    if (existing) {
+      const { error: updateError } = await supabase
+        .from('player_profiles')
+        .update(profileData)
+        .eq('id', existing.id)
+      if (updateError) return { success: false, error: updateError.message }
+    } else {
+      const { error: insertError } = await supabase
+        .from('player_profiles')
+        .insert({ ...profileData, community_id: null })
+      if (insertError) return { success: false, error: insertError.message }
+    }
+  } else {
+    // Community-specific profile (invite flow)
+    const { error: upsertError } = await supabase
+      .from('player_profiles')
+      .upsert(
+        { ...profileData, community_id: communityId },
+        { onConflict: 'user_id,community_id' }
+      )
+
+    if (upsertError) return { success: false, error: upsertError.message }
+
+    // Sync display_name to community_members
+    await supabase
+      .from('community_members')
+      .update({ display_name: parsed.displayName })
+      .eq('user_id', user.id)
+      .eq('community_id', communityId)
+  }
 
   revalidatePath('/profile')
 
@@ -112,18 +140,22 @@ export async function upsertProfile(input: unknown): Promise<ProfileActionResult
 }
 
 // PROF-02: Coach sets skill assessment for a player
-export async function setCoachAssessment(input: unknown): Promise<ProfileActionResult> {
+// Community-scoped: communityId + communitySlug required
+export async function setCoachAssessment(
+  communityId: string,
+  communitySlug: string,
+  input: unknown
+): Promise<ProfileActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const claims = await getJWTClaims(supabase)
-  const communityId = claims.community_id
-  if (!communityId) return { success: false, error: 'No community associated with your account' }
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
 
   // Role check: only admin or coach can set assessments (T-3-01)
-  if (claims.user_role !== 'admin' && claims.user_role !== 'coach') {
+  if (membership.role !== 'admin' && membership.role !== 'coach') {
     return { success: false, error: 'Only coaches and admins can set skill assessments' }
   }
 
@@ -135,23 +167,13 @@ export async function setCoachAssessment(input: unknown): Promise<ProfileActionR
     return { success: false, error: err instanceof Error ? err.message : String(err) }
   }
 
-  // Get current user's community_members id as coach_member_id
-  const { data: coachMember } = await supabase
-    .from('community_members')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('community_id', communityId)
-    .maybeSingle()
-
-  if (!coachMember) return { success: false, error: 'Coach member record not found' }
-
   const { error: upsertError } = await supabase
     .from('coach_assessments')
     .upsert(
       {
         community_id: communityId,
         subject_member_id: parsed.subjectMemberId,
-        coach_member_id: coachMember.id,
+        coach_member_id: membership.memberId,
         skill_level: parsed.skillLevel,
         assessed_at: new Date().toISOString(),
       },
@@ -160,24 +182,28 @@ export async function setCoachAssessment(input: unknown): Promise<ProfileActionR
 
   if (upsertError) return { success: false, error: upsertError.message }
 
-  revalidatePath('/profile')
+  revalidatePath(`/c/${communitySlug}/profile`)
 
   return { success: true }
 }
 
 // PROF-04: Coach adds a progress note for a session attendee
-export async function addProgressNote(input: unknown): Promise<ProfileActionResult> {
+// Community-scoped: communityId + communitySlug required
+export async function addProgressNote(
+  communityId: string,
+  communitySlug: string,
+  input: unknown
+): Promise<ProfileActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const claims = await getJWTClaims(supabase)
-  const communityId = claims.community_id
-  if (!communityId) return { success: false, error: 'No community associated with your account' }
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
 
   // Role check: only admin or coach can add notes (T-3-06)
-  if (claims.user_role !== 'admin' && claims.user_role !== 'coach') {
+  if (membership.role !== 'admin' && membership.role !== 'coach') {
     return { success: false, error: 'Only coaches and admins can add progress notes' }
   }
 
@@ -189,16 +215,6 @@ export async function addProgressNote(input: unknown): Promise<ProfileActionResu
     return { success: false, error: err instanceof Error ? err.message : String(err) }
   }
 
-  // Get coach's community_members id
-  const { data: coachMember } = await supabase
-    .from('community_members')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('community_id', communityId)
-    .maybeSingle()
-
-  if (!coachMember) return { success: false, error: 'Coach member record not found' }
-
   const { error: upsertError } = await supabase
     .from('progress_notes')
     .upsert(
@@ -206,7 +222,7 @@ export async function addProgressNote(input: unknown): Promise<ProfileActionResu
         community_id: communityId,
         session_id: parsed.sessionId,
         subject_member_id: parsed.subjectMemberId,
-        coach_member_id: coachMember.id,
+        coach_member_id: membership.memberId,
         note_text: parsed.noteText,
         updated_at: new Date().toISOString(),
       },
@@ -215,14 +231,17 @@ export async function addProgressNote(input: unknown): Promise<ProfileActionResu
 
   if (upsertError) return { success: false, error: upsertError.message }
 
-  revalidatePath('/profile')
-  revalidatePath(`/coach/sessions/${parsed.sessionId}`)
+  revalidatePath(`/c/${communitySlug}/profile`)
+  revalidatePath(`/c/${communitySlug}/coach/sessions/${parsed.sessionId}`)
 
   return { success: true }
 }
 
 // PROF-04: Update an existing progress note
+// Community-scoped: communityId + communitySlug required
 export async function updateProgressNote(
+  communityId: string,
+  communitySlug: string,
   noteId: string,
   noteText: string
 ): Promise<ProfileActionResult> {
@@ -231,11 +250,10 @@ export async function updateProgressNote(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const claims = await getJWTClaims(supabase)
-  const communityId = claims.community_id
-  if (!communityId) return { success: false, error: 'No community associated with your account' }
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
 
-  if (claims.user_role !== 'admin' && claims.user_role !== 'coach') {
+  if (membership.role !== 'admin' && membership.role !== 'coach') {
     return { success: false, error: 'Only coaches and admins can update progress notes' }
   }
 
@@ -255,13 +273,15 @@ export async function updateProgressNote(
 
   if (error) return { success: false, error: error.message }
 
-  revalidatePath('/profile')
+  revalidatePath(`/c/${communitySlug}/profile`)
 
   return { success: true }
 }
 
 // PROF-03: Get lesson history for a member with pagination
+// Community-scoped: communityId required
 export async function getLessonHistory(
+  communityId: string,
   memberId: string,
   limit = 20,
   offset = 0
@@ -271,9 +291,8 @@ export async function getLessonHistory(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const claims = await getJWTClaims(supabase)
-  const communityId = claims.community_id
-  if (!communityId) return { success: false, error: 'No community associated with your account' }
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
 
   // Fetch confirmed non-cancelled RSVPs with session details
   const { data: rsvps, error: rsvpsError } = await supabase
