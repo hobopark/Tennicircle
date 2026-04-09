@@ -12,7 +12,11 @@ Coaches can schedule sessions and members can RSVP — replacing spreadsheets en
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Atomic RSVP prevents double-booking under concurrent access (Phase 6)
+- [x] RLS enabled on all 15 database tables with policies (Phase 6)
+- [x] Session capacity display with color-coded badges (Phase 6)
+- [x] Calendar frozen panes and view persistence (Phase 6)
+- [x] Styled Dialog for destructive actions, no browser dialogs (Phase 6)
 
 ### Active
 
