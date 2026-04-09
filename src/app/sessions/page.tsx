@@ -72,13 +72,12 @@ export default async function SessionsPage() {
 
   const now = new Date().toISOString()
 
-  // Fetch upcoming confirmed session RSVPs for this member (next 5)
+  // Fetch upcoming session RSVPs for this member (confirmed + waitlisted, next 20)
   const { data: upcomingRsvpRows } = await supabase
     .from('session_rsvps')
-    .select('rsvp_type, session_id')
+    .select('rsvp_type, session_id, waitlist_position')
     .eq('member_id', member.id)
     .is('cancelled_at', null)
-    .eq('rsvp_type', 'confirmed')
     .limit(20)
 
   const upcomingSessionIds = (upcomingRsvpRows ?? []).map((r: { session_id: string }) => r.session_id)
@@ -95,6 +94,22 @@ export default async function SessionsPage() {
     : { data: [] }
   const allSessionRows = (rawSessionRows ?? []) as unknown as SessionWithTemplate[]
 
+  // Fetch confirmed counts for those sessions (batch query)
+  const sessionIds = allSessionRows.map(s => s.id)
+  const { data: allSessionRsvps } = sessionIds.length > 0
+    ? await supabase
+        .from('session_rsvps')
+        .select('session_id, rsvp_type')
+        .in('session_id', sessionIds)
+        .eq('rsvp_type', 'confirmed')
+        .is('cancelled_at', null)
+    : { data: [] }
+  const sessionConfirmedCountMap = new Map<string, number>()
+  for (const rsvp of (allSessionRsvps ?? [])) {
+    const cur = sessionConfirmedCountMap.get(rsvp.session_id) ?? 0
+    sessionConfirmedCountMap.set(rsvp.session_id, cur + 1)
+  }
+
   // Resolve coach names from player_profiles
   const coachUserIds = [...new Set(allSessionRows.map(s => (s.session_templates as { coach?: { user_id?: string } })?.coach?.user_id).filter(Boolean))] as string[]
   const { data: coachProfiles } = coachUserIds.length > 0
@@ -102,10 +117,10 @@ export default async function SessionsPage() {
     : { data: [] }
   const coachNameMap = new Map((coachProfiles ?? []).map(p => [p.user_id, p.display_name]))
 
-  // Build rsvp type map
-  const rsvpTypeMap = new Map<string, string>()
+  // Build rsvp type map (includes waitlist_position)
+  const rsvpTypeMap = new Map<string, { rsvp_type: string; waitlist_position: number | null }>()
   for (const r of (upcomingRsvpRows ?? [])) {
-    rsvpTypeMap.set(r.session_id, r.rsvp_type)
+    rsvpTypeMap.set(r.session_id, { rsvp_type: r.rsvp_type, waitlist_position: r.waitlist_position ?? null })
   }
 
   const upcomingSessions = allSessionRows.map(s => {
@@ -117,7 +132,9 @@ export default async function SessionsPage() {
       duration_minutes: s.duration_minutes,
       venue: s.venue,
       capacity: s.capacity,
-      rsvp_type: rsvpTypeMap.get(s.id) ?? 'confirmed',
+      confirmed_count: sessionConfirmedCountMap.get(s.id) ?? 0,
+      rsvp_type: rsvpTypeMap.get(s.id)?.rsvp_type ?? 'confirmed',
+      waitlist_position: rsvpTypeMap.get(s.id)?.waitlist_position ?? null,
       template_title: s.session_templates?.title ?? null,
       coach_name: coachUserId ? coachNameMap.get(coachUserId) ?? null : null,
     }
