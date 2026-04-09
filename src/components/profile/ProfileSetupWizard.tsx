@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { Check, Loader2 } from 'lucide-react'
@@ -135,6 +136,16 @@ export function ProfileSetupWizard({
       animate={{ opacity: 1, y: 0 }}
       className="w-full bg-background p-5 sm:max-w-[440px] sm:w-full sm:bg-card sm:rounded-3xl sm:border sm:border-border/50 sm:shadow-[0_4px_24px_rgba(0,0,0,0.06)] sm:p-8"
     >
+      {/* Cancel link — returns to profile view */}
+      <div className="flex justify-end mb-4">
+        <Link
+          href="/profile"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Cancel
+        </Link>
+      </div>
+
       {/* Step indicator */}
       <div className="flex items-center mb-8" role="list" aria-label="Setup progress">
         {STEPS.map((step, i) => {

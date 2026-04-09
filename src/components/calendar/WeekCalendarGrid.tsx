@@ -205,7 +205,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
   const [view, setView] = useState<'day' | 'week'>('week')
   const [hideCancelled, setHideCancelled] = useState(false)
   useEffect(() => {
-    const saved = localStorage.getItem('tennis-schedule-view')
+    const saved = localStorage.getItem('tc-calendar-view')
     if (saved === 'day' || saved === 'week') setView(saved)
     const savedHide = localStorage.getItem('tennis-hide-cancelled')
     if (savedHide === 'true') setHideCancelled(true)
@@ -214,7 +214,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
 
   const handleViewChange = (v: 'day' | 'week') => {
     setView(v)
-    localStorage.setItem('tennis-schedule-view', v)
+    localStorage.setItem('tc-calendar-view', v)
   }
 
   const handleHideCancelledChange = () => {
@@ -584,9 +584,9 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
               }}
             >
               {/* Header row — sticky */}
-              {/* Time label header cell */}
+              {/* Time label header cell — corner anchor: sticky in both axes */}
               <div
-                className="bg-muted border-b border-r border-border sticky top-0 z-10"
+                className="bg-muted border-b border-r border-border sticky top-0 left-0 z-20"
                 style={{ gridColumn: 1, gridRow: 1 }}
               />
               {/* Day header cells */}
@@ -605,11 +605,11 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                 </div>
               ))}
 
-              {/* Time label cells */}
+              {/* Time label cells — sticky left so time column stays visible on horizontal scroll */}
               {TIME_LABELS.map((label, rowIdx) => (
                 <div
                   key={`time-${rowIdx}`}
-                  className="border-b border-r border-border flex items-start pt-1 pr-2 justify-end bg-background"
+                  className="border-b border-r border-border flex items-start pt-1 pr-2 justify-end bg-background sticky left-0 z-[8]"
                   style={{ gridColumn: 1, gridRow: rowIdx + 2 }}
                 >
                   {rowIdx % 2 === 0 && (
