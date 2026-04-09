@@ -15,6 +15,7 @@ export function WelcomePage() {
   const router = useRouter()
   const [role, setRole] = useState<UserRole>('pending')
   const [joining, setJoining] = useState(false)
+  const [joinFailed, setJoinFailed] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -30,7 +31,7 @@ export function WelcomePage() {
 
   // MGMT-04: Auto-join pending users as clients in the single community
   useEffect(() => {
-    if (role !== 'pending' || joining) return
+    if (role !== 'pending' || joining || joinFailed) return
 
     async function autoJoin() {
       setJoining(true)
@@ -56,12 +57,13 @@ export function WelcomePage() {
         }
       } else {
         toast.error(result.error ?? 'Failed to join community')
+        setJoinFailed(true)
       }
       setJoining(false)
     }
 
     autoJoin()
-  }, [role, joining])
+  }, [role, joining, joinFailed])
 
   function handleSkip() {
     if (role !== 'pending' && role in ROLE_HOME_ROUTES) {

@@ -72,6 +72,12 @@ create policy "users_insert_own_membership"
 on public.community_members for insert to authenticated
 with check (user_id = auth.uid());
 
+-- Allow any authenticated user to read communities (needed for open sign-up MGMT-04)
+-- New users have no community_id in JWT yet, so community-scoped RLS blocks them
+create policy "authenticated_read_communities"
+on public.communities for select to authenticated
+using (true);
+
 -- Note: community_members.coach_id column is NOT dropped.
 -- It is deprecated — new code reads from coach_client_assignments.
 -- Column will be dropped in a future migration after confirming no reads.
