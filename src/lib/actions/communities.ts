@@ -34,7 +34,7 @@ export async function getUserCommunities(): Promise<{
   if (error) return { success: false, error: error.message }
 
   const result = (data ?? []).map((row) => ({
-    community: row.communities as { id: string; name: string; slug: string; description: string | null },
+    community: row.communities as unknown as { id: string; name: string; slug: string; description: string | null },
     role: row.role,
     memberId: row.id,
   }))
