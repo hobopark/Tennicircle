@@ -50,15 +50,16 @@ export async function processInviteSignup(
   }
 
   // Create community membership with the role from the invite
-  const { error: insertError } = await supabase
+  // Note: coach_id is deprecated (D-10) — use coach_client_assignments instead
+  const { data: newMember, error: insertError } = await supabase
     .from('community_members')
     .insert({
       community_id: invite.community_id,
       user_id: userId,
       role: invite.role,
-      // If invite role is 'client' and created_by is a coach, set coach_id (D-07)
-      coach_id: invite.role === 'client' ? invite.created_by : null,
     })
+    .select('id')
+    .single()
 
   if (insertError) {
     if (insertError.message.includes('duplicate')) {
@@ -67,87 +68,73 @@ export async function processInviteSignup(
     return { success: false, error: insertError.message }
   }
 
+  // If invite role is 'client' and created_by is the inviting coach/admin,
+  // create a coach-client assignment in the junction table (D-10)
+  // RLS policy "users_insert_own_assignment" (from Plan 01 migration) allows
+  // the new user to insert their own assignment where client_member_id = their member record
+  if (invite.role === 'client' && newMember) {
+    const { error: assignError } = await supabase
+      .from('coach_client_assignments')
+      .insert({
+        community_id: invite.community_id,
+        coach_member_id: invite.created_by,
+        client_member_id: newMember.id,
+      })
+
+    if (assignError) {
+      console.error('Failed to create coach-client assignment during invite sign-up:', assignError.message)
+      // The membership itself was created successfully — log the assignment failure
+      // but do not fail the overall sign-up. The coach can assign manually from the roster.
+    }
+  }
+
   return { success: true }
 }
 
-// MGMT-06 + D-09: Coach assigns a client to themselves
-export async function assignClient(
-  clientMemberId: string
-): Promise<{ success: boolean; error?: string }> {
+// MGMT-04: Auto-assign open sign-up users as client in the single community
+export async function joinCommunityAsClient(): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const claims = await getJWTClaims(supabase)
-  if (claims.user_role !== 'coach' && claims.user_role !== 'admin') {
-    return { success: false, error: 'Only coaches and admins can assign clients' }
-  }
-  if (!claims.community_id) {
-    return { success: false, error: 'No community associated with your account' }
-  }
-
-  // Get the current user's community_members record
-  const { data: selfMember } = await supabase
+  // Check if already a community member
+  const { data: existingMember } = await supabase
     .from('community_members')
     .select('id')
     .eq('user_id', user.id)
-    .eq('community_id', claims.community_id)
+    .maybeSingle()
+
+  if (existingMember) return { success: false, error: 'Already a community member' }
+
+  // MVP assumption: single community — fetch the one community
+  const { data: community, error: communityError } = await supabase
+    .from('communities')
+    .select('id')
+    .limit(1)
     .single()
 
-  if (!selfMember) return { success: false, error: 'Member record not found' }
+  if (communityError || !community) {
+    return { success: false, error: 'No community found' }
+  }
 
-  const { error } = await supabase
-    .from('coach_client_assignments')
+  // Insert as client with no coach assignment
+  // RLS policy "users_insert_own_membership" (from Plan 01 migration) allows self-insert
+  const { error: insertError } = await supabase
+    .from('community_members')
     .insert({
-      community_id: claims.community_id,
-      coach_member_id: selfMember.id,
-      client_member_id: clientMemberId,
+      community_id: community.id,
+      user_id: user.id,
+      role: 'client',
     })
 
-  if (error) {
-    if (error.message.includes('duplicate') || error.message.includes('unique')) {
-      return { success: false, error: 'Client is already assigned to you' }
+  if (insertError) {
+    if (insertError.message.includes('duplicate')) {
+      return { success: false, error: 'Already a community member' }
     }
-    return { success: false, error: error.message }
-  }
-  return { success: true }
-}
-
-// MGMT-06 + D-09: Coach removes a client from their own list
-export async function removeClientAssignment(
-  clientMemberId: string
-): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Not authenticated' }
-
-  const claims = await getJWTClaims(supabase)
-  if (claims.user_role !== 'coach' && claims.user_role !== 'admin') {
-    return { success: false, error: 'Only coaches and admins can remove client assignments' }
-  }
-  if (!claims.community_id) {
-    return { success: false, error: 'No community associated with your account' }
+    return { success: false, error: insertError.message }
   }
 
-  // Get the current user's community_members record
-  const { data: selfMember } = await supabase
-    .from('community_members')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('community_id', claims.community_id)
-    .single()
-
-  if (!selfMember) return { success: false, error: 'Member record not found' }
-
-  const { error } = await supabase
-    .from('coach_client_assignments')
-    .delete()
-    .eq('coach_member_id', selfMember.id)
-    .eq('client_member_id', clientMemberId)
-
-  if (error) return { success: false, error: error.message }
   return { success: true }
 }
 
