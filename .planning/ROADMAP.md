@@ -18,6 +18,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 4: Coach Dashboard & Community Events** - Schedule view, player roster, and community events with RSVP
 - [ ] **Phase 5: Notifications** - In-app notification feed with real-time delivery
 - [ ] **Phase 6: Polish & Launch Readiness** - UX hardening, edge cases, and cross-cutting correctness
+- [ ] **Phase 7: Member Management & Invite System** - Admin/coach invite links, role management, coach client assignment
+- [ ] **Phase 8: Community Selector & Open Sign-Up** - Multi-community navigation, community browser, join requests with approval
 
 ## Phase Details
 
@@ -125,6 +127,35 @@ Plans:
 **Plans:** [To be planned]
 **UI hint**: yes
 
+### Phase 7: Member Management & Invite System
+**Goal**: Admins and coaches can manage members, send invite links, and assign clients — completing the member lifecycle that was stubbed in Phase 1
+**Depends on**: Phase 1, Phase 4
+**Requirements**: MGMT-01, MGMT-02, MGMT-03, MGMT-04, MGMT-05, MGMT-06, MGMT-07
+**Gap Closure**: Closes AUTH-04, AUTH-05, DASH-03 gaps from v1.0 audit
+**Success Criteria** (what must be TRUE):
+  1. An admin can send an invite link specifying coach or client role, and the recipient joins with that role after signing up
+  2. An admin can add or remove coaches and grant admin privilege to any community member
+  3. A new sign-up without an invite link is assigned the client role with no coach
+  4. A coach can view all members in the community, with a filter toggle for "my clients" only
+  5. A coach can assign any unassigned member to themselves and remove members from their own client list
+  6. Members without completed profiles appear in the roster with a "profile pending" state (not silently hidden)
+**Plans:** [To be planned]
+**UI hint**: yes
+
+### Phase 8: Community Selector & Open Sign-Up
+**Goal**: Users can belong to multiple communities and navigate between them; new users can discover and request to join communities
+**Depends on**: Phase 7
+**Requirements**: COMM-01, COMM-02, COMM-03, COMM-04, COMM-05, COMM-06
+**Success Criteria** (what must be TRUE):
+  1. After login, a user who belongs to multiple communities sees a community picker screen and can select which community to enter
+  2. A user who belongs to only one community is auto-redirected to that community's dashboard
+  3. A new user signing up without an invite link sees a community browser listing all communities and can request to join one
+  4. A join request requires coach or admin approval before the member gains access
+  5. An admin can create a new community and becomes that community's first admin (future: paid feature for non-admins)
+  6. Routing is restructured so community context is part of the navigation (dashboard loads after community selection, not directly after login)
+**Plans:** [To be planned]
+**UI hint**: yes
+
 ## Progress
 
 **Execution Order:**
@@ -133,8 +164,10 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Auth | 4/4 | Complete   | 2026-04-07 |
-| 2. Session Management | 0/7 | Planning complete | - |
-| 3. Player Profiles | 0/4 | Planning complete | - |
-| 4. Coach Dashboard & Community Events | 0/6 | Planning complete | - |
-| 5. Notifications | 0/4 | Planning complete | - |
-| 6. Polish & Launch Readiness | 0/? | Not started | - |
+| 2. Session Management | 7/7 | Complete | - |
+| 3. Player Profiles | 4/4 | Complete | - |
+| 4. Coach Dashboard & Community Events | 6/6 | Complete | - |
+| 5. Notifications | 4/4 | Complete | - |
+| 6. Polish & Launch Readiness | 5/5 | Complete | - |
+| 7. Member Management & Invite System | 0/? | Not started | - |
+| 8. Community Selector & Open Sign-Up | 0/? | Not started | - |
