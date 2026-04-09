@@ -56,6 +56,25 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **NOTF-02**: In-app announcement alert notifications
 - [ ] **NOTF-03**: In-app RSVP confirmation notifications
 
+### Member Management
+
+- [ ] **MGMT-01**: Admin can send invite links specifying coach or client role
+- [ ] **MGMT-02**: Admin can add/remove coaches from the community
+- [ ] **MGMT-03**: Admin can grant admin privilege to any community member
+- [ ] **MGMT-04**: New sign-up without invite link is assigned client role with no coach
+- [ ] **MGMT-05**: Coach can view all community members with filter for own assigned clients
+- [ ] **MGMT-06**: Coach can assign/remove members to/from their own client list
+- [ ] **MGMT-07**: Members without completed profiles visible in roster with "profile pending" state
+
+### Community Navigation
+
+- [ ] **COMM-01**: Post-login community picker for users in multiple communities
+- [ ] **COMM-02**: Auto-redirect to dashboard for users in a single community
+- [ ] **COMM-03**: Community browser for new sign-ups (all communities visible)
+- [ ] **COMM-04**: Join request requires coach/admin approval before member gains access
+- [ ] **COMM-05**: Admin can create a new community (future: paid feature for non-admins)
+- [ ] **COMM-06**: Routing restructured with community context in navigation
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -154,10 +173,23 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NOTF-01 | Phase 5 | Pending |
 | NOTF-02 | Phase 5 | Pending |
 | NOTF-03 | Phase 5 | Pending |
+| MGMT-01 | Phase 7 | Pending |
+| MGMT-02 | Phase 7 | Pending |
+| MGMT-03 | Phase 7 | Pending |
+| MGMT-04 | Phase 7 | Pending |
+| MGMT-05 | Phase 7 | Pending |
+| MGMT-06 | Phase 7 | Pending |
+| MGMT-07 | Phase 7 | Pending |
+| COMM-01 | Phase 8 | Pending |
+| COMM-02 | Phase 8 | Pending |
+| COMM-03 | Phase 8 | Pending |
+| COMM-04 | Phase 8 | Pending |
+| COMM-05 | Phase 8 | Pending |
+| COMM-06 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 31 total
-- Mapped to phases: 31
+- v1 requirements: 44 total
+- Mapped to phases: 44
 - Unmapped: 0 ✓
 
 ---
