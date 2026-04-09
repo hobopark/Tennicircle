@@ -1,0 +1,62 @@
+import { redirect } from 'next/navigation'
+import { createClient, getUserRole } from '@/lib/supabase/server'
+import { CreateSessionForm } from '@/components/sessions/CreateSessionForm'
+import { AppNav } from '@/components/nav/AppNav'
+
+export default async function NewSessionPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}) {
+  const { slug } = await params
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth')
+
+  const { data: community } = await supabase
+    .from('communities')
+    .select('id')
+    .eq('slug', slug)
+    .single()
+  if (!community) redirect('/communities')
+
+  const membership = await getUserRole(supabase, community.id)
+  if (!membership) redirect('/communities')
+  const { role, memberId } = membership
+
+  if (role !== 'coach' && role !== 'admin') redirect(`/c/${slug}/sessions`)
+
+  let clients: { id: string; email: string }[] = []
+
+  // Fetch clients assigned to this coach
+  const { data: clientMembers } = await supabase
+    .from('community_members')
+    .select('id, user_id')
+    .eq('community_id', community.id)
+    .eq('role', 'client')
+    .eq('coach_id', memberId)
+
+  if (clientMembers) {
+    clients = clientMembers.map((c) => ({
+      id: c.id,
+      email: c.user_id, // user_id as placeholder display — email not accessible via anon client
+    }))
+  }
+
+  return (
+    <>
+      <AppNav />
+      <div className="min-h-screen bg-background">
+        <div className="max-w-[560px] mx-auto px-4 py-8">
+          <h1 className="font-display text-[28px] font-bold text-foreground mb-6">
+            Create recurring session
+          </h1>
+          <CreateSessionForm
+            communityId={community.id}
+            assignedClients={clients}
+          />
+        </div>
+      </div>
+    </>
+  )
+}

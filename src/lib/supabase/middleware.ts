@@ -95,7 +95,7 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     if (memberships && memberships.length === 1) {
       const m = memberships[0]
-      const slug = (m.communities as { slug: string }).slug
+      const slug = (m.communities as unknown as { slug: string }).slug
       // Preserve full nested path: /sessions/123 → /c/{slug}/sessions/123
       if (matchedOldRoute === '/welcome') {
         url.pathname = getRoleHomeRoute(slug, m.role as 'admin' | 'coach' | 'client')
@@ -116,7 +116,7 @@ export async function updateSession(request: NextRequest) {
 
     // Find membership for this community
     const membership = memberships?.find(
-      (m) => (m.communities as { slug: string }).slug === slug
+      (m) => (m.communities as unknown as { slug: string }).slug === slug
     )
 
     // Not a member → redirect /communities (D-50)

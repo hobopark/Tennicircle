@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient, getJWTClaims } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { ProfileView } from '@/components/profile/ProfileView'
 import { LessonHistory } from '@/components/profile/LessonHistory'
@@ -14,38 +14,42 @@ export default async function ProfilePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth')
 
-  const claims = await getJWTClaims(supabase)
-  const communityId = claims.community_id
-  if (!communityId) redirect('/auth')
-
-  const userRole = (claims.user_role as UserRole) ?? 'pending'
-
-  // Get community_members record for this user
-  const { data: member } = await supabase
+  // Look up any community membership to get role (use first one for own profile)
+  // Profile page is global (D-04) — shows own profile, community-agnostic display
+  const { data: memberRow } = await supabase
     .from('community_members')
-    .select('id, joined_at, display_name')
+    .select('id, joined_at, display_name, role, community_id')
     .eq('user_id', user.id)
-    .eq('community_id', communityId)
+    .limit(1)
     .maybeSingle()
 
-  // Fetch player profile
-  const { data: profile } = await supabase
-    .from('player_profiles')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('community_id', communityId)
-    .maybeSingle()
+  const communityId = memberRow?.community_id ?? null
+  const userRole = (memberRow?.role as UserRole) ?? 'client'
+
+  // Fetch player profile (community-specific if available, or global)
+  const { data: profile } = communityId
+    ? await supabase
+        .from('player_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('community_id', communityId)
+        .maybeSingle()
+    : await supabase
+        .from('player_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle()
 
   // Redirect to setup if no profile exists
   if (!profile) redirect('/profile/setup')
 
-  // Fetch latest coach assessment
+  // Fetch latest coach assessment if we have a member record
   let coachAssessment: CoachAssessment | null = null
-  if (member) {
+  if (memberRow && communityId) {
     const { data: assessment } = await supabase
       .from('coach_assessments')
       .select('*')
-      .eq('subject_member_id', member.id)
+      .eq('subject_member_id', memberRow.id)
       .eq('community_id', communityId)
       .order('assessed_at', { ascending: false })
       .limit(1)
@@ -53,21 +57,21 @@ export default async function ProfilePage() {
     coachAssessment = assessment as CoachAssessment | null
   }
 
-  const memberId = member?.id ?? ''
+  const memberId = memberRow?.id ?? ''
   const isCoachOrAdmin = userRole === 'coach' || userRole === 'admin'
 
-  // Fetch lesson history
-  const historyResult = member
-    ? await getLessonHistory(member.id, 20, 0)
+  // Fetch lesson history (requires communityId)
+  const historyResult = memberRow && communityId
+    ? await getLessonHistory(communityId, memberRow.id, 20, 0)
     : null
 
   const lessonEntries = historyResult?.data?.entries ?? []
   const lessonSummary = historyResult?.data?.summary
 
   // Format member since as "Apr 2026"
-  const memberSince = member?.joined_at
+  const memberSince = memberRow?.joined_at
     ? new Intl.DateTimeFormat('en-AU', { month: 'short', year: 'numeric' }).format(
-        new Date(member.joined_at)
+        new Date(memberRow.joined_at)
       )
     : '—'
 
