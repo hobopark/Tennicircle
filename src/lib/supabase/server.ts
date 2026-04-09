@@ -1,5 +1,4 @@
 import { createServerClient } from '@supabase/ssr'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 export async function createClient() {
@@ -22,29 +21,19 @@ export async function createClient() {
   )
 }
 
-// D-12: Permission checks query community_members for the user's role in a given community.
-// Replaces getJWTClaims() role checks from Phase 1.
-export async function getUserRole(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  communityId: string
-): Promise<{ role: 'admin' | 'coach' | 'client'; memberId: string } | null> {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-  const { data } = await supabase
-    .from('community_members')
-    .select('id, role')
-    .eq('user_id', user.id)
-    .eq('community_id', communityId)
-    .maybeSingle()
-  if (!data) return null
-  return { role: data.role as 'admin' | 'coach' | 'client', memberId: data.id }
-}
-
-// Service role client for operations that bypass RLS (e.g. notification inserts, profile copy on join approve)
-// Uses SUPABASE_SERVICE_ROLE_KEY — never expose this to the browser.
-export function createServiceClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+// Extract custom JWT claims (user_role, community_id) injected by Custom Access Token Hook.
+// getUser() returns app_metadata from the auth server which does NOT include hook-injected claims.
+// The claims are only in the JWT access token, so we decode them from getSession().
+export async function getJWTClaims(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) return { user_role: undefined, community_id: undefined }
+  try {
+    const payload = JSON.parse(atob(session.access_token.split('.')[1]))
+    return {
+      user_role: payload.user_role as string | undefined,
+      community_id: payload.community_id as string | undefined,
+    }
+  } catch {
+    return { user_role: undefined, community_id: undefined }
+  }
 }

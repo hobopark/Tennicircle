@@ -5,9 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { NotificationActionResult } from '@/lib/types/notifications'
 
 // Mark all unread notifications as read for the authenticated member
-export async function markAllNotificationsRead(
-  communitySlug: string
-): Promise<NotificationActionResult> {
+export async function markAllNotificationsRead(): Promise<NotificationActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -31,15 +29,12 @@ export async function markAllNotificationsRead(
 
   if (updateError) return { success: false, error: updateError.message }
 
-  revalidatePath(`/c/${communitySlug}/notifications`)
+  revalidatePath('/notifications')
   return { success: true }
 }
 
 // Mark a single notification as read for the authenticated member
-export async function markNotificationRead(
-  communitySlug: string,
-  notificationId: string
-): Promise<NotificationActionResult> {
+export async function markNotificationRead(notificationId: string): Promise<NotificationActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -63,6 +58,6 @@ export async function markNotificationRead(
 
   if (updateError) return { success: false, error: updateError.message }
 
-  revalidatePath(`/c/${communitySlug}/notifications`)
+  revalidatePath('/notifications')
   return { success: true }
 }

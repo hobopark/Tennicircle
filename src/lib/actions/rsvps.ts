@@ -1,30 +1,26 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, getUserRole } from '@/lib/supabase/server'
+import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import type { RsvpActionResult, SessionActionResult } from '@/lib/types/sessions'
 
 // SESS-05: RSVP to a session (confirmed or waitlisted based on capacity)
-export async function rsvpSession(
-  communityId: string,
-  communitySlug: string,
-  sessionId: string
-): Promise<RsvpActionResult> {
+export async function rsvpSession(sessionId: string): Promise<RsvpActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const membership = await getUserRole(supabase, communityId)
-  if (!membership) return { success: false, error: 'Not a member of this community' }
+  const claims = await getJWTClaims(supabase)
+  const communityId = claims.community_id
+  if (!communityId) return { success: false, error: 'No community associated with your account' }
 
   // Get member record
   const { data: member, error: memberError } = await supabase
     .from('community_members')
     .select('id')
     .eq('user_id', user.id)
-    .eq('community_id', communityId)
     .single()
 
   if (memberError || !member) return { success: false, error: 'Member record not found' }
@@ -195,32 +191,24 @@ export async function rsvpSession(
     }
   }
 
-  revalidatePath(`/c/${communitySlug}/sessions`)
-  revalidatePath(`/c/${communitySlug}/coach`)
+  revalidatePath('/sessions')
+  revalidatePath('/coach')
 
   return { success: true, rsvpType, waitlistPosition: waitlistPosition ?? undefined }
 }
 
 // SESS-07: Cancel own RSVP
-export async function cancelRsvp(
-  communityId: string,
-  communitySlug: string,
-  sessionId: string
-): Promise<SessionActionResult> {
+export async function cancelRsvp(sessionId: string): Promise<SessionActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
-
-  const membership = await getUserRole(supabase, communityId)
-  if (!membership) return { success: false, error: 'Not a member of this community' }
 
   // Get member record
   const { data: member, error: memberError } = await supabase
     .from('community_members')
     .select('id')
     .eq('user_id', user.id)
-    .eq('community_id', communityId)
     .single()
 
   if (memberError || !member) return { success: false, error: 'Member record not found' }
@@ -297,38 +285,33 @@ export async function cancelRsvp(
     await resequenceWaitlist(supabase, sessionId)
   }
 
-  revalidatePath(`/c/${communitySlug}/sessions`)
-  revalidatePath(`/c/${communitySlug}/coach`)
+  revalidatePath('/sessions')
+  revalidatePath('/coach')
 
   return { success: true }
 }
 
 // SESS-08: Coach promotes a waitlisted member to confirmed
-export async function promoteFromWaitlist(
-  communityId: string,
-  communitySlug: string,
-  rsvpId: string
-): Promise<SessionActionResult> {
+export async function promoteFromWaitlist(rsvpId: string): Promise<SessionActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
   // Auth check: only coach or admin — T-02-07
-  const membership = await getUserRole(supabase, communityId)
-  if (!membership) return { success: false, error: 'Not a member of this community' }
-  if (membership.role !== 'coach' && membership.role !== 'admin') {
+  const promoteClaims = await getJWTClaims(supabase)
+  if (promoteClaims.user_role !== 'coach' && promoteClaims.user_role !== 'admin') {
     return { success: false, error: 'Only coaches can promote from waitlist' }
   }
 
-  // Verify the RSVP's session belongs to this community
+  // Verify the RSVP's session belongs to this coach's community
   const { data: rsvpCheck } = await supabase
     .from('session_rsvps')
     .select('community_id')
     .eq('id', rsvpId)
     .single()
 
-  if (rsvpCheck && rsvpCheck.community_id !== communityId) {
+  if (rsvpCheck && rsvpCheck.community_id !== promoteClaims.community_id) {
     return { success: false, error: 'You cannot manage sessions outside your community' }
   }
 
@@ -395,27 +378,22 @@ export async function promoteFromWaitlist(
   // Resequence remaining waitlist positions for the session
   await resequenceWaitlist(supabase, rsvp.session_id)
 
-  revalidatePath(`/c/${communitySlug}/sessions`)
-  revalidatePath(`/c/${communitySlug}/coach`)
+  revalidatePath('/sessions')
+  revalidatePath('/coach')
 
   return { success: true }
 }
 
 // SESS-09: Coach removes a waitlisted member from the waitlist
-export async function removeFromWaitlist(
-  communityId: string,
-  communitySlug: string,
-  rsvpId: string
-): Promise<SessionActionResult> {
+export async function removeFromWaitlist(rsvpId: string): Promise<SessionActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
   // Auth check: only coach or admin
-  const membership = await getUserRole(supabase, communityId)
-  if (!membership) return { success: false, error: 'Not a member of this community' }
-  if (membership.role !== 'coach' && membership.role !== 'admin') {
+  const removeClaims = await getJWTClaims(supabase)
+  if (removeClaims.user_role !== 'coach' && removeClaims.user_role !== 'admin') {
     return { success: false, error: 'Only coaches can remove from waitlist' }
   }
 
@@ -447,8 +425,8 @@ export async function removeFromWaitlist(
   // Resequence remaining waitlist positions for the session
   await resequenceWaitlist(supabase, rsvp.session_id)
 
-  revalidatePath(`/c/${communitySlug}/sessions`)
-  revalidatePath(`/c/${communitySlug}/coach`)
+  revalidatePath('/sessions')
+  revalidatePath('/coach')
 
   return { success: true }
 }

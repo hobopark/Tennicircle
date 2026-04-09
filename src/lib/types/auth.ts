@@ -12,12 +12,11 @@ export interface CommunityMember {
   joined_at: string
 }
 
-// Matches communities table schema (D-43: description column added)
+// Matches communities table schema
 export interface Community {
   id: string
   name: string
   slug: string
-  description: string | null
   created_at: string
 }
 
@@ -32,29 +31,7 @@ export interface InviteLink {
   created_at: string
 }
 
-// Matches coach_client_assignments junction table (Phase 7 D-10)
-export interface CoachClientAssignment {
-  id: string
-  community_id: string
-  coach_member_id: string
-  client_member_id: string
-  assigned_at: string
-}
-
-// Matches join_requests table (Phase 8 D-42)
-export interface JoinRequest {
-  id: string
-  community_id: string
-  user_id: string
-  status: 'pending' | 'approved' | 'rejected'
-  created_at: string
-  resolved_at: string | null
-  resolved_by: string | null
-}
-
-/** @deprecated Use getRoleHomeRoute(slug, role) instead */
-// JWT custom claims injected by Custom Access Token Hook — removed in Phase 8 (D-08, D-09, D-10)
-// Kept temporarily for backward compatibility during migration. Remove after proxy rewrite in Plan 03.
+// JWT custom claims injected by Custom Access Token Hook
 export interface JWTCustomClaims {
   user_role: UserRole
   community_id: string | null
@@ -74,31 +51,12 @@ export interface AuthFormState {
   }
 }
 
-// Dynamic role home route per D-16 — community-scoped routes use slug in path
-export function getRoleHomeRoute(slug: string, role: Exclude<UserRole, 'pending'>): string {
-  const routes: Record<Exclude<UserRole, 'pending'>, string> = {
-    admin: `/c/${slug}/admin`,
-    coach: `/c/${slug}/coach`,
-    client: `/c/${slug}/sessions`,
-  }
-  return routes[role]
-}
-
-/** @deprecated Use getRoleHomeRoute(slug, role) instead */
-// Role-based route configuration per D-10 — flat routes pre-Phase 8
-// Will be removed when proxy is rewritten in Plan 03.
+// Role-based route configuration per D-10
 export const ROLE_HOME_ROUTES: Record<Exclude<UserRole, 'pending'>, string> = {
   admin: '/admin',
   coach: '/coach',
   client: '/sessions',
 } as const
-
-// Path suffix patterns after /c/[slug] — used by proxy for role-based route access checks
-export const ROLE_ALLOWED_ROUTE_PATTERNS: Record<Exclude<UserRole, 'pending'>, string[]> = {
-  admin: ['/admin', '/coach', '/sessions', '/events', '/notifications', '/members'],
-  coach: ['/coach', '/events', '/notifications', '/members'],
-  client: ['/sessions', '/events', '/notifications', '/members'],
-}
 
 export const ROLE_ALLOWED_ROUTES: Record<Exclude<UserRole, 'pending'>, string[]> = {
   admin: ['/admin', '/coach', '/sessions', '/welcome', '/profile', '/events'],
@@ -108,6 +66,3 @@ export const ROLE_ALLOWED_ROUTES: Record<Exclude<UserRole, 'pending'>, string[]>
 
 // Public routes that don't require authentication
 export const PUBLIC_ROUTES = ['/auth', '/'] as const
-
-// Routes accessible to any authenticated user (no community membership required)
-export const AUTHENTICATED_PUBLIC_ROUTES = ['/communities', '/profile', '/profile/setup'] as const

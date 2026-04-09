@@ -12,11 +12,7 @@ Coaches can schedule sessions and members can RSVP — replacing spreadsheets en
 
 ### Validated
 
-- [x] Atomic RSVP prevents double-booking under concurrent access (Phase 6)
-- [x] RLS enabled on all 15 database tables with policies (Phase 6)
-- [x] Session capacity display with color-coded badges (Phase 6)
-- [x] Calendar frozen panes and view persistence (Phase 6)
-- [x] Styled Dialog for destructive actions, no browser dialogs (Phase 6)
+(None yet — ship to validate)
 
 ### Active
 
@@ -57,27 +53,12 @@ Coaches can schedule sessions and members can RSVP — replacing spreadsheets en
 - [ ] Coaches/admin can post announcements to their community
 - [ ] In-app notifications only for MVP (session reminders, waitlist updates, announcements)
 
-#### Member Management & Invites
-- [ ] Admin can send invite links specifying coach or client role
-- [ ] Admin can add/remove coaches and grant admin privilege to any member
-- [ ] New sign-up without invite link is assigned client role with no coach
-- [ ] Coach can view all community members with filter for own assigned clients
-- [ ] Coach can assign/remove members to/from their own client list
-- [ ] Members without completed profiles visible in roster with "profile pending" state
-
-#### Community Navigation
-- [ ] Post-login community picker for users in multiple communities
-- [ ] Auto-redirect for users in a single community
-- [ ] Community browser for new sign-ups — all communities visible, request to join
-- [ ] Join request requires coach/admin approval before member gains access
-- [ ] Admin can create a new community (future: paid feature for non-admins)
-- [ ] Routing restructured with community context in navigation
-
 ### Out of Scope
 
 - Payments / revenue tracking — handled outside the app for MVP; premium subscriptions, pro shop planned for post-MVP
 - AI-assisted coaching (video/photo analysis) — Phase 2 feature per PRD
 - Progress analytics dashboards — Phase 2 feature
+- Member directory / browsing other member profiles — deferred
 - Community activity feed / social wall — deferred
 - Live scoring / automated bracket generation for tournaments — deferred; manual draws for MVP
 - Automated match scheduling based on availability — deferred
@@ -116,10 +97,7 @@ Coaches can schedule sessions and members can RSVP — replacing spreadsheets en
 | Manual waitlist promotion | Coaches know their players; auto-promote could cause issues | — Pending |
 | In-app notifications only | Simpler for MVP; email/push can layer on later | — Pending |
 | RSVP + manual draws for tournaments | Full bracket automation is complex; manual sufficient for MVP | — Pending |
-| Community creation admin-only for now | Future: paid feature for anyone to create communities | — Decided 2026-04-09 |
-| Open sign-up → community browser → approval | New users without invite pick a community and request to join; coach/admin approves | — Decided 2026-04-09 |
-| Post-login community picker | Users in multiple communities choose which to enter; single-community auto-redirects | — Decided 2026-04-09 |
-| Coaches see all members, filter own clients | Coaches can assign/remove members to themselves from full roster | — Decided 2026-04-09 |
+| No member directory for MVP | Coaching relationship is coach-scoped; community browsing deferred | — Pending |
 
 ## Evolution
 
@@ -139,4 +117,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-09 after milestone audit gap closure (Phases 7-8 added)*
+*Last updated: 2026-04-07 after initialization*

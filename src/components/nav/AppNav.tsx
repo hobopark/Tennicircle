@@ -6,62 +6,67 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShieldCheck, LayoutDashboard, CalendarDays, Calendar, Users, User, Trophy, Bell, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { useMaybeCommunity } from '@/lib/context/community'
 import type { UserRole } from '@/lib/types/auth'
 
-// Role-based nav tab definitions — paths are relative sub-paths after /c/{slug}
+// Role-based nav tab definitions
 const NAV_TABS: {
-  subPath: string
+  href: string
   label: string
   icon: React.ReactNode
-  roles: Exclude<UserRole, 'pending'>[]
+  roles: UserRole[]
 }[] = [
   {
-    subPath: '/admin',
+    href: '/admin',
     label: 'Admin',
     icon: <ShieldCheck className="w-5 h-5" />,
     roles: ['admin'],
   },
   {
-    subPath: '/coach',
+    href: '/coach',
     label: 'Dashboard',
     icon: <LayoutDashboard className="w-5 h-5" />,
     roles: ['coach'],
   },
   {
-    subPath: '/coach/schedule',
+    href: '/coach/schedule',
     label: 'Schedule',
     icon: <CalendarDays className="w-5 h-5" />,
     roles: ['admin', 'coach'],
   },
   {
-    subPath: '/sessions',
+    href: '/sessions',
     label: 'Dashboard',
     icon: <LayoutDashboard className="w-5 h-5" />,
     roles: ['client'],
   },
   {
-    subPath: '/sessions/calendar',
+    href: '/sessions/calendar',
     label: 'Calendar',
     icon: <Calendar className="w-5 h-5" />,
     roles: ['client'],
   },
   {
-    subPath: '/coach/clients',
+    href: '/coach/clients',
     label: 'Clients',
     icon: <Users className="w-5 h-5" />,
     roles: ['admin', 'coach'],
   },
   {
-    subPath: '/events',
+    href: '/events',
     label: 'Events',
     icon: <Trophy className="w-5 h-5" />,
     roles: ['admin', 'coach', 'client'],
   },
   {
-    subPath: '/notifications',
+    href: '/notifications',
     label: 'Notifications',
     icon: <Bell className="w-5 h-5" />,
+    roles: ['admin', 'coach', 'client'] as UserRole[],
+  },
+  {
+    href: '/profile',
+    label: 'Profile',
+    icon: <User className="w-5 h-5" />,
     roles: ['admin', 'coach', 'client'],
   },
 ]
@@ -69,36 +74,40 @@ const NAV_TABS: {
 export function AppNav() {
   const pathname = usePathname()
   const router = useRouter()
+  const [role, setRole] = useState<UserRole>('pending')
   const [unreadCount, setUnreadCount] = useState(0)
   const [memberId, setMemberId] = useState<string | null>(null)
 
-  // Safe community context — null on global routes like /profile
-  const community = useMaybeCommunity()
-  const communitySlug = community?.communitySlug
-  const role = community?.role
-
-  // Only fetch member ID when in community context (for notification badge)
   useEffect(() => {
-    if (!community) return
     const supabase = createClient()
-    supabase
-      .from('community_members')
-      .select('id')
-      .eq('id', community.membershipId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setMemberId(data.id)
-          // Fetch initial unread count
-          supabase
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.access_token) {
+        try {
+          const payload = JSON.parse(atob(session.access_token.split('.')[1]))
+          setRole((payload.user_role as UserRole) || 'pending')
+        } catch { /* fall through */ }
+
+        // Fetch member_id for notification queries
+        const { data: memberData } = await supabase
+          .from('community_members')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .maybeSingle()
+
+        if (memberData) {
+          setMemberId(memberData.id)
+          // Fetch unread notification count
+          const { count } = await supabase
             .from('notifications')
             .select('*', { count: 'exact', head: true })
-            .eq('member_id', data.id)
+            .eq('member_id', memberData.id)
             .is('read_at', null)
-            .then(({ count }) => setUnreadCount(count ?? 0))
+
+          setUnreadCount(count ?? 0)
         }
-      })
-  }, [community?.membershipId])
+      }
+    })
+  }, [])
 
   // Realtime subscription for live badge updates
   useEffect(() => {
@@ -128,6 +137,7 @@ export function AppNav() {
           filter: `member_id=eq.${memberId}`,
         },
         () => {
+          // Re-fetch count on any update (mark-as-read)
           supabase
             .from('notifications')
             .select('*', { count: 'exact', head: true })
@@ -141,36 +151,13 @@ export function AppNav() {
     return () => { supabase.removeChannel(channel) }
   }, [memberId])
 
+  const visibleTabs = NAV_TABS.filter(tab => tab.roles.includes(role))
+
   async function handleLogout() {
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/auth')
     router.refresh()
-  }
-
-  // Active path check using longest-match-wins with slug-based paths
-  const isActive = (subPath: string) => {
-    if (!communitySlug) return false
-    const fullPath = `/c/${communitySlug}${subPath}`
-    return pathname === fullPath || pathname.startsWith(fullPath + '/')
-  }
-
-  // Determine visible tabs based on role (only in community context)
-  const visibleTabs = community && role
-    ? NAV_TABS.filter(tab => tab.roles.includes(role))
-    : []
-
-  // In community context: resolve active tab with longest-match-wins
-  const activeTabPaths = visibleTabs
-    .map(tab => ({ subPath: tab.subPath, active: isActive(tab.subPath) }))
-    .filter(t => t.active)
-
-  // Find which tabs have a more-specific match active (suppress parent tabs)
-  const hasMoreSpecificActiveTab = (subPath: string) => {
-    return activeTabPaths.some(
-      t => t.subPath !== subPath
-        && t.subPath.startsWith(subPath + '/')
-    )
   }
 
   return (
@@ -185,95 +172,60 @@ export function AppNav() {
         <LogOut className="w-4 h-4 text-muted-foreground" />
       </button>
 
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-t border-border pb-[env(safe-area-inset-bottom)]"
-        aria-label="Bottom navigation"
-      >
-        <div className="flex items-center justify-around px-2 h-16">
-          {community && role ? (
-            // Community context: show role-based tabs
-            visibleTabs.map(tab => {
-              const active = isActive(tab.subPath) && !hasMoreSpecificActiveTab(tab.subPath)
-              const href = `/c/${communitySlug}${tab.subPath}`
-              return (
-                <Link
-                  key={tab.subPath}
-                  href={href}
-                  className={`flex flex-col items-center gap-0.5 flex-1 py-2 ${
-                    active ? 'text-primary' : 'text-muted-foreground'
-                  }`}
-                >
-                  <span
-                    className={
-                      active
-                        ? 'bg-primary text-primary-foreground p-1.5 rounded-xl transition-all duration-300 shadow-sm'
-                        : 'p-1.5 transition-all duration-300'
-                    }
-                  >
-                    {tab.subPath === '/notifications' ? (
-                      <span className="relative">
-                        <Bell className="w-5 h-5" aria-hidden="true" />
-                        {unreadCount > 0 && (
-                          <span
-                            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm"
-                            style={{ backgroundColor: '#c8e030', color: '#1a1a1a' }}
-                            aria-label={`${unreadCount > 9 ? '9+' : unreadCount} unread notifications`}
-                          >
-                            {unreadCount > 9 ? '9+' : unreadCount}
-                          </span>
-                        )}
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-t border-border pb-[env(safe-area-inset-bottom)]"
+      aria-label="Bottom navigation"
+    >
+      <div className="flex items-center justify-around px-2 h-16">
+        {visibleTabs.map(tab => {
+          // Longest-match-wins: only highlight the most specific matching tab
+          const matches = pathname === tab.href || pathname.startsWith(tab.href + '/')
+          const hasMoreSpecificMatch = matches && visibleTabs.some(
+            other => other.href !== tab.href
+              && other.href.startsWith(tab.href + '/')
+              && (pathname === other.href || pathname.startsWith(other.href + '/'))
+          )
+          const isActive = matches && !hasMoreSpecificMatch
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={`flex flex-col items-center gap-0.5 flex-1 py-2 ${
+                isActive ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              <span
+                className={
+                  isActive
+                    ? 'bg-primary text-primary-foreground p-1.5 rounded-xl transition-all duration-300 shadow-sm'
+                    : 'p-1.5 transition-all duration-300'
+                }
+              >
+                {tab.href === '/notifications' ? (
+                  <span className="relative">
+                    <Bell className="w-5 h-5" aria-hidden="true" />
+                    {unreadCount > 0 && (
+                      <span
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm"
+                        style={{ backgroundColor: '#c8e030', color: '#1a1a1a' }}
+                        aria-label={`${unreadCount > 9 ? '9+' : unreadCount} unread notifications`}
+                      >
+                        {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
-                    ) : (
-                      tab.icon
                     )}
                   </span>
-                  <span className={`text-[10px] ${active ? 'font-bold text-primary' : ''}`}>
-                    {tab.label}
-                  </span>
-                </Link>
-              )
-            })
-          ) : (
-            // Minimal nav for global routes (/profile, /profile/setup, /communities)
-            <>
-              <Link
-                href="/communities"
-                className={`flex flex-col items-center gap-0.5 flex-1 py-2 ${
-                  pathname === '/communities' ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                <span className={
-                  pathname === '/communities'
-                    ? 'bg-primary text-primary-foreground p-1.5 rounded-xl transition-all duration-300 shadow-sm'
-                    : 'p-1.5 transition-all duration-300'
-                }>
-                  <LayoutDashboard className="w-5 h-5" />
-                </span>
-                <span className={`text-[10px] ${pathname === '/communities' ? 'font-bold text-primary' : ''}`}>
-                  Communities
-                </span>
-              </Link>
-              <Link
-                href="/profile"
-                className={`flex flex-col items-center gap-0.5 flex-1 py-2 ${
-                  pathname.startsWith('/profile') ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                <span className={
-                  pathname.startsWith('/profile')
-                    ? 'bg-primary text-primary-foreground p-1.5 rounded-xl transition-all duration-300 shadow-sm'
-                    : 'p-1.5 transition-all duration-300'
-                }>
-                  <User className="w-5 h-5" />
-                </span>
-                <span className={`text-[10px] ${pathname.startsWith('/profile') ? 'font-bold text-primary' : ''}`}>
-                  Profile
-                </span>
-              </Link>
-            </>
-          )}
-        </div>
-      </nav>
+                ) : (
+                  tab.icon
+                )}
+              </span>
+              <span className={`text-[10px] ${isActive ? 'font-bold text-primary' : ''}`}>
+                {tab.label}
+              </span>
+            </Link>
+          )
+        })}
+      </div>
+    </nav>
     </>
   )
 }

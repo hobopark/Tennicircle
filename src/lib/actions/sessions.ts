@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, getUserRole } from '@/lib/supabase/server'
+import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { CancelSessionSchema, SessionTemplateSchema, EditSessionSchema } from '@/lib/validations/sessions'
 import type { SessionActionResult } from '@/lib/types/sessions'
@@ -24,8 +24,6 @@ function getSydneyOffsetString(date: Date): string {
 
 // D-01, D-03, D-04, D-16: Coach creates a recurring session template
 export async function createSessionTemplate(
-  communityId: string,
-  communitySlug: string,
   _prevState: SessionActionResult,
   formData: FormData
 ): Promise<SessionActionResult> {
@@ -34,10 +32,15 @@ export async function createSessionTemplate(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const membership = await getUserRole(supabase, communityId)
-  if (!membership) return { success: false, error: 'Not a member of this community' }
-  if (membership.role !== 'coach' && membership.role !== 'admin') {
+  const claims = await getJWTClaims(supabase)
+  const userRole = claims.user_role
+  if (userRole !== 'coach' && userRole !== 'admin') {
     return { success: false, error: 'Only coaches and admins can create sessions' }
+  }
+
+  const communityId = claims.community_id
+  if (!communityId) {
+    return { success: false, error: 'No community associated with your account' }
   }
 
   // Parse co_coach_ids and invited_client_ids from comma-separated hidden inputs
@@ -57,7 +60,6 @@ export async function createSessionTemplate(
     .from('community_members')
     .select('id')
     .eq('user_id', user.id)
-    .eq('community_id', communityId)
     .single()
 
   if (!member) return { success: false, error: 'Member record not found' }
@@ -153,16 +155,14 @@ export async function createSessionTemplate(
     }
   }
 
-  revalidatePath(`/c/${communitySlug}/coach`)
-  revalidatePath(`/c/${communitySlug}/sessions`)
+  revalidatePath('/coach')
+  revalidatePath('/sessions')
 
   return { success: true }
 }
 
 // D-14: Coach edits a session instance with this/future scope
 export async function editSession(
-  communityId: string,
-  communitySlug: string,
   sessionId: string,
   scope: 'this' | 'future',
   formData: FormData
@@ -172,9 +172,9 @@ export async function editSession(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const membership = await getUserRole(supabase, communityId)
-  if (!membership) return { success: false, error: 'Not a member of this community' }
-  if (membership.role !== 'coach' && membership.role !== 'admin') {
+  const editClaims = await getJWTClaims(supabase)
+  const userRole = editClaims.user_role
+  if (userRole !== 'coach' && userRole !== 'admin') {
     return { success: false, error: 'Only coaches and admins can edit sessions' }
   }
 
@@ -214,14 +214,14 @@ export async function editSession(
     }
 
     // Verify ownership: coach can only edit sessions they coach (T-02-12)
+    const communityId = editClaims.community_id
     const { data: member } = await supabase
       .from('community_members')
       .select('id')
       .eq('user_id', user.id)
-      .eq('community_id', communityId)
       .single()
 
-    if (member && membership.role !== 'admin') {
+    if (member && userRole !== 'admin') {
       const { data: coachRecord } = await supabase
         .from('session_coaches')
         .select('member_id')
@@ -257,10 +257,9 @@ export async function editSession(
       .from('community_members')
       .select('id')
       .eq('user_id', user.id)
-      .eq('community_id', communityId)
       .single()
 
-    if (member && membership.role !== 'admin') {
+    if (member && userRole !== 'admin') {
       const { data: template } = await supabase
         .from('session_templates')
         .select('coach_id')
@@ -341,17 +340,14 @@ export async function editSession(
     }
   }
 
-  revalidatePath(`/c/${communitySlug}/sessions`)
-  revalidatePath(`/c/${communitySlug}/coach`)
-  revalidatePath(`/c/${communitySlug}/coach/schedule`)
+  revalidatePath('/sessions')
+  revalidatePath('/coach')
 
   return { success: true }
 }
 
 // D-17: Coaches and admins can cancel a session with a required reason
 export async function cancelSession(
-  communityId: string,
-  communitySlug: string,
   sessionId: string,
   formData: FormData
 ): Promise<SessionActionResult> {
@@ -361,9 +357,8 @@ export async function cancelSession(
   if (!user) return { success: false, error: 'Not authenticated' }
 
   // Auth check: only coach or admin
-  const membership = await getUserRole(supabase, communityId)
-  if (!membership) return { success: false, error: 'Not a member of this community' }
-  if (membership.role !== 'coach' && membership.role !== 'admin') {
+  const cancelClaims = await getJWTClaims(supabase)
+  if (cancelClaims.user_role !== 'coach' && cancelClaims.user_role !== 'admin') {
     return { success: false, error: 'Only coaches and admins can cancel sessions' }
   }
 
@@ -424,8 +419,8 @@ export async function cancelSession(
     .eq('session_id', sessionId)
     .is('cancelled_at', null)
 
-  revalidatePath(`/c/${communitySlug}/sessions`)
-  revalidatePath(`/c/${communitySlug}/coach`)
+  revalidatePath('/sessions')
+  revalidatePath('/coach')
 
   return { success: true }
 }

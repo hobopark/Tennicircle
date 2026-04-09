@@ -1,23 +1,17 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, getUserRole } from '@/lib/supabase/server'
+import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import type { SessionActionResult } from '@/lib/types/sessions'
 
-export async function addInvitation(
-  communityId: string,
-  communitySlug: string,
-  templateId: string,
-  memberId: string
-): Promise<SessionActionResult> {
+export async function addInvitation(templateId: string, memberId: string): Promise<SessionActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const membership = await getUserRole(supabase, communityId)
-  if (!membership) return { success: false, error: 'Not a member of this community' }
-  if (membership.role !== 'coach' && membership.role !== 'admin') {
+  const claims = await getJWTClaims(supabase)
+  if (claims.user_role !== 'coach' && claims.user_role !== 'admin') {
     return { success: false, error: 'Only coaches can manage invitations' }
   }
 
@@ -32,26 +26,20 @@ export async function addInvitation(
     return { success: false, error: error.message }
   }
 
-  revalidatePath(`/c/${communitySlug}/coach`)
-  revalidatePath(`/c/${communitySlug}/sessions`)
+  revalidatePath('/coach')
+  revalidatePath('/sessions')
 
   return { success: true }
 }
 
-export async function removeInvitation(
-  communityId: string,
-  communitySlug: string,
-  templateId: string,
-  memberId: string
-): Promise<SessionActionResult> {
+export async function removeInvitation(templateId: string, memberId: string): Promise<SessionActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const membership = await getUserRole(supabase, communityId)
-  if (!membership) return { success: false, error: 'Not a member of this community' }
-  if (membership.role !== 'coach' && membership.role !== 'admin') {
+  const claims = await getJWTClaims(supabase)
+  if (claims.user_role !== 'coach' && claims.user_role !== 'admin') {
     return { success: false, error: 'Only coaches can manage invitations' }
   }
 
@@ -63,8 +51,8 @@ export async function removeInvitation(
 
   if (error) return { success: false, error: error.message }
 
-  revalidatePath(`/c/${communitySlug}/coach`)
-  revalidatePath(`/c/${communitySlug}/sessions`)
+  revalidatePath('/coach')
+  revalidatePath('/sessions')
 
   return { success: true }
 }
