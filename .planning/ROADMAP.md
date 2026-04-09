@@ -126,11 +126,11 @@ Plans:
   4. An RLS audit confirms every database table has row-level security enabled with correct community-scoping policies
 **Plans:** 5 plans
 Plans:
-- [ ] 07-00-PLAN.md — Wave 0: test stub files for all Phase 7 requirements
-- [ ] 07-01-PLAN.md — Junction table migration, types, and assignment server actions
-- [ ] 07-02-PLAN.md — Open sign-up auto-join and processInviteSignup junction table update
-- [ ] 07-03-PLAN.md — Roster UI: invite button, member cards, role management, client assignment
-- [ ] 07-04-PLAN.md — Schema push (manual) and end-to-end verification checkpoint
+- [x] 07-00-PLAN.md — Wave 0: test stub files for all Phase 7 requirements
+- [x] 07-01-PLAN.md — Junction table migration, types, and assignment server actions
+- [x] 07-02-PLAN.md — Open sign-up auto-join and processInviteSignup junction table update
+- [x] 07-03-PLAN.md — Roster UI: invite button, member cards, role management, client assignment
+- [x] 07-04-PLAN.md — Schema push (manual) and end-to-end verification checkpoint
 **UI hint**: yes
 
 ### Phase 7: Member Management & Invite System
@@ -147,10 +147,10 @@ Plans:
   6. Members without completed profiles appear in the roster with a "profile pending" state (not silently hidden)
 **Plans:** 4 plans
 Plans:
-- [ ] 07-01-PLAN.md — Junction table migration, types, and assignment server actions
-- [ ] 07-02-PLAN.md — Open sign-up auto-join and processInviteSignup junction table update
-- [ ] 07-03-PLAN.md — Roster UI: invite button, member cards, role management, client assignment
-- [ ] 07-04-PLAN.md — Schema push (manual) and end-to-end verification checkpoint
+- [x] 07-01-PLAN.md — Junction table migration, types, and assignment server actions
+- [x] 07-02-PLAN.md — Open sign-up auto-join and processInviteSignup junction table update
+- [x] 07-03-PLAN.md — Roster UI: invite button, member cards, role management, client assignment
+- [x] 07-04-PLAN.md — Schema push (manual) and end-to-end verification checkpoint
 **UI hint**: yes
 
 ### Phase 8: Community Selector & Open Sign-Up
@@ -164,11 +164,12 @@ Plans:
   4. A join request requires coach or admin approval before the member gains access
   5. An admin can create a new community and becomes that community's first admin (future: paid feature for non-admins)
   6. Routing is restructured so community context is part of the navigation (dashboard loads after community selection, not directly after login)
+  7. All key route directories have loading.tsx skeleton files for instant perceived navigation between tabs (coach dashboard, sessions, clients, events, notifications, profile)
 **Plans:** 4 plans
 Plans:
-- [ ] 07-01-PLAN.md — Junction table migration, types, and assignment server actions
-- [ ] 07-02-PLAN.md — Open sign-up auto-join and processInviteSignup junction table update
-- [ ] 07-03-PLAN.md — Roster UI: invite button, member cards, role management, client assignment
+- [x] 07-01-PLAN.md — Junction table migration, types, and assignment server actions
+- [x] 07-02-PLAN.md — Open sign-up auto-join and processInviteSignup junction table update
+- [x] 07-03-PLAN.md — Roster UI: invite button, member cards, role management, client assignment
 - [ ] 07-04-PLAN.md — Schema push (manual) and end-to-end verification checkpoint
 **UI hint**: yes
 
