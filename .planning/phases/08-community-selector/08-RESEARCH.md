@@ -626,27 +626,31 @@ CREATE POLICY "coaches_admins_update_requests"
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Supabase Custom Access Token Hook removal sequence**
    - What we know: SQL can drop the function. Dashboard registration is manual.
    - What's unclear: Does Supabase fail immediately when hook function is missing, or gracefully skip?
    - Recommendation: Plan must include explicit instruction for human to remove the hook in Supabase dashboard BEFORE deploying the migration that drops the function — or at minimum immediately after. Flag as human task in the plan.
+   - RESOLVED: Plan 05 Task 2 is a `checkpoint:human-action` task requiring the human to remove the hook binding in Supabase dashboard and push the SQL migration via SQL Editor before proceeding.
 
 2. **Proxy combined query performance**
    - What we know: D-13 calls for a single combined query. AppNav also needs all memberships for the switcher.
    - What's unclear: Exact SQL join to retrieve profile + all memberships + community slugs in one query.
    - Recommendation: Use Claude's Discretion to design the query. Pattern: LEFT JOIN community_members + JOIN communities filtered by user_id. If profile doesn't exist, return null profile (allows D-14 step 4 to fire).
+   - RESOLVED: Plan 03 uses two separate queries (profile lookup + memberships lookup) by design per the CRITICAL implementation note. Combined query deemed unnecessary complexity.
 
 3. **Old flat routes during migration**
    - What we know: D-06 says proxy handles `/coach` → redirect to `/c/[slug]/coach`. Proxy runs on every request.
    - What's unclear: Whether old page files should be deleted or just redirected.
    - Recommendation: Per D-02, files physically move. Old directories are deleted. Proxy handles any bookmarked URL redirects.
+   - RESOLVED: Per D-02, files physically move into `/c/[slug]/` directories. Plan 03 Task 1 deletes old flat route directories after migration. Proxy handles bookmarked URLs.
 
 4. **Notification inserts for join_approved/join_rejected use service role**
    - What we know: notifications table has INSERT policy for service_role only (T-05-03 from Phase 5).
    - What's unclear: Whether server actions that approve/reject can insert notifications or need a separate service client.
    - Recommendation: Create a `createServiceClient()` helper in server.ts (using `SUPABASE_SERVICE_ROLE_KEY`) for notification inserts, matching Phase 5 cron pattern. Server actions call this after successful approve/reject.
+   - RESOLVED: Plan 01 Task 2 creates `createServiceClient()` helper in `src/lib/supabase/server.ts`. Used by `approveJoinRequest` and `rejectJoinRequest` in communities.ts for notification inserts.
 
 ---
 
