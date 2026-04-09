@@ -44,7 +44,8 @@ Declared values (multiples of 4):
 | 3xl | 64px | Page-level top padding (accounts for fixed top-bar) |
 
 Exceptions:
-- Bottom nav safe area: `pb-[env(safe-area-inset-bottom)]` on nav, `pb-20` on page content
+- nav-clearance: 80px (`pb-20`) — page content bottom padding to clear fixed bottom nav; named exception, not part of the 8-point scale
+- Bottom nav safe area: `pb-[env(safe-area-inset-bottom)]` on nav element itself
 - Touch targets (community cards, join buttons): minimum 44px height
 - Community switcher dropdown trigger: min-width 200px
 
@@ -57,7 +58,7 @@ Exceptions:
 | Display | 24px (text-2xl) | 700 (bold) | 1.2 | Space Grotesk | Page heading on `/communities` ("Your Communities") |
 | Heading | 16px (text-base) | 700 (bold) | 1.2 | Space Grotesk | Community card name, section titles |
 | Body | 14px (text-sm) | 400 (regular) | 1.5 | Inter | Community description, member count, helper text |
-| Label | 10px (text-[10px]) | 500 (medium) | 1.4 | Inter | Role badge text, nav tab labels, micro metadata |
+| Label | 10px (text-[10px]) | 400 (regular) | 1.4 | Inter | Role badge text, nav tab labels, micro metadata |
 
 Only 2 weights used: 400 (regular) and 700 (bold). Source: DESIGN-REF.md + existing AppNav pattern.
 
@@ -123,9 +124,9 @@ active:scale-[0.98] transition-transform
 ```
 
 Card anatomy (top to bottom):
-1. Top row: community name (`font-heading font-bold text-base`) + role badge (`text-[10px] font-medium px-2 py-0.5 rounded-full`)
+1. Top row: community name (`font-heading font-bold text-base`) + role badge (`text-[10px] font-normal px-2 py-0.5 rounded-full`)
 2. Middle row: member count (`text-sm text-muted-foreground`) + last activity (`text-xs text-muted-foreground`)
-3. Bottom row: "Go to community" button (primary, full-width on mobile)
+3. Bottom row: "Go to Community" button (primary, full-width on mobile)
 
 Role badge colors:
 - admin: `bg-primary/10 text-primary`
@@ -152,8 +153,10 @@ After request sent — inline state change (no remount):
 ### "/communities" Page Layout
 
 ```
-px-5 pt-16 pb-24   ← top accounts for logout button; bottom clears nav
+px-5 pt-16 pb-24   ← top accounts for logout button; bottom applies nav-clearance exception (80px)
 ```
+
+Focal point: "Your Communities" section heading and card grid — the first thing a returning user acts on. If empty, the "Browse Communities" section becomes the focal point.
 
 Section order:
 1. Page heading: `font-heading font-bold text-2xl mb-6` — "Communities"
@@ -220,7 +223,7 @@ Section header: "Pending Requests" (`font-heading font-bold text-base`) + count 
 
 Per request row:
 - `InitialsAvatar` (existing component) + member name (`text-sm font-medium`) + join date (`text-xs text-muted-foreground`)
-- "Approve" button: primary variant, compact (`text-xs h-8`)
+- "Approve Member" button: primary variant, compact (`text-xs h-8`)
 - "Reject" button: `variant="outline"` with orange border hover state (`hover:border-orange-400 hover:text-orange-600`), compact
 
 ### Reject Confirmation Dialog
@@ -243,7 +246,7 @@ Source: CONTEXT.md D-40 + project memory (no red for cancel/destructive actions,
 | Primary CTA — join | "Request to Join" |
 | Primary CTA — go to community | "Go to Community" |
 | Primary CTA — create community | "Create Community" |
-| Primary CTA — approve request | "Approve" |
+| Primary CTA — approve request | "Approve Member" |
 | Pending join button state | "Pending Approval" |
 | Cancel request link | "Cancel request" |
 | Reject request confirm | "Reject Request" |
@@ -295,7 +298,7 @@ Implementation: `useTransition` + optimistic state per card — matches existing
 ### Approve/Reject Request (Coach/Admin)
 
 Approve:
-1. "Approve" button: loading state with spinner
+1. "Approve Member" button: loading state with spinner
 2. On success: row removed from pending section, count badge decrements
 3. Toast: "Approved. [Name] is now a member." (success)
 
@@ -321,7 +324,7 @@ Every route under `/c/[slug]/` shows a skeleton `loading.tsx` while the communit
 ## Accessibility
 
 - Community cards: keyboard focusable, `aria-label="Go to [Community Name]"` on card link
-- Role badge: `aria-label="Your role: [role]"` 
+- Role badge: `aria-label="Your role: [role]"`
 - Pending count badge on Clients tab: `aria-label="[N] pending join request[s]"` (matches existing notification badge pattern)
 - Reject dialog: `DialogTitle` and `DialogDescription` always present (matches existing Dialog usage in AppNav)
 - Community switcher: `aria-expanded`, `aria-haspopup="listbox"` on trigger; `role="listbox"` on dropdown
