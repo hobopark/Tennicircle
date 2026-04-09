@@ -41,7 +41,7 @@ export function LoginForm() {
           type="email"
           placeholder="you@example.com"
           autoComplete="email"
-          defaultValue=""
+          defaultValue={state.values?.email ?? ''}
           className={[
             'h-12 rounded-xl bg-input border border-border px-4 text-base font-sans',
             'placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-ring',

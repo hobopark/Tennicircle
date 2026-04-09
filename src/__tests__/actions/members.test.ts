@@ -129,8 +129,7 @@ describe('processInviteSignup', () => {
 
   it('creates community membership with valid token', async () => {
     const mockSupabase = createMockSupabase()
-    const insertMock = vi.fn()
-    const assignInsertMock = vi.fn().mockResolvedValue({ error: null })
+    const insertMock = vi.fn().mockResolvedValue({ error: null })
     mockSupabase.from = vi.fn((table: string) => {
       if (table === 'invite_links') {
         return {
@@ -151,19 +150,7 @@ describe('processInviteSignup', () => {
         }
       }
       if (table === 'community_members') {
-        return {
-          insert: vi.fn((data: Record<string, unknown>) => {
-            insertMock(data)
-            return {
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: { id: 'new-member-1' }, error: null }),
-              }),
-            }
-          }),
-        }
-      }
-      if (table === 'coach_client_assignments') {
-        return { insert: assignInsertMock }
+        return { insert: insertMock }
       }
       return {}
     }) as never
@@ -177,14 +164,7 @@ describe('processInviteSignup', () => {
         community_id: 'community-1',
         user_id: 'user-new',
         role: 'client',
-      })
-    )
-    // Junction table assignment created for client invites (D-10)
-    expect(assignInsertMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        community_id: 'community-1',
-        coach_member_id: 'member-coach-1',
-        client_member_id: 'new-member-1',
+        coach_id: 'member-coach-1',
       })
     )
   })
@@ -201,10 +181,9 @@ describe('processInviteSignup', () => {
     expect(result.error).toBe('Invalid or revoked invite link')
   })
 
-  it('skips junction table assignment for coach role invites', async () => {
+  it('sets coach_id to null for coach role invites', async () => {
     const mockSupabase = createMockSupabase()
-    const insertMock = vi.fn()
-    const assignInsertMock = vi.fn().mockResolvedValue({ error: null })
+    const insertMock = vi.fn().mockResolvedValue({ error: null })
     mockSupabase.from = vi.fn((table: string) => {
       if (table === 'invite_links') {
         return {
@@ -225,19 +204,7 @@ describe('processInviteSignup', () => {
         }
       }
       if (table === 'community_members') {
-        return {
-          insert: vi.fn((data: Record<string, unknown>) => {
-            insertMock(data)
-            return {
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: { id: 'new-coach-1' }, error: null }),
-              }),
-            }
-          }),
-        }
-      }
-      if (table === 'coach_client_assignments') {
-        return { insert: assignInsertMock }
+        return { insert: insertMock }
       }
       return {}
     }) as never
@@ -249,10 +216,9 @@ describe('processInviteSignup', () => {
     expect(insertMock).toHaveBeenCalledWith(
       expect.objectContaining({
         role: 'coach',
+        coach_id: null,
       })
     )
-    // Coach invites should NOT create a junction table assignment
-    expect(assignInsertMock).not.toHaveBeenCalled()
   })
 })
 

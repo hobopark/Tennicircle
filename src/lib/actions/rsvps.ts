@@ -25,18 +25,109 @@ export async function rsvpSession(sessionId: string): Promise<RsvpActionResult> 
 
   if (memberError || !member) return { success: false, error: 'Member record not found' }
 
-  // Atomic RSVP via RPC — serializes concurrent access using FOR UPDATE lock on session row
-  const { data: rpcResult, error: rpcError } = await supabase.rpc('atomic_rsvp', {
-    p_session_id: sessionId,
-    p_member_id: member.id,
-    p_community_id: communityId,
-  })
-  if (rpcError) return { success: false, error: rpcError.message }
-  const result = rpcResult as { success: boolean; rsvp_type?: string; waitlist_position?: number; error?: string }
-  if (!result.success) return { success: false, error: result.error ?? 'RSVP failed' }
+  // Check session is not cancelled and get capacity
+  const { data: session, error: sessionError } = await supabase
+    .from('sessions')
+    .select('capacity, cancelled_at, template_id')
+    .eq('id', sessionId)
+    .single()
 
-  const rsvpType = result.rsvp_type as 'confirmed' | 'waitlisted'
-  const waitlistPosition = result.waitlist_position ?? null
+  if (sessionError || !session) return { success: false, error: 'Session not found' }
+  if (session.cancelled_at !== null) return { success: false, error: 'This session has been cancelled' }
+
+  // Verify client is invited to this session's template
+  if (session.template_id) {
+    const { data: invitation } = await supabase
+      .from('session_invitations')
+      .select('id')
+      .eq('template_id', session.template_id)
+      .eq('member_id', member.id)
+      .single()
+
+    if (!invitation) return { success: false, error: 'You are not invited to this session' }
+  }
+
+  // Check for existing active RSVP
+  const { data: activeRsvp } = await supabase
+    .from('session_rsvps')
+    .select('id')
+    .eq('session_id', sessionId)
+    .eq('member_id', member.id)
+    .is('cancelled_at', null)
+    .maybeSingle()
+
+  if (activeRsvp) return { success: false, error: 'You already have an active RSVP for this session' }
+
+  // Count confirmed RSVPs (non-cancelled)
+  const { count: confirmedCount, error: confirmedError } = await supabase
+    .from('session_rsvps')
+    .select('*', { count: 'exact', head: true })
+    .eq('session_id', sessionId)
+    .eq('rsvp_type', 'confirmed')
+    .is('cancelled_at', null)
+
+  if (confirmedError) return { success: false, error: confirmedError.message }
+
+  let rsvpType: 'confirmed' | 'waitlisted'
+  let waitlistPosition: number | null = null
+
+  if ((confirmedCount ?? 0) < session.capacity) {
+    rsvpType = 'confirmed'
+  } else {
+    // Count current waitlisted (non-cancelled)
+    const { count: waitlistCount, error: waitlistError } = await supabase
+      .from('session_rsvps')
+      .select('*', { count: 'exact', head: true })
+      .eq('session_id', sessionId)
+      .eq('rsvp_type', 'waitlisted')
+      .is('cancelled_at', null)
+
+    if (waitlistError) return { success: false, error: waitlistError.message }
+
+    rsvpType = 'waitlisted'
+    waitlistPosition = (waitlistCount ?? 0) + 1
+  }
+
+  // Check for an existing cancelled RSVP — reactivate instead of inserting
+  const { data: existingRsvp } = await supabase
+    .from('session_rsvps')
+    .select('id')
+    .eq('session_id', sessionId)
+    .eq('member_id', member.id)
+    .not('cancelled_at', 'is', null)
+    .maybeSingle()
+
+  if (existingRsvp) {
+    // Reactivate the cancelled RSVP
+    const { error: updateError } = await supabase
+      .from('session_rsvps')
+      .update({
+        rsvp_type: rsvpType,
+        waitlist_position: waitlistPosition,
+        cancelled_at: null,
+      })
+      .eq('id', existingRsvp.id)
+
+    if (updateError) return { success: false, error: updateError.message }
+  } else {
+    // First-time RSVP — insert new row
+    const { error: insertError } = await supabase
+      .from('session_rsvps')
+      .insert({
+        session_id: sessionId,
+        member_id: member.id,
+        community_id: communityId,
+        rsvp_type: rsvpType,
+        waitlist_position: waitlistPosition,
+      })
+
+    if (insertError) {
+      if (insertError.message.includes('capacity')) {
+        return { success: false, error: "This session is now full. You've been added to the waitlist." }
+      }
+      return { success: false, error: insertError.message }
+    }
+  }
 
   // NOTF-03: Notify member of RSVP confirmation + notify coach(es) of new RSVP (fire-and-forget)
   {

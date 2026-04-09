@@ -20,7 +20,7 @@ export function RsvpSessionButton({ sessionId }: RsvpSessionButtonProps) {
       const result = await rsvpSession(sessionId)
       if (result.success) {
         if (result.rsvpType === 'waitlisted') {
-          toast.success(`Session just filled — you're #${result.waitlistPosition ?? '?'} on the waitlist`)
+          toast.success(`Session is full. You're on the waitlist (position ${result.waitlistPosition}).`)
         } else {
           toast.success("You're in! See you there.")
         }

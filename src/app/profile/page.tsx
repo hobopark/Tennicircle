@@ -84,7 +84,7 @@ export default async function ProfilePage() {
           memberId={memberId}
           email={user.email ?? ''}
         />
-        <div className="max-w-[640px] mx-auto px-5 pb-24">
+        <div className="max-w-[640px] mx-auto px-5 pb-8">
           {/* Summary stats grid */}
           {isCoachOrAdmin ? (
             <div className="grid grid-cols-1 gap-3 mb-6">

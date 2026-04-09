@@ -89,7 +89,7 @@ export default async function MemberProfilePage({ params }: PageProps) {
           memberId={memberId}
           email={targetEmail}
         />
-        <div className="max-w-[640px] mx-auto px-5 pb-24">
+        <div className="max-w-[640px] mx-auto px-5 pb-8">
           {/* Summary stats grid */}
           <div className="grid grid-cols-3 gap-3 mb-6">
             <div className="bg-card rounded-2xl border border-border/50 p-4 text-center">

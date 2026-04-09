@@ -31,15 +31,6 @@ export interface InviteLink {
   created_at: string
 }
 
-// Matches coach_client_assignments junction table (Phase 7 D-10)
-export interface CoachClientAssignment {
-  id: string
-  community_id: string
-  coach_member_id: string
-  client_member_id: string
-  assigned_at: string
-}
-
 // JWT custom claims injected by Custom Access Token Hook
 export interface JWTCustomClaims {
   user_role: UserRole
