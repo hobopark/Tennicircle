@@ -7,8 +7,8 @@ import { useRouter } from 'next/navigation'
 import { ShieldCheck, LayoutDashboard, CalendarDays, Calendar, Users, User, Trophy, Bell, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useMaybeCommunity } from '@/lib/context/community'
-import type { UserRole } from '@/lib/types/auth'
 import { CommunitySwitcherDropdown } from '@/components/nav/CommunitySwitcherDropdown'
+import type { UserRole } from '@/lib/types/auth'
 
 // Role-based nav tab definitions — paths are relative sub-paths after /c/{slug}
 const NAV_TABS: {
@@ -176,16 +176,14 @@ export function AppNav() {
 
   return (
     <>
-      {/* Top bar: community switcher (left) + logout (right) */}
-      <div className="fixed top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
-        <div className="pointer-events-auto">
-          <CommunitySwitcherDropdown />
-        </div>
+      {/* Top bar — community switcher + logout */}
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <CommunitySwitcherDropdown />
         <button
           type="button"
           onClick={handleLogout}
           aria-label="Log out"
-          className="pointer-events-auto w-9 h-9 rounded-xl bg-muted/80 backdrop-blur-sm flex items-center justify-center hover:bg-muted transition-colors"
+          className="w-9 h-9 rounded-xl bg-muted/80 backdrop-blur-sm flex items-center justify-center hover:bg-muted transition-colors"
         >
           <LogOut className="w-4 h-4 text-muted-foreground" />
         </button>

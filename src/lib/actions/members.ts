@@ -1,10 +1,12 @@
 'use server'
 
-import { createClient, getJWTClaims } from '@/lib/supabase/server'
+import { createClient, getUserRole } from '@/lib/supabase/server'
 import type { UserRole } from '@/lib/types/auth'
 
 // AUTH-04: Admin can update a community member's role
 export async function updateMemberRole(
+  communityId: string,
+  communitySlug: string,
   memberId: string,
   newRole: Exclude<UserRole, 'pending'>
 ): Promise<{ success: boolean; error?: string }> {
@@ -14,8 +16,12 @@ export async function updateMemberRole(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const claims = await getJWTClaims(supabase)
-  if (claims.user_role !== 'admin') return { success: false, error: 'Only admins can update roles' }
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
+  if (membership.role !== 'admin') return { success: false, error: 'Only admins can update roles' }
+
+  // communitySlug accepted for API consistency (callers may revalidate after)
+  void communitySlug
 
   const { error } = await supabase
     .from('community_members')
@@ -31,6 +37,9 @@ export async function updateMemberRole(
 }
 
 // Process invite token after email verification — called from /auth/confirm
+// NOTE: Uses createClient (not getUserRole) because this runs during signup flow
+// before the user has a community membership. No communityId param needed — the
+// invite link carries its own community_id.
 export async function processInviteSignup(
   userId: string,
   inviteToken: string
@@ -72,6 +81,8 @@ export async function processInviteSignup(
 
 // Remove a member from the community (admin only)
 export async function removeMember(
+  communityId: string,
+  communitySlug: string,
   memberId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient()
@@ -79,8 +90,11 @@ export async function removeMember(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const removeClaims = await getJWTClaims(supabase)
-  if (removeClaims.user_role !== 'admin') return { success: false, error: 'Only admins can remove members' }
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
+  if (membership.role !== 'admin') return { success: false, error: 'Only admins can remove members' }
+
+  void communitySlug
 
   const { error } = await supabase
     .from('community_members')
@@ -88,5 +102,34 @@ export async function removeMember(
     .eq('id', memberId)
 
   if (error) return { success: false, error: error.message }
+  return { success: true }
+}
+
+// Join a community as a client (open sign-up flow — no invite).
+// CRITICAL: communityId must be passed explicitly — never queried with .limit(1) (multi-tenant safe).
+export async function joinCommunityAsClient(
+  communityId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const { error: insertError } = await supabase
+    .from('community_members')
+    .insert({
+      community_id: communityId,
+      user_id: user.id,
+      role: 'client',
+      coach_id: null,
+    })
+
+  if (insertError) {
+    if (insertError.message.includes('duplicate') || insertError.code === '23505') {
+      return { success: false, error: 'Already a member of this community' }
+    }
+    return { success: false, error: insertError.message }
+  }
+
   return { success: true }
 }

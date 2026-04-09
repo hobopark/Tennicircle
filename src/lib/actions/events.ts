@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, getJWTClaims } from '@/lib/supabase/server'
+import { createClient, getUserRole } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { CreateEventSchema } from '@/lib/validations/events'
 import type { EventActionResult, EventRsvpActionResult } from '@/lib/types/events'
@@ -31,6 +31,8 @@ function toSydneyIso(dateStr: string, timeStr: string): string {
 
 // EVNT-01: Create a community event
 export async function createEvent(
+  communityId: string,
+  communitySlug: string,
   _prevState: EventActionResult,
   formData: FormData
 ): Promise<EventActionResult> {
@@ -39,15 +41,15 @@ export async function createEvent(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const claims = await getJWTClaims(supabase)
-  const communityId = claims.community_id
-  if (!communityId) return { success: false, error: 'No community associated with your account' }
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
 
   // Get member record
   const { data: member, error: memberError } = await supabase
     .from('community_members')
     .select('id')
     .eq('user_id', user.id)
+    .eq('community_id', communityId)
     .single()
 
   if (memberError || !member) return { success: false, error: 'Member record not found' }
@@ -58,8 +60,8 @@ export async function createEvent(
     return { success: false, fieldErrors: parsed.error.flatten().fieldErrors }
   }
 
-  // T-04-02: is_official is derived from JWT role — NEVER from formData
-  const isOfficial = claims.user_role === 'coach' || claims.user_role === 'admin'
+  // T-04-02: is_official is derived from server-side role — NEVER from formData
+  const isOfficial = membership.role === 'coach' || membership.role === 'admin'
 
   // Combine date + time into ISO string (Sydney timezone-aware)
   const startsAt = toSydneyIso(parsed.data.starts_at_date, parsed.data.starts_at_time)
@@ -98,28 +100,32 @@ export async function createEvent(
 
   if (insertError) return { success: false, error: insertError.message }
 
-  revalidatePath('/events')
-  revalidatePath('/sessions')
+  revalidatePath(`/c/${communitySlug}/events`)
+  revalidatePath(`/c/${communitySlug}/sessions`)
 
   return { success: true, data: insertedEvent }
 }
 
 // EVNT-03: RSVP to an event (confirmed or waitlisted based on capacity)
-export async function rsvpEvent(eventId: string): Promise<EventRsvpActionResult> {
+export async function rsvpEvent(
+  communityId: string,
+  communitySlug: string,
+  eventId: string
+): Promise<EventRsvpActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const claims = await getJWTClaims(supabase)
-  const communityId = claims.community_id
-  if (!communityId) return { success: false, error: 'No community associated with your account' }
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
 
   // T-04-06: member_id derived from auth.uid() lookup, not from client input
   const { data: member, error: memberError } = await supabase
     .from('community_members')
     .select('id')
     .eq('user_id', user.id)
+    .eq('community_id', communityId)
     .single()
 
   if (memberError || !member) return { success: false, error: 'Member record not found' }
@@ -205,24 +211,32 @@ export async function rsvpEvent(eventId: string): Promise<EventRsvpActionResult>
     }).then(() => {})
   }
 
-  revalidatePath('/events')
-  revalidatePath('/sessions')
+  revalidatePath(`/c/${communitySlug}/events`)
+  revalidatePath(`/c/${communitySlug}/sessions`)
 
   return { success: true, rsvpType }
 }
 
 // EVNT-04: Cancel own RSVP for an event
-export async function cancelEventRsvp(eventId: string): Promise<EventRsvpActionResult> {
+export async function cancelEventRsvp(
+  communityId: string,
+  communitySlug: string,
+  eventId: string
+): Promise<EventRsvpActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
+
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
 
   // T-04-06: member_id derived from auth.uid() lookup
   const { data: member, error: memberError } = await supabase
     .from('community_members')
     .select('id')
     .eq('user_id', user.id)
+    .eq('community_id', communityId)
     .single()
 
   if (memberError || !member) return { success: false, error: 'Member record not found' }
@@ -274,9 +288,8 @@ export async function cancelEventRsvp(eventId: string): Promise<EventRsvpActionR
       if (eventInfo) {
         const serviceClient = createServiceClient()
         const { formatDateTime } = await import('@/lib/utils/dates')
-        const claims = await getJWTClaims(supabase)
         serviceClient.from('notifications').insert({
-          community_id: claims.community_id!,
+          community_id: communityId,
           member_id: nextWaitlisted.member_id,
           notification_type: 'waitlist_promoted' as const,
           title: "You've been moved off the waitlist",
@@ -327,14 +340,16 @@ export async function cancelEventRsvp(eventId: string): Promise<EventRsvpActionR
     }
   }
 
-  revalidatePath('/events')
-  revalidatePath('/sessions')
+  revalidatePath(`/c/${communitySlug}/events`)
+  revalidatePath(`/c/${communitySlug}/sessions`)
 
   return { success: true }
 }
 
 // Update an existing event (creator or admin only)
 export async function updateEvent(
+  communityId: string,
+  communitySlug: string,
   eventId: string,
   _prevState: EventActionResult,
   formData: FormData
@@ -344,12 +359,14 @@ export async function updateEvent(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const claims = await getJWTClaims(supabase)
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
 
   const { data: member, error: memberError } = await supabase
     .from('community_members')
     .select('id')
     .eq('user_id', user.id)
+    .eq('community_id', communityId)
     .single()
 
   if (memberError || !member) return { success: false, error: 'Member record not found' }
@@ -362,7 +379,7 @@ export async function updateEvent(
     .single()
 
   if (eventError || !event) return { success: false, error: 'Event not found' }
-  if (event.created_by !== member.id && claims.user_role !== 'admin') {
+  if (event.created_by !== member.id && membership.role !== 'admin') {
     return { success: false, error: 'You can only edit your own events' }
   }
 
@@ -409,7 +426,6 @@ export async function updateEvent(
     if (rsvps && rsvps.length > 0) {
       const serviceClient = createServiceClient()
       const { formatDateTime } = await import('@/lib/utils/dates')
-      const communityId = claims.community_id!
       const notificationRows = rsvps.map(r => ({
         community_id: communityId,
         member_id: r.member_id,
@@ -422,26 +438,32 @@ export async function updateEvent(
     }
   }
 
-  revalidatePath('/events')
-  revalidatePath(`/events/${eventId}`)
+  revalidatePath(`/c/${communitySlug}/events`)
+  revalidatePath(`/c/${communitySlug}/events/${eventId}`)
 
   return { success: true, data: updated }
 }
 
 // EVNT-05: Delete an event (creator or admin only)
-export async function deleteEvent(eventId: string): Promise<EventActionResult> {
+export async function deleteEvent(
+  communityId: string,
+  communitySlug: string,
+  eventId: string
+): Promise<EventActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const claims = await getJWTClaims(supabase)
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
 
   // T-04-08: Server action verifies user is event creator or admin before deletion
   const { data: member, error: memberError } = await supabase
     .from('community_members')
     .select('id')
     .eq('user_id', user.id)
+    .eq('community_id', communityId)
     .single()
 
   if (memberError || !member) return { success: false, error: 'Member record not found' }
@@ -455,7 +477,7 @@ export async function deleteEvent(eventId: string): Promise<EventActionResult> {
 
   if (eventError || !event) return { success: false, error: 'Event not found' }
 
-  if (event.created_by !== member.id && claims.user_role !== 'admin' && claims.user_role !== 'coach') {
+  if (event.created_by !== member.id && membership.role !== 'admin' && membership.role !== 'coach') {
     return { success: false, error: 'You can only delete your own events' }
   }
 
@@ -466,7 +488,7 @@ export async function deleteEvent(eventId: string): Promise<EventActionResult> {
 
   if (deleteError) return { success: false, error: deleteError.message }
 
-  revalidatePath('/events')
+  revalidatePath(`/c/${communitySlug}/events`)
 
   return { success: true }
 }

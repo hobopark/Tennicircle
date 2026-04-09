@@ -1,13 +1,15 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, getJWTClaims } from '@/lib/supabase/server'
+import { createClient, getUserRole } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { CreateAnnouncementSchema } from '@/lib/validations/events'
 import type { AnnouncementActionResult } from '@/lib/types/events'
 
 // EVNT-02: Coach/admin posts a community announcement
 export async function createAnnouncement(
+  communityId: string,
+  communitySlug: string,
   _prevState: AnnouncementActionResult,
   formData: FormData
 ): Promise<AnnouncementActionResult> {
@@ -16,12 +18,11 @@ export async function createAnnouncement(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const claims = await getJWTClaims(supabase)
-  const communityId = claims.community_id
-  if (!communityId) return { success: false, error: 'No community associated with your account' }
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
 
   // T-04-05: Role check — only coaches and admins can post announcements
-  if (claims.user_role !== 'coach' && claims.user_role !== 'admin') {
+  if (membership.role !== 'coach' && membership.role !== 'admin') {
     return { success: false, error: 'Only coaches and admins can post announcements' }
   }
 
@@ -30,6 +31,7 @@ export async function createAnnouncement(
     .from('community_members')
     .select('id')
     .eq('user_id', user.id)
+    .eq('community_id', communityId)
     .single()
 
   if (memberError || !member) return { success: false, error: 'Member record not found' }
@@ -73,13 +75,15 @@ export async function createAnnouncement(
     serviceClient.from('notifications').insert(notificationRows).then(() => {})
   }
 
-  revalidatePath('/events')
+  revalidatePath(`/c/${communitySlug}/events`)
 
   return { success: true, data: insertedAnnouncement }
 }
 
 // Update an existing announcement
 export async function updateAnnouncement(
+  communityId: string,
+  communitySlug: string,
   announcementId: string,
   _prevState: AnnouncementActionResult,
   formData: FormData
@@ -89,8 +93,9 @@ export async function updateAnnouncement(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const claims = await getJWTClaims(supabase)
-  if (claims.user_role !== 'coach' && claims.user_role !== 'admin') {
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
+  if (membership.role !== 'coach' && membership.role !== 'admin') {
     return { success: false, error: 'Only coaches and admins can edit announcements' }
   }
 
@@ -112,20 +117,25 @@ export async function updateAnnouncement(
 
   if (error) return { success: false, error: error.message }
 
-  revalidatePath('/events')
+  revalidatePath(`/c/${communitySlug}/events`)
 
   return { success: true, data: updated }
 }
 
 // Delete an announcement (coach or admin only)
-export async function deleteAnnouncement(announcementId: string): Promise<AnnouncementActionResult> {
+export async function deleteAnnouncement(
+  communityId: string,
+  communitySlug: string,
+  announcementId: string
+): Promise<AnnouncementActionResult> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  const claims = await getJWTClaims(supabase)
-  if (claims.user_role !== 'coach' && claims.user_role !== 'admin') {
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
+  if (membership.role !== 'coach' && membership.role !== 'admin') {
     return { success: false, error: 'Only coaches and admins can delete announcements' }
   }
 
@@ -136,7 +146,7 @@ export async function deleteAnnouncement(announcementId: string): Promise<Announ
 
   if (error) return { success: false, error: error.message }
 
-  revalidatePath('/events')
+  revalidatePath(`/c/${communitySlug}/events`)
 
   return { success: true }
 }
