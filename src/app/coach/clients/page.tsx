@@ -1,21 +1,12 @@
 import { redirect } from 'next/navigation'
-import { Users } from 'lucide-react'
 import { createClient, getJWTClaims } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import type { UserRole } from '@/lib/types/auth'
-import { MemberCard } from '@/components/members/MemberCard'
 import type { MemberCardData } from '@/components/members/MemberCard'
 import { InviteButton } from '@/components/members/InviteButton'
 import { RosterClientWrapper } from './RosterClientWrapper'
 
-export default async function ClientsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ view?: string }>
-}) {
-  const params = await searchParams
-  const viewMode = params.view === 'all-members' ? 'all-members' : 'my-clients'
-
+export default async function ClientsPage() {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -147,13 +138,6 @@ export default async function ClientsPage({
     })
     .sort((a, b) => a.displayName.localeCompare(b.displayName))
 
-  // Filter based on view mode for coaches
-  const displayMembers = viewMode === 'my-clients' && (userRole === 'coach' || userRole === 'admin')
-    ? allMemberCards.filter(m => m.isAssignedToMe)
-    : allMemberCards
-
-  const showToggle = userRole === 'coach' || userRole === 'admin'
-
   return (
     <>
       <AppNav />
@@ -162,43 +146,16 @@ export default async function ClientsPage({
           {/* Header with invite button */}
           <div className="flex items-center justify-between mb-4">
             <h1 className="font-heading font-bold text-2xl text-foreground">
-              Members ({displayMembers.length})
+              Members ({allMemberCards.length})
             </h1>
             <InviteButton userRole={userRole as Exclude<UserRole, 'pending'>} />
           </div>
 
-          {/* Toggle for My clients / All members */}
-          {showToggle && (
-            <div className="mb-4">
-              <RosterClientWrapper viewMode={viewMode as 'my-clients' | 'all-members'} />
-            </div>
-          )}
-
-          {/* Member list */}
-          {displayMembers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Users className="w-8 h-8 text-muted mb-3" />
-              <p className="font-heading font-bold text-base mb-1">
-                {viewMode === 'my-clients' ? 'No clients assigned' : 'No members yet'}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {viewMode === 'my-clients'
-                  ? 'Switch to "All members" to find and assign clients.'
-                  : 'Members will appear here once they join the community.'}
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {displayMembers.map(member => (
-                <MemberCard
-                  key={member.id}
-                  member={member}
-                  viewerRole={userRole as Exclude<UserRole, 'pending'>}
-                  isSelf={false}
-                />
-              ))}
-            </div>
-          )}
+          {/* Client-side toggle + filtered member list */}
+          <RosterClientWrapper
+            allMembers={allMemberCards}
+            viewerRole={userRole as Exclude<UserRole, 'pending'>}
+          />
         </div>
       </div>
     </>
