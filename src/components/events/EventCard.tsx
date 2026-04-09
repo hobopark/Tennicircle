@@ -35,12 +35,16 @@ export function EventCard({ event }: EventCardProps) {
           {EVENT_TYPE_LABELS[event.event_type]}
         </span>
 
-        <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${
-          isFull
-            ? 'bg-muted text-muted-foreground'
-            : 'bg-card/90 backdrop-blur-sm text-muted-foreground'
+        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+          event.capacity === null
+            ? 'text-primary bg-primary/10'
+            : isFull
+            ? 'text-red-500 bg-red-500/10'
+            : event.rsvp_count / event.capacity >= 0.75
+            ? 'text-orange-500 bg-orange-500/10'
+            : 'text-primary bg-primary/10'
         }`}>
-          {event.rsvp_count}/{event.capacity !== null ? event.capacity : 'unlimited'}
+          {event.rsvp_count}/{event.capacity ?? '∞'} spots
         </span>
       </div>
 
@@ -74,7 +78,7 @@ export function EventCard({ event }: EventCardProps) {
               Going
             </span>
           ) : (
-            <span className="inline-block bg-muted text-muted-foreground text-[10px] font-bold px-2.5 py-1 rounded-full">
+            <span className="inline-block bg-orange-500/10 text-orange-500 text-[10px] font-bold px-2.5 py-1 rounded-full">
               Waitlisted
             </span>
           )}
