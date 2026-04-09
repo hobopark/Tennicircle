@@ -165,18 +165,19 @@ Plans:
   5. An admin can create a new community and becomes that community's first admin (future: paid feature for non-admins)
   6. Routing is restructured so community context is part of the navigation (dashboard loads after community selection, not directly after login)
   7. All key route directories have loading.tsx skeleton files for instant perceived navigation between tabs (coach dashboard, sessions, clients, events, notifications, profile)
-**Plans:** 4 plans
+**Plans:** 5 plans
 Plans:
-- [x] 07-01-PLAN.md — Junction table migration, types, and assignment server actions
-- [x] 07-02-PLAN.md — Open sign-up auto-join and processInviteSignup junction table update
-- [x] 07-03-PLAN.md — Roster UI: invite button, member cards, role management, client assignment
-- [ ] 07-04-PLAN.md — Schema push (manual) and end-to-end verification checkpoint
+- [ ] 08-01-PLAN.md — SQL migration (RLS rewrite, join_requests table, types, helpers, CommunityProvider)
+- [ ] 08-02-PLAN.md — Server actions migration (communityId parameter, remove getJWTClaims)
+- [ ] 08-03-PLAN.md — Route migration to /c/[slug]/, proxy rewrite, AppNav update
+- [ ] 08-04-PLAN.md — /communities page (picker, browse, join, create), community switcher
+- [ ] 08-05-PLAN.md — Join request approval UI, loading skeletons, schema push checkpoint
 **UI hint**: yes
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -186,5 +187,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 4. Coach Dashboard & Community Events | 6/6 | Complete | - |
 | 5. Notifications | 4/4 | Complete | - |
 | 6. Polish & Launch Readiness | 5/5 | Complete | - |
-| 7. Member Management & Invite System | 0/4 | Planning complete | - |
-| 8. Community Selector & Open Sign-Up | 0/? | Not started | - |
+| 7. Member Management & Invite System | 4/4 | Complete | - |
+| 8. Community Selector & Open Sign-Up | 0/5 | Planning complete | - |
