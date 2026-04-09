@@ -159,7 +159,7 @@ Plans:
 **Requirements**: COMM-01, COMM-02, COMM-03, COMM-04, COMM-05, COMM-06
 **Success Criteria** (what must be TRUE):
   1. After login, a user who belongs to multiple communities sees a community picker screen and can select which community to enter
-  2. A user who belongs to only one community is auto-redirected to that community's dashboard
+  2. A user who belongs to a single community lands on the community picker showing their one community — single tap to enter (D-23 override: no auto-redirect past picker)
   3. A new user signing up without an invite link sees a community browser listing all communities and can request to join one
   4. A join request requires coach or admin approval before the member gains access
   5. An admin can create a new community and becomes that community's first admin (future: paid feature for non-admins)

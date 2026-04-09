@@ -41,8 +41,8 @@ created: 2026-04-09
 | 08-01-01 | 01 | 1 | COMM-01 | — | N/A | manual/smoke | n/a — server component | ❌ W0 | ⬜ pending |
 | 08-01-02 | 01 | 1 | COMM-02 | — | N/A | manual | n/a | N/A | ⬜ pending |
 | 08-02-01 | 02 | 1 | COMM-03 | — | N/A | manual/smoke | n/a | ❌ W0 | ⬜ pending |
-| 08-02-02 | 02 | 1 | COMM-04 | T-08-01 | Join request inserts as pending, not approved | unit | `npx vitest run src/lib/actions/members.test.ts` | ❌ W0 | ⬜ pending |
-| 08-02-03 | 02 | 1 | COMM-04 | T-08-02 | approveJoinRequest checks admin/coach role | unit | `npx vitest run src/lib/actions/members.test.ts` | ❌ W0 | ⬜ pending |
+| 08-02-02 | 02 | 1 | COMM-04 | T-08-01 | Join request inserts as pending, not approved | unit | `npx vitest run src/lib/actions/communities.test.ts` | ❌ W0 | ⬜ pending |
+| 08-02-03 | 02 | 1 | COMM-04 | T-08-02 | approveJoinRequest checks admin/coach role | unit | `npx vitest run src/lib/actions/communities.test.ts` | ❌ W0 | ⬜ pending |
 | 08-03-01 | 03 | 2 | COMM-05 | — | N/A | unit | `npx vitest run src/lib/actions/communities.test.ts` | ❌ W0 | ⬜ pending |
 | 08-04-01 | 04 | 2 | COMM-06 | — | Proxy redirects use auth state | unit | `npx vitest run src/lib/supabase/middleware.test.ts` | ❌ W0 | ⬜ pending |
 | 08-04-02 | 04 | 2 | COMM-06 | — | 0 or 2+ communities → /communities | unit | `npx vitest run src/lib/supabase/middleware.test.ts` | ❌ W0 | ⬜ pending |
@@ -53,8 +53,7 @@ created: 2026-04-09
 
 ## Wave 0 Requirements
 
-- [ ] `src/lib/actions/members.test.ts` — stubs for COMM-04 (join request CRUD)
-- [ ] `src/lib/actions/communities.test.ts` — stubs for COMM-05 (createCommunity)
+- [ ] `src/lib/actions/communities.test.ts` — stubs for COMM-04 (join request CRUD) and COMM-05 (createCommunity)
 - [ ] `src/lib/supabase/middleware.test.ts` — stubs for COMM-06 (proxy redirects)
 
 *Existing test infrastructure covers framework setup.*
