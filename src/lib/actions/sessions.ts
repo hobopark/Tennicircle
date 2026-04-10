@@ -311,6 +311,28 @@ export async function editSession(
 
       if (sessionsError) return { success: false, error: sessionsError.message }
     }
+
+    // Update scheduled_at for existing future sessions when start_time changes
+    if (start_time) {
+      const { data: futureSessions } = await supabase
+        .from('sessions')
+        .select('id, scheduled_at')
+        .eq('template_id', session.template_id)
+        .gte('scheduled_at', session.scheduled_at)
+
+      if (futureSessions && futureSessions.length > 0) {
+        const dtf = new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney', year: 'numeric', month: '2-digit', day: '2-digit' })
+        for (const s of futureSessions) {
+          const sessionDate = dtf.format(new Date(s.scheduled_at))
+          const offset = getSydneyOffsetString(new Date(s.scheduled_at))
+          const newScheduledAt = new Date(`${sessionDate}T${start_time}:00${offset}`).toISOString()
+          await supabase
+            .from('sessions')
+            .update({ scheduled_at: newScheduledAt })
+            .eq('id', s.id)
+        }
+      }
+    }
   }
 
   // Notify RSVP'd members about session update (fire-and-forget)

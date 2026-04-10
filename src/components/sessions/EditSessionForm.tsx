@@ -74,6 +74,7 @@ export function EditSessionForm({ session, templateId }: EditSessionFormProps) {
       const result: SessionActionResult = await editSession(communityId, communitySlug, session.id, effectiveScope, formData)
 
       if (result.success) {
+        toast.success('Session updated')
         router.push(`/c/${communitySlug}/coach`)
       } else if (result.fieldErrors) {
         setFieldErrors(result.fieldErrors)
