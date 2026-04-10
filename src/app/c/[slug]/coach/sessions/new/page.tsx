@@ -63,7 +63,13 @@ export default async function NewSessionPage({
     <>
       <AppNav />
       <div className="min-h-screen bg-background">
-        <div className="max-w-[560px] mx-auto px-4 py-8">
+        <div className="max-w-[560px] mx-auto px-4 pt-8 pb-24">
+          <a
+            href={`/c/${slug}/coach`}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+          >
+            ← Back to Dashboard
+          </a>
           <h1 className="font-display text-[28px] font-bold text-foreground mb-6">
             Create recurring session
           </h1>

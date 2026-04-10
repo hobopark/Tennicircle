@@ -86,7 +86,7 @@ export function CommunitySwitcherDropdown() {
       {isOpen && (
         <div
           role="listbox"
-          className="absolute top-full left-0 mt-1 w-56 bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-lg overflow-hidden z-50 opacity-100 scale-100 transition-all duration-150"
+          className="absolute top-full right-0 mt-1 w-56 bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-lg overflow-hidden z-50 opacity-100 scale-100 transition-all duration-150"
         >
           {/* Current community */}
           <div
