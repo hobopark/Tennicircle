@@ -28,6 +28,7 @@ const DURATION_OPTIONS = [
 function formatDate(scheduledAt: string): string {
   const date = new Date(scheduledAt)
   return date.toLocaleDateString('en-AU', {
+    timeZone: 'Australia/Sydney',
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -36,11 +37,14 @@ function formatDate(scheduledAt: string): string {
 }
 
 function extractTime(scheduledAt: string): string {
-  // Extract HH:MM from ISO timestamp in local time
+  // Extract HH:MM in Sydney timezone (server interprets submitted time as Sydney)
   const date = new Date(scheduledAt)
-  const hours = date.getHours().toString().padStart(2, '0')
-  const minutes = date.getMinutes().toString().padStart(2, '0')
-  return `${hours}:${minutes}`
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Australia/Sydney',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date)
 }
 
 export function EditSessionForm({ session, templateId }: EditSessionFormProps) {

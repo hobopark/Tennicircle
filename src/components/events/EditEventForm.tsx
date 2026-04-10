@@ -29,10 +29,13 @@ export function EditEventForm({ event, eventId }: EditEventFormProps) {
     }
   }, [state.success, router, eventId])
 
-  // Parse existing date/time for default values — use local time, not UTC
+  // Parse existing date/time for default values — always in Sydney timezone
+  // (server action toSydneyIso interprets submitted values as Sydney time)
   const startsAt = new Date(event.starts_at)
-  const dateStr = `${startsAt.getFullYear()}-${String(startsAt.getMonth() + 1).padStart(2, '0')}-${String(startsAt.getDate()).padStart(2, '0')}`
-  const timeStr = `${String(startsAt.getHours()).padStart(2, '0')}:${String(startsAt.getMinutes()).padStart(2, '0')}`
+  const sydneyDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney', year: 'numeric', month: '2-digit', day: '2-digit' }).format(startsAt)
+  const dateStr = sydneyDate // en-CA gives YYYY-MM-DD format
+  const sydneyHour = new Intl.DateTimeFormat('en-GB', { timeZone: 'Australia/Sydney', hour: '2-digit', minute: '2-digit', hour12: false }).format(startsAt)
+  const timeStr = sydneyHour
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
