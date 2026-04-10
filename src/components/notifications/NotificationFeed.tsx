@@ -127,12 +127,12 @@ export function NotificationFeed({ initialNotifications, memberId, userRole: ser
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-3 mb-4">
         <h1 className="text-xl font-heading font-bold">Notifications</h1>
         {unreadCount > 0 && (
           <Button
             variant="ghost"
-            className="text-sm text-primary rounded-xl"
+            className="text-sm text-primary rounded-xl px-2 h-7"
             onClick={handleMarkAllRead}
           >
             Mark all as read
