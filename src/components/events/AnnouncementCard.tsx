@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useActionState, useEffect, useTransition } from 'react'
+import { useState, useActionState, useEffect, useMemo, useTransition } from 'react'
 import { Pencil, X, Trash2, Megaphone, ChevronRight, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -42,7 +42,10 @@ export function AnnouncementCard({ announcement, canEdit }: AnnouncementCardProp
   const [isDeleting, startDeleteTransition] = useTransition()
   const router = useRouter()
 
-  const boundUpdate = updateAnnouncement.bind(null, communityId, communitySlug, announcement.id)
+  const boundUpdate = useMemo(
+    () => updateAnnouncement.bind(null, communityId, communitySlug, announcement.id),
+    [communityId, communitySlug, announcement.id]
+  )
   const [state, formAction, isPending] = useActionState(boundUpdate, initialState)
 
   useEffect(() => {

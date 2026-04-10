@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Trophy, PartyPopper, Zap } from 'lucide-react'
 import { toast } from 'sonner'
@@ -74,8 +74,14 @@ export function CreateEventDialog({
   // Field error state for local clearing on change
   const [localFieldErrors, setLocalFieldErrors] = useState<Record<string, string | undefined>>({})
 
-  const boundCreateEvent = createEvent.bind(null, community.communityId, community.communitySlug)
-  const boundCreateAnnouncement = createAnnouncement.bind(null, community.communityId, community.communitySlug)
+  const boundCreateEvent = useMemo(
+    () => createEvent.bind(null, community.communityId, community.communitySlug),
+    [community.communityId, community.communitySlug]
+  )
+  const boundCreateAnnouncement = useMemo(
+    () => createAnnouncement.bind(null, community.communityId, community.communitySlug),
+    [community.communityId, community.communitySlug]
+  )
   const [eventState, eventAction, isEventPending] = useActionState(boundCreateEvent, initialEventState)
   const [announcementState, announcementAction, isAnnouncementPending] = useActionState(
     boundCreateAnnouncement,

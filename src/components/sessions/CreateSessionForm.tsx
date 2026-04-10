@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createSessionTemplate } from '@/lib/actions/sessions'
@@ -50,7 +50,10 @@ const initialState: SessionActionResult = { success: false }
 export function CreateSessionForm({ communityId, assignedClients }: CreateSessionFormProps) {
   const { communitySlug } = useCommunity()
   const router = useRouter()
-  const boundCreateSession = createSessionTemplate.bind(null, communityId, communitySlug)
+  const boundCreateSession = useMemo(
+    () => createSessionTemplate.bind(null, communityId, communitySlug),
+    [communityId, communitySlug]
+  )
   const [state, formAction, isPending] = useActionState(boundCreateSession, initialState)
 
   const [venue, setVenue] = useState('')

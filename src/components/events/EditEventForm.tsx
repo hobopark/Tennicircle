@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -18,7 +18,10 @@ const initialState: EventActionResult = { success: false }
 export function EditEventForm({ event, eventId }: EditEventFormProps) {
   const { communityId, communitySlug } = useCommunity()
   const router = useRouter()
-  const boundUpdate = updateEvent.bind(null, communityId, communitySlug, eventId)
+  const boundUpdate = useMemo(
+    () => updateEvent.bind(null, communityId, communitySlug, eventId),
+    [communityId, communitySlug, eventId]
+  )
   const [state, formAction, isPending] = useActionState(boundUpdate, initialState)
 
   useEffect(() => {
