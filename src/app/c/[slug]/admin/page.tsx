@@ -160,6 +160,8 @@ export default async function AdminDashboardPage({
   }
   myUpcomingSessions.sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())
   const upcomingSessionRows = myUpcomingSessions.slice(0, 5)
+  const mySessionCount = myUpcomingSessions.length
+  const myEventCount = myEventIds.length
 
   // Resolve announcement author names from player_profiles
   const annUserIds = (rawAnnouncements ?? []).map((a: RawAnnouncementRow) => a.author?.user_id).filter(Boolean)
@@ -184,8 +186,9 @@ export default async function AdminDashboardPage({
             <InviteButton userRole="admin" />
           </div>
 
-          {/* Stats strip */}
-          <div className="grid grid-cols-4 gap-2 mb-6">
+          {/* Community stats */}
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1.5">Community</p>
+          <div className="grid grid-cols-4 gap-2 mb-4">
             <Link href={`/c/${slug}/coach/clients`} className="bg-primary/10 rounded-2xl border border-primary/20 p-3 text-center hover:bg-primary/15 transition-colors">
               <p className="font-heading font-bold text-xl text-primary">{members.length}</p>
               <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Members</p>
@@ -205,6 +208,25 @@ export default async function AdminDashboardPage({
               <p className="font-heading font-bold text-xl text-emerald-600">{pendingRequests?.length ?? 0}</p>
               <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Pending</p>
               <p className="text-[8px] text-muted-foreground">requests</p>
+            </Link>
+          </div>
+
+          {/* My stats */}
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1.5">My coaching</p>
+          <div className="grid grid-cols-3 gap-2 mb-6">
+            <div className="bg-primary/5 rounded-2xl border border-primary/10 p-3 text-center">
+              <p className="font-heading font-bold text-xl text-primary">{mySessionCount}</p>
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">My sessions</p>
+              <p className="text-[8px] text-muted-foreground">upcoming</p>
+            </div>
+            <div className="bg-amber-500/5 rounded-2xl border border-amber-500/10 p-3 text-center">
+              <p className="font-heading font-bold text-xl text-amber-600">{myEventCount}</p>
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">My events</p>
+              <p className="text-[8px] text-muted-foreground">attending</p>
+            </div>
+            <Link href={`/c/${slug}/coach/schedule`} className="bg-muted/50 rounded-2xl border border-border/50 p-3 text-center hover:bg-muted transition-colors">
+              <Calendar className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Schedule</p>
             </Link>
           </div>
 
