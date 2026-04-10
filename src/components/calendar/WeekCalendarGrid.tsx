@@ -92,7 +92,7 @@ function formatTimeShort(isoString: string): string {
 }
 
 function formatDayLabel(date: Date): string {
-  return date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })
+  return date.toLocaleDateString('en-AU', { timeZone: 'Australia/Sydney', weekday: 'short', day: 'numeric', month: 'short' })
 }
 
 // Grid starts at 6:00am, rows are 30-min increments
@@ -117,9 +117,8 @@ function getGridRowFraction(isoString: string): number {
 }
 
 function getEndTimeIso(isoString: string, durationMinutes: number): string {
-  const d = new Date(isoString)
-  d.setMinutes(d.getMinutes() + durationMinutes)
-  return d.toISOString()
+  // Adding minutes to a UTC timestamp is timezone-safe (no DST boundary issues)
+  return new Date(new Date(isoString).getTime() + durationMinutes * 60000).toISOString()
 }
 
 function formatTimeRange(startIso: string, durationMinutes: number): string {
@@ -567,7 +566,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                 }}
                 className="text-sm text-muted-foreground hover:text-foreground cursor-pointer hover:underline"
               >
-                {currentWeekStart.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })}
+                {currentWeekStart.toLocaleDateString('en-AU', { timeZone: 'Australia/Sydney', month: 'long', year: 'numeric' })}
               </button>
               <input
                 id="week-date-picker"

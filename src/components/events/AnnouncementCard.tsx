@@ -21,6 +21,7 @@ import type { AnnouncementWithAuthor, AnnouncementActionResult } from '@/lib/typ
 function formatAnnouncementDate(createdAt: string): string {
   const date = new Date(createdAt)
   return date.toLocaleDateString('en-AU', {
+    timeZone: 'Australia/Sydney',
     day: 'numeric',
     month: 'short',
     year: 'numeric',

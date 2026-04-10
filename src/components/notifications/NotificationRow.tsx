@@ -51,7 +51,7 @@ function formatRelativeTime(isoString: string): string {
   if (diffHr < 24) return `${diffHr}h ago`
   const diffDay = Math.floor(diffHr / 24)
   if (diffDay < 7) return `${diffDay}d ago`
-  return new Date(isoString).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
+  return new Date(isoString).toLocaleDateString('en-AU', { timeZone: 'Australia/Sydney', day: 'numeric', month: 'short' })
 }
 
 export function NotificationRow({ notification, onTap }: Props) {

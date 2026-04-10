@@ -29,12 +29,12 @@ interface SessionDetailPanelProps {
 
 function formatSessionDate(isoString: string): string {
   const d = new Date(isoString)
-  return d.toLocaleDateString('en-AU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  return d.toLocaleDateString('en-AU', { timeZone: 'Australia/Sydney', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 }
 
 function formatSessionTime(isoString: string): string {
   const d = new Date(isoString)
-  return d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true })
+  return d.toLocaleTimeString('en-AU', { timeZone: 'Australia/Sydney', hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
 export function SessionDetailPanel({ session, rsvps, coaches }: SessionDetailPanelProps) {

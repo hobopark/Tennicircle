@@ -24,8 +24,8 @@ function groupByMonth(events: EventWithRsvpStatus[]): { label: string; events: E
   const groups = new Map<string, EventWithRsvpStatus[]>()
   for (const event of events) {
     const date = new Date(event.starts_at)
-    const key = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`
-    const label = date.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })
+    const key = date.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney', year: 'numeric', month: '2-digit' })
+    const label = date.toLocaleDateString('en-AU', { timeZone: 'Australia/Sydney', month: 'long', year: 'numeric' })
     if (!groups.has(key)) groups.set(key, [])
     groups.get(key)!.push(event)
     // Store label on first item
@@ -37,10 +37,10 @@ function groupByMonth(events: EventWithRsvpStatus[]): { label: string; events: E
   const seen = new Set<string>()
   for (const event of events) {
     const date = new Date(event.starts_at)
-    const key = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`
+    const key = date.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney', year: 'numeric', month: '2-digit' })
     if (!seen.has(key)) {
       seen.add(key)
-      const label = date.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })
+      const label = date.toLocaleDateString('en-AU', { timeZone: 'Australia/Sydney', month: 'long', year: 'numeric' })
       result.push({ label, events: groups.get(key)! })
     }
   }
