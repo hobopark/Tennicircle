@@ -130,7 +130,7 @@ export function MemberCard({ member, viewerRole, isSelf }: MemberCardProps) {
               <ChevronDown size={16} className={`text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
             </button>
           ) : member.hasProfile ? (
-            <Link href={`/coach/clients/${member.id}`}>
+            <Link href={`/c/${communitySlug}/members/${member.id}`}>
               <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             </Link>
           ) : null}
