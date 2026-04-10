@@ -1,7 +1,13 @@
+import { Loader2 } from 'lucide-react'
+
 export default function ScheduleLoading() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-5 pt-14 pb-24">
+        <div className="flex items-center justify-center gap-2 py-4">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <span className="text-sm text-muted-foreground">Loading...</span>
+        </div>
         {/* Back link area */}
         <div className="h-4 w-32 bg-muted animate-pulse rounded-2xl mb-4" />
 
