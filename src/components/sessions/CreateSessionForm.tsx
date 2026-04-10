@@ -48,7 +48,7 @@ interface CreateSessionFormProps {
 const initialState: SessionActionResult = { success: false }
 
 export function CreateSessionForm({ communityId, assignedClients }: CreateSessionFormProps) {
-  const { communitySlug } = useCommunity()
+  const { communitySlug, role } = useCommunity()
   const router = useRouter()
   const boundCreateSession = useMemo(
     () => createSessionTemplate.bind(null, communityId, communitySlug),
@@ -100,7 +100,8 @@ export function CreateSessionForm({ communityId, assignedClients }: CreateSessio
 
   useEffect(() => {
     if (state.success) {
-      router.push(`/c/${communitySlug}/coach`)
+      const home = role === 'admin' ? `/c/${communitySlug}/admin` : `/c/${communitySlug}/coach`
+      router.push(home)
     } else if (state.error) {
       toast.error(state.error)
     } else if (state.fieldErrors) {

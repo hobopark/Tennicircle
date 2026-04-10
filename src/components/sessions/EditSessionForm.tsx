@@ -48,7 +48,7 @@ function extractTime(scheduledAt: string): string {
 }
 
 export function EditSessionForm({ session, templateId }: EditSessionFormProps) {
-  const { communityId, communitySlug } = useCommunity()
+  const { communityId, communitySlug, role } = useCommunity()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [scope, setScope] = useState<EditScope | null>(null)
@@ -75,7 +75,8 @@ export function EditSessionForm({ session, templateId }: EditSessionFormProps) {
 
       if (result.success) {
         toast.success('Session updated')
-        router.push(`/c/${communitySlug}/coach`)
+        const home = role === 'admin' ? `/c/${communitySlug}/admin` : `/c/${communitySlug}/coach`
+        router.push(home)
       } else if (result.fieldErrors) {
         setFieldErrors(result.fieldErrors)
       } else {
