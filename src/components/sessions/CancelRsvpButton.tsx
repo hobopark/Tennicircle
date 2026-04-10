@@ -28,10 +28,15 @@ export function CancelRsvpButton({ sessionId }: CancelRsvpButtonProps) {
 
   function handleConfirm() {
     startTransition(async () => {
-      await cancelRsvp(communityId, communitySlug, sessionId)
+      const result = await cancelRsvp(communityId, communitySlug, sessionId)
       setDialogOpen(false)
-      toast.success('RSVP cancelled')
-      router.refresh()
+      if (result.success) {
+        toast.success('RSVP cancelled')
+        // router.refresh() inside startTransition gets batched — use explicit navigation
+        router.push(`/c/${communitySlug}/sessions/${sessionId}`)
+      } else {
+        toast.error(result.error ?? 'Failed to cancel RSVP')
+      }
     })
   }
 

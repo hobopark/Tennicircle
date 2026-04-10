@@ -26,7 +26,7 @@ export function RsvpSessionButton({ sessionId }: RsvpSessionButtonProps) {
         } else {
           toast.success("You're in! See you there.")
         }
-        router.refresh()
+        router.push(`/c/${communitySlug}/sessions/${sessionId}`)
       } else {
         toast.error(result.error ?? 'Failed to RSVP')
       }
