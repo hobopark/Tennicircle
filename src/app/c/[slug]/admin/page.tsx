@@ -34,7 +34,7 @@ export default async function AdminDashboardPage({
 
   const membership = await getUserRole(supabase, community.id)
   if (!membership) redirect('/communities')
-  const { role } = membership
+  const { role, memberId } = membership
 
   if (role !== 'admin') redirect(`/c/${slug}/coach`)
 
@@ -56,12 +56,29 @@ export default async function AdminDashboardPage({
   // Fetch pending requests
   const { data: pendingRequests } = await getPendingRequests(community.id)
 
+  // Get admin's own templates + co-coached sessions for "My Sessions"
+  const [{ data: myTemplateIds }, { data: myCoCoachRows }] = await Promise.all([
+    supabase.from('session_templates').select('id').eq('coach_id', memberId),
+    supabase.from('session_coaches').select('session_id').eq('member_id', memberId),
+  ])
+  const myCoCoachSessionIds = (myCoCoachRows ?? []).map(r => r.session_id)
+
+  // Get admin's event RSVPs
+  const { data: myEventRsvps } = await supabase
+    .from('event_rsvps')
+    .select('event_id')
+    .eq('member_id', memberId)
+    .eq('rsvp_type', 'confirmed')
+    .is('cancelled_at', null)
+  const myEventIds = (myEventRsvps ?? []).map(r => r.event_id)
+
   // Parallelize all stats + data queries
   const [
     { data: allMembers },
-    { data: sessionsThisMonthData },
+    { data: allSessionsThisMonth },
     { count: upcomingEventCount },
-    { data: upcomingSessions },
+    { data: myOwnedSessions },
+    { data: myCoCoachSessions },
     { data: upcomingEvents },
     { data: rawAnnouncements },
   ] = await Promise.all([
@@ -69,6 +86,7 @@ export default async function AdminDashboardPage({
       .from('community_members')
       .select('id, role')
       .eq('community_id', community.id),
+    // Stats: ALL community sessions this month
     supabase
       .from('sessions')
       .select('id')
@@ -76,28 +94,46 @@ export default async function AdminDashboardPage({
       .gte('scheduled_at', currentMonthStart.toISOString())
       .lt('scheduled_at', nextMonthStart.toISOString())
       .is('cancelled_at', null),
+    // Stats: ALL upcoming events count
     supabase
       .from('events')
       .select('*', { count: 'exact', head: true })
       .eq('community_id', community.id)
       .is('cancelled_at', null)
       .gte('starts_at', now),
-    supabase
-      .from('sessions')
-      .select('id, scheduled_at, duration_minutes, venue, capacity, session_templates(title)')
-      .eq('community_id', community.id)
-      .gte('scheduled_at', now)
-      .is('cancelled_at', null)
-      .order('scheduled_at', { ascending: true })
-      .limit(5),
-    supabase
-      .from('events')
-      .select('*, creator:community_members!created_by(display_name)')
-      .eq('community_id', community.id)
-      .is('cancelled_at', null)
-      .gte('starts_at', now)
-      .order('starts_at', { ascending: true })
-      .limit(3),
+    // My Sessions: from own templates
+    myTemplateIds && myTemplateIds.length > 0
+      ? supabase
+          .from('sessions')
+          .select('id, scheduled_at, duration_minutes, venue, capacity, session_templates(title)')
+          .in('template_id', myTemplateIds.map(t => t.id))
+          .gte('scheduled_at', now)
+          .is('cancelled_at', null)
+          .order('scheduled_at', { ascending: true })
+          .limit(5)
+      : Promise.resolve({ data: [], error: null }),
+    // My Sessions: co-coached
+    myCoCoachSessionIds.length > 0
+      ? supabase
+          .from('sessions')
+          .select('id, scheduled_at, duration_minutes, venue, capacity, session_templates(title)')
+          .in('id', myCoCoachSessionIds)
+          .gte('scheduled_at', now)
+          .is('cancelled_at', null)
+          .order('scheduled_at', { ascending: true })
+          .limit(5)
+      : Promise.resolve({ data: [], error: null }),
+    // My Events: only ones I've RSVP'd to
+    myEventIds.length > 0
+      ? supabase
+          .from('events')
+          .select('*, creator:community_members!created_by(display_name)')
+          .in('id', myEventIds)
+          .is('cancelled_at', null)
+          .gte('starts_at', now)
+          .order('starts_at', { ascending: true })
+          .limit(3)
+      : Promise.resolve({ data: [], error: null }),
     supabase
       .from('announcements')
       .select('*, author:community_members!created_by(display_name, user_id)')
@@ -111,9 +147,19 @@ export default async function AdminDashboardPage({
   const adminCount = members.filter(m => m.role === 'admin').length
   const coachCount = members.filter(m => m.role === 'coach').length
   const clientCount = members.filter(m => m.role === 'client').length
-  const sessionsThisMonth = sessionsThisMonthData?.length ?? 0
+  const sessionsThisMonth = allSessionsThisMonth?.length ?? 0
 
-  const upcomingSessionRows = (upcomingSessions ?? []) as unknown as SessionWithTemplate[]
+  // Deduplicate owned + co-coached sessions
+  const seenIds = new Set<string>()
+  const myUpcomingSessions: SessionWithTemplate[] = []
+  for (const s of [...(myOwnedSessions ?? []), ...(myCoCoachSessions ?? [])] as unknown as SessionWithTemplate[]) {
+    if (!seenIds.has(s.id)) {
+      seenIds.add(s.id)
+      myUpcomingSessions.push(s)
+    }
+  }
+  myUpcomingSessions.sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())
+  const upcomingSessionRows = myUpcomingSessions.slice(0, 5)
 
   // Resolve announcement author names from player_profiles
   const annUserIds = (rawAnnouncements ?? []).map((a: RawAnnouncementRow) => a.author?.user_id).filter(Boolean)
