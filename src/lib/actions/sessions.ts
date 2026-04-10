@@ -136,12 +136,14 @@ export async function createSessionTemplate(
     await supabase.from('session_invitations').insert(invitations)
 
     // Auto-confirm invited clients for all generated sessions
+    // Uses service client because RLS restricts RSVP inserts to self only
     const { data: generatedForRsvp } = await supabase
       .from('sessions')
       .select('id')
       .eq('template_id', newTemplate.id)
 
     if (generatedForRsvp && generatedForRsvp.length > 0) {
+      const serviceClient = createServiceClient()
       const autoRsvps = generatedForRsvp.flatMap((session) =>
         invitedClientIds.map(clientId => ({
           community_id: communityId,
@@ -150,7 +152,7 @@ export async function createSessionTemplate(
           rsvp_type: 'confirmed' as const,
         }))
       )
-      await supabase.from('session_rsvps').insert(autoRsvps)
+      await serviceClient.from('session_rsvps').insert(autoRsvps)
     }
   }
 
