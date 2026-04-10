@@ -36,10 +36,17 @@ export default async function NewSessionPage({
     .eq('role', 'client')
     .eq('coach_id', memberId)
 
-  if (clientMembers) {
+  if (clientMembers && clientMembers.length > 0) {
+    const clientUserIds = clientMembers.map(c => c.user_id)
+    const { data: profiles } = await supabase
+      .from('player_profiles')
+      .select('user_id, display_name')
+      .in('user_id', clientUserIds)
+    const profileMap = new Map((profiles ?? []).map(p => [p.user_id, p.display_name]))
+
     clients = clientMembers.map((c) => ({
       id: c.id,
-      email: c.user_id, // user_id as placeholder display — email not accessible via anon client
+      email: profileMap.get(c.user_id) ?? 'Client',
     }))
   }
 
