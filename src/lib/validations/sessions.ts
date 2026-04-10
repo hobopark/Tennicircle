@@ -8,8 +8,8 @@ export const SessionTemplateSchema = z.object({
   duration_minutes: z.coerce.number().int().min(15).max(480).default(60),
   capacity: z.coerce.number().int().min(1, { error: 'Capacity must be at least 1' }),
   starts_on: z.string().date({ error: 'Start date is required' }),
-  ends_on: z.string().date().optional(),
-  court_number: z.string().optional(),
+  ends_on: z.union([z.string().date(), z.literal('')]).optional().transform(v => v === '' ? undefined : v),
+  court_number: z.string().optional().transform(v => v === '' ? undefined : v),
   co_coach_ids: z.array(z.string().uuid()).optional(),
   invited_client_ids: z.array(z.string().min(1)).min(1, { error: 'Select at least one client' }),
 })

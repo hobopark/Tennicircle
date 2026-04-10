@@ -92,11 +92,14 @@ export function CreateSessionForm({ communityId, assignedClients }: CreateSessio
 
   useEffect(() => {
     if (state.success) {
-      router.push('/coach')
+      router.push(`/c/${communitySlug}/coach`)
     } else if (state.error) {
       toast.error(state.error)
+    } else if (state.fieldErrors) {
+      const firstError = Object.values(state.fieldErrors).flat()[0]
+      if (firstError) toast.error(firstError)
     }
-  }, [state, router])
+  }, [state, router, communitySlug])
 
   function toggleCoCoach(id: string) {
     setCoCoachIds((prev) =>
