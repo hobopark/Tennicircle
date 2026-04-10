@@ -1,10 +1,8 @@
 export const dynamic = 'force-dynamic'
 
 import { redirect } from 'next/navigation'
-import { Users } from 'lucide-react'
 import { createClient, getUserRole } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
-import { MemberCard } from '@/components/members/MemberCard'
 import type { MemberCardData } from '@/components/members/MemberCard'
 import { InviteButton } from '@/components/members/InviteButton'
 import { getPendingRequests } from '@/lib/actions/communities'
@@ -154,28 +152,9 @@ export default async function ClientsPage({
           <RosterClientWrapper
             pendingRequests={pendingRequests ?? []}
             communitySlug={slug}
+            allMembers={memberCards}
+            currentMemberId={memberId}
           />
-
-          {memberCards.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Users className="w-8 h-8 text-muted mb-3" />
-              <p className="font-heading font-bold text-base mb-1">No members yet</p>
-              <p className="text-sm text-muted-foreground">
-                Share an invite link to grow your community.
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {memberCards.map(member => (
-                <MemberCard
-                  key={member.id}
-                  member={member}
-                  viewerRole={role}
-                  isSelf={member.id === memberId}
-                />
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </>
