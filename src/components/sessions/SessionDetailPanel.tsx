@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { WaitlistPanel } from '@/components/sessions/WaitlistPanel'
 import { CancelSessionDialog } from '@/components/sessions/CancelSessionDialog'
 import { editSession } from '@/lib/actions/sessions'
+import { useCommunity } from '@/lib/context/community'
 import type { Session, SessionRsvp } from '@/lib/types/sessions'
 
 interface RsvpWithName extends SessionRsvp {
@@ -37,6 +38,7 @@ function formatSessionTime(isoString: string): string {
 }
 
 export function SessionDetailPanel({ session, rsvps, coaches }: SessionDetailPanelProps) {
+  const { communityId, communitySlug } = useCommunity()
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [courtNumber, setCourtNumber] = useState(session.court_number ?? '')
   const [editingCourt, setEditingCourt] = useState(false)
@@ -48,7 +50,7 @@ export function SessionDetailPanel({ session, rsvps, coaches }: SessionDetailPan
     startCourtTransition(async () => {
       const formData = new FormData()
       formData.set('court_number', courtNumber)
-      await editSession(session.id, 'this', formData)
+      await editSession(communityId, communitySlug, session.id, 'this', formData)
       setEditingCourt(false)
     })
   }

@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { editSession } from '@/lib/actions/sessions'
+import { useCommunity } from '@/lib/context/community'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -43,6 +44,7 @@ function extractTime(scheduledAt: string): string {
 }
 
 export function EditSessionForm({ session, templateId }: EditSessionFormProps) {
+  const { communityId, communitySlug } = useCommunity()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [scope, setScope] = useState<EditScope | null>(null)
@@ -65,10 +67,10 @@ export function EditSessionForm({ session, templateId }: EditSessionFormProps) {
     const effectiveScope: EditScope = templateId === null ? 'this' : (scope ?? 'this')
 
     startTransition(async () => {
-      const result: SessionActionResult = await editSession(session.id, effectiveScope, formData)
+      const result: SessionActionResult = await editSession(communityId, communitySlug, session.id, effectiveScope, formData)
 
       if (result.success) {
-        router.push('/coach')
+        router.push(`/c/${communitySlug}/coach`)
       } else if (result.fieldErrors) {
         setFieldErrors(result.fieldErrors)
       } else {

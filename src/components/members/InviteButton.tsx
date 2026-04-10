@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { UserPlus } from 'lucide-react'
 import { createInviteLink } from '@/lib/actions/invites'
+import { useCommunity } from '@/lib/context/community'
 import { toast } from 'sonner'
 import type { UserRole } from '@/lib/types/auth'
 
@@ -11,13 +12,14 @@ interface InviteButtonProps {
 }
 
 export function InviteButton({ userRole }: InviteButtonProps) {
+  const { communityId, communitySlug } = useCommunity()
   const [isPending, startTransition] = useTransition()
   const [selectedRole, setSelectedRole] = useState<'coach' | 'client'>('client')
 
   function handleInvite() {
     startTransition(async () => {
       const roleToInvite = userRole === 'admin' ? selectedRole : 'client'
-      const result = await createInviteLink(roleToInvite)
+      const result = await createInviteLink(communityId, communitySlug, roleToInvite)
       if (result.success && result.data) {
         const url = `${window.location.origin}/auth?invite=${result.data.token}`
         try {

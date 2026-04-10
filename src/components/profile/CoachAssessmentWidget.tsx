@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { setCoachAssessment } from '@/lib/actions/profiles'
+import { useCommunity } from '@/lib/context/community'
 import type { SkillLevel } from '@/lib/types/profiles'
 
 interface CoachAssessmentWidgetProps {
@@ -26,13 +27,14 @@ function skillBadgeClass(level: SkillLevel | null): string {
 }
 
 export function CoachAssessmentWidget({ subjectMemberId, currentLevel }: CoachAssessmentWidgetProps) {
+  const { communityId, communitySlug } = useCommunity()
   const [expanded, setExpanded] = useState(false)
   const [selectedLevel, setSelectedLevel] = useState<SkillLevel>(currentLevel ?? 'beginner')
   const [isPending, startTransition] = useTransition()
 
   function handleSave() {
     startTransition(async () => {
-      const result = await setCoachAssessment({ subjectMemberId, skillLevel: selectedLevel })
+      const result = await setCoachAssessment(communityId, communitySlug, { subjectMemberId, skillLevel: selectedLevel })
       if (result.success) {
         toast.success('Assessment updated')
         setExpanded(false)

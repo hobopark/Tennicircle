@@ -4,6 +4,7 @@ import { useTransition } from 'react'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { promoteFromWaitlist, removeFromWaitlist } from '@/lib/actions/rsvps'
+import { useCommunity } from '@/lib/context/community'
 import { Button } from '@/components/ui/button'
 import type { SessionRsvp } from '@/lib/types/sessions'
 
@@ -20,12 +21,13 @@ interface WaitlistRowProps {
 }
 
 function WaitlistRow({ rsvp }: WaitlistRowProps) {
+  const { communityId, communitySlug } = useCommunity()
   const [isPending, startTransition] = useTransition()
   const [isRemoving, startRemoveTransition] = useTransition()
 
   function handlePromote() {
     startTransition(async () => {
-      const result = await promoteFromWaitlist(rsvp.id)
+      const result = await promoteFromWaitlist(communityId, communitySlug, rsvp.id)
       if (result.success) {
         toast.success('Promoted to confirmed')
       } else {
@@ -36,7 +38,7 @@ function WaitlistRow({ rsvp }: WaitlistRowProps) {
 
   function handleRemove() {
     startRemoveTransition(async () => {
-      const result = await removeFromWaitlist(rsvp.id)
+      const result = await removeFromWaitlist(communityId, communitySlug, rsvp.id)
       if (result.success) {
         toast.success('Removed from waitlist')
       } else {

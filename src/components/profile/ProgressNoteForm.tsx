@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { addProgressNote } from '@/lib/actions/profiles'
+import { useCommunity } from '@/lib/context/community'
 
 interface ProgressNoteFormProps {
   sessionId: string
@@ -23,6 +24,7 @@ export function ProgressNoteForm({
   playerName,
   existingNote,
 }: ProgressNoteFormProps) {
+  const { communityId, communitySlug } = useCommunity()
   const [expanded, setExpanded] = useState(false)
   const [noteText, setNoteText] = useState(existingNote?.note_text ?? '')
   const [displayedNote, setDisplayedNote] = useState(existingNote?.note_text ?? '')
@@ -43,7 +45,7 @@ export function ProgressNoteForm({
 
   function handleSave() {
     startTransition(async () => {
-      const result = await addProgressNote({
+      const result = await addProgressNote(communityId, communitySlug, {
         sessionId,
         subjectMemberId,
         noteText,
