@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect, notFound } from 'next/navigation'
 import { createClient, getUserRole } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'

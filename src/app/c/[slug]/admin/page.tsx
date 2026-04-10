@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { AppNav } from '@/components/nav/AppNav'
 
 export default function AdminDashboard() {

@@ -294,16 +294,12 @@ export async function editSession(
       if (templateError) return { success: false, error: templateError.message }
     }
 
-    // Build session-level updates, convert start_time to scheduled_at for each session
+    // Build session-level updates
     const sessionUpdates: Record<string, unknown> = {}
     if (parsed.data.venue) sessionUpdates.venue = parsed.data.venue
     if (parsed.data.capacity) sessionUpdates.capacity = parsed.data.capacity
     if (parsed.data.duration_minutes) sessionUpdates.duration_minutes = parsed.data.duration_minutes
     if (parsed.data.court_number !== undefined) sessionUpdates.court_number = parsed.data.court_number
-
-    // Note: start_time for future sessions is handled at template level; per-session scheduled_at
-    // update for start_time changes requires fetching each session's date — skip per-instance time update here.
-    // The template update above ensures new generated sessions get the new time.
 
     if (Object.keys(sessionUpdates).length > 0) {
       // CRITICAL: gte includes current session, does not touch past sessions (T-02-06)

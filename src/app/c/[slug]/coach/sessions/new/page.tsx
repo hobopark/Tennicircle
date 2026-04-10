@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect } from 'next/navigation'
 import { createClient, getUserRole } from '@/lib/supabase/server'
 import { CreateSessionForm } from '@/components/sessions/CreateSessionForm'
