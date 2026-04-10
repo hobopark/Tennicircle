@@ -167,11 +167,11 @@ Plans:
   7. All key route directories have loading.tsx skeleton files for instant perceived navigation between tabs (coach dashboard, sessions, clients, events, notifications, profile)
 **Plans:** 5 plans
 Plans:
-- [ ] 08-01-PLAN.md — SQL migration (RLS rewrite, join_requests table, types, helpers, CommunityProvider)
-- [ ] 08-02-PLAN.md — Server actions migration (communityId parameter, remove getJWTClaims)
-- [ ] 08-03-PLAN.md — Route migration to /c/[slug]/, proxy rewrite, AppNav update
-- [ ] 08-04-PLAN.md — /communities page (picker, browse, join, create), community switcher
-- [ ] 08-05-PLAN.md — Join request approval UI, loading skeletons, schema push checkpoint
+- [x] 08-01-PLAN.md — SQL migration (RLS rewrite, join_requests table, types, helpers, CommunityProvider)
+- [x] 08-02-PLAN.md — Server actions migration (communityId parameter, remove getJWTClaims)
+- [x] 08-03-PLAN.md — Route migration to /c/[slug]/, proxy rewrite, AppNav update
+- [x] 08-04-PLAN.md — /communities page (picker, browse, join, create), community switcher
+- [x] 08-05-PLAN.md — Join request approval UI, loading skeletons, schema push checkpoint
 **UI hint**: yes
 
 ## Progress
