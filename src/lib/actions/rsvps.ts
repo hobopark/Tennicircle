@@ -196,7 +196,9 @@ export async function rsvpSession(
   }
 
   revalidatePath(`/c/${communitySlug}/sessions`)
+  revalidatePath(`/c/${communitySlug}/sessions/${sessionId}`)
   revalidatePath(`/c/${communitySlug}/coach`)
+  revalidatePath(`/c/${communitySlug}/coach/schedule`)
 
   return { success: true, rsvpType, waitlistPosition: waitlistPosition ?? undefined }
 }
@@ -298,10 +300,14 @@ export async function cancelRsvp(
   }
 
   revalidatePath(`/c/${communitySlug}/sessions`)
+  revalidatePath(`/c/${communitySlug}/sessions/${sessionId}`)
   revalidatePath(`/c/${communitySlug}/coach`)
+  revalidatePath(`/c/${communitySlug}/coach/schedule`)
 
   return { success: true }
 }
+
+// END cancelRsvp
 
 // SESS-08: Coach promotes a waitlisted member to confirmed
 export async function promoteFromWaitlist(
