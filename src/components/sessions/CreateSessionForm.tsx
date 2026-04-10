@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createSessionTemplate } from '@/lib/actions/sessions'
+import { useCommunity } from '@/lib/context/community'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -47,8 +48,10 @@ interface CreateSessionFormProps {
 const initialState: SessionActionResult = { success: false }
 
 export function CreateSessionForm({ communityId, assignedClients }: CreateSessionFormProps) {
+  const { communitySlug } = useCommunity()
   const router = useRouter()
-  const [state, formAction, isPending] = useActionState(createSessionTemplate, initialState)
+  const boundCreateSession = createSessionTemplate.bind(null, communityId, communitySlug)
+  const [state, formAction, isPending] = useActionState(boundCreateSession, initialState)
 
   const [venue, setVenue] = useState('')
   const [coCoachIds, setCoCoachIds] = useState<string[]>([])

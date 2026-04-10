@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { removeMember } from '@/lib/actions/members'
+import { useCommunity } from '@/lib/context/community'
 import { toast } from 'sonner'
 
 interface RemoveMemberDialogProps {
@@ -22,12 +23,13 @@ interface RemoveMemberDialogProps {
 }
 
 export function RemoveMemberDialog({ open, onOpenChange, memberId, memberName }: RemoveMemberDialogProps) {
+  const { communityId, communitySlug } = useCommunity()
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
   function handleRemove() {
     startTransition(async () => {
-      const result = await removeMember(memberId)
+      const result = await removeMember(communityId, communitySlug, memberId)
       if (result.success) {
         toast.success(`${memberName} has been removed`)
         onOpenChange(false)

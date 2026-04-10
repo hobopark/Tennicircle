@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import { toast } from 'sonner'
 import { cancelSession } from '@/lib/actions/sessions'
+import { useCommunity } from '@/lib/context/community'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,6 +17,7 @@ interface CancelSessionDialogProps {
 }
 
 export function CancelSessionDialog({ sessionId, isOpen, onClose }: CancelSessionDialogProps) {
+  const { communityId, communitySlug } = useCommunity()
   const [reason, setReason] = useState('')
   const [showError, setShowError] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
@@ -40,7 +42,7 @@ export function CancelSessionDialog({ sessionId, isOpen, onClose }: CancelSessio
     startTransition(async () => {
       const formData = new FormData()
       formData.set('cancellation_reason', reason.trim())
-      const result = await cancelSession(sessionId, formData)
+      const result = await cancelSession(communityId, communitySlug, sessionId, formData)
       if (result.success) {
         toast.success('Session cancelled')
         handleClose()

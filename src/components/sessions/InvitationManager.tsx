@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { UserPlus, X, Loader2, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { addInvitation, removeInvitation } from '@/lib/actions/invitations'
+import { useCommunity } from '@/lib/context/community'
 import { useRouter } from 'next/navigation'
 import { InitialsAvatar } from '@/components/profile/InitialsAvatar'
 
@@ -20,6 +21,7 @@ interface InvitationManagerProps {
 }
 
 export function InvitationManager({ templateId, invitedPlayers, availablePlayers }: InvitationManagerProps) {
+  const { communityId, communitySlug } = useCommunity()
   const router = useRouter()
   const [pendingAdd, setPendingAdd] = useState<string | null>(null)
   const [pendingRemove, setPendingRemove] = useState<string | null>(null)
@@ -30,7 +32,7 @@ export function InvitationManager({ templateId, invitedPlayers, availablePlayers
   function handleAdd(memberId: string) {
     setPendingAdd(memberId)
     startAddTransition(async () => {
-      const result = await addInvitation(templateId, memberId)
+      const result = await addInvitation(communityId, communitySlug, templateId, memberId)
       if (result.success) {
         toast.success('Player invited')
         router.refresh()
@@ -44,7 +46,7 @@ export function InvitationManager({ templateId, invitedPlayers, availablePlayers
   function handleRemove(memberId: string) {
     setPendingRemove(memberId)
     startRemoveTransition(async () => {
-      const result = await removeInvitation(templateId, memberId)
+      const result = await removeInvitation(communityId, communitySlug, templateId, memberId)
       if (result.success) {
         toast.success('Invitation removed')
         router.refresh()

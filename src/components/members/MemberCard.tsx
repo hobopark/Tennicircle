@@ -7,7 +7,8 @@ import Link from 'next/link'
 import { ChevronRight, ChevronDown, Shield, UserCheck, UserMinus, UserCog } from 'lucide-react'
 import { InitialsAvatar } from '@/components/profile/InitialsAvatar'
 import { RemoveMemberDialog } from '@/components/members/RemoveMemberDialog'
-import { assignClient, removeClientAssignment, updateMemberRole } from '@/lib/actions/members'
+import { updateMemberRole } from '@/lib/actions/members'
+import { useCommunity } from '@/lib/context/community'
 import { toast } from 'sonner'
 import type { UserRole } from '@/lib/types/auth'
 import { formatAttendanceDate } from '@/lib/utils/dates'
@@ -30,38 +31,25 @@ interface MemberCardProps {
 }
 
 export function MemberCard({ member, viewerRole, isSelf }: MemberCardProps) {
+  const { communityId, communitySlug } = useCommunity()
   const [expanded, setExpanded] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [showRemoveDialog, setShowRemoveDialog] = useState(false)
   const router = useRouter()
 
   function handleAssign() {
-    startTransition(async () => {
-      const result = await assignClient(member.id)
-      if (result.success) {
-        toast.success(`${member.displayName} assigned to you`)
-        router.refresh()
-      } else {
-        toast.error(result.error ?? 'Failed to assign client')
-      }
-    })
+    // TODO: assignCoachToClient was removed during Phase 8 migration — needs reimplementation
+    toast.error('Coach assignment not yet available')
   }
 
   function handleUnassign() {
-    startTransition(async () => {
-      const result = await removeClientAssignment(member.id)
-      if (result.success) {
-        toast.success(`${member.displayName} removed from your clients`)
-        router.refresh()
-      } else {
-        toast.error(result.error ?? 'Failed to remove assignment')
-      }
-    })
+    // TODO: removeCoachFromClient was removed during Phase 8 migration — needs reimplementation
+    toast.error('Coach unassignment not yet available')
   }
 
   function handleRoleChange(newRole: 'coach' | 'client' | 'admin') {
     startTransition(async () => {
-      const result = await updateMemberRole(member.id, newRole)
+      const result = await updateMemberRole(communityId, communitySlug, member.id, newRole)
       if (result.success) {
         toast.success(`${member.displayName} is now ${newRole}`)
         router.refresh()

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cancelRsvp } from '@/lib/actions/rsvps'
+import { useCommunity } from '@/lib/context/community'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -20,13 +21,14 @@ interface CancelRsvpButtonProps {
 }
 
 export function CancelRsvpButton({ sessionId }: CancelRsvpButtonProps) {
+  const { communityId, communitySlug } = useCommunity()
   const [isPending, startTransition] = useTransition()
   const [dialogOpen, setDialogOpen] = useState(false)
   const router = useRouter()
 
   function handleConfirm() {
     startTransition(async () => {
-      await cancelRsvp(sessionId)
+      await cancelRsvp(communityId, communitySlug, sessionId)
       setDialogOpen(false)
       toast.success('RSVP cancelled')
       router.refresh()

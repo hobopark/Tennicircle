@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { rsvpSession } from '@/lib/actions/rsvps'
+import { useCommunity } from '@/lib/context/community'
 import { Button } from '@/components/ui/button'
 
 interface RsvpSessionButtonProps {
@@ -12,12 +13,13 @@ interface RsvpSessionButtonProps {
 }
 
 export function RsvpSessionButton({ sessionId }: RsvpSessionButtonProps) {
+  const { communityId, communitySlug } = useCommunity()
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
   function handleJoin() {
     startTransition(async () => {
-      const result = await rsvpSession(sessionId)
+      const result = await rsvpSession(communityId, communitySlug, sessionId)
       if (result.success) {
         if (result.rsvpType === 'waitlisted') {
           toast.success(`Session is full. You're on the waitlist (position ${result.waitlistPosition}).`)

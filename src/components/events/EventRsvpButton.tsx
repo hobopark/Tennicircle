@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { rsvpEvent, cancelEventRsvp } from '@/lib/actions/events'
+import { useCommunity } from '@/lib/context/community'
 import type { EventRsvp } from '@/lib/types/events'
 import {
   Dialog,
@@ -21,13 +22,14 @@ interface EventRsvpButtonProps {
 }
 
 export function EventRsvpButton({ eventId, userRsvp, onRsvpChange }: EventRsvpButtonProps) {
+  const { communityId, communitySlug } = useCommunity()
   const [isPending, startTransition] = useTransition()
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [isCancelling, startCancelTransition] = useTransition()
 
   function handleJoin() {
     startTransition(async () => {
-      const result = await rsvpEvent(eventId)
+      const result = await rsvpEvent(communityId, communitySlug, eventId)
       if (result.success) {
         if (result.rsvpType === 'waitlisted') {
           toast.success("This event is full. You've been added to the waitlist.")
@@ -43,7 +45,7 @@ export function EventRsvpButton({ eventId, userRsvp, onRsvpChange }: EventRsvpBu
 
   function handleCancelConfirm() {
     startCancelTransition(async () => {
-      const result = await cancelEventRsvp(eventId)
+      const result = await cancelEventRsvp(communityId, communitySlug, eventId)
       if (result.success) {
         setCancelDialogOpen(false)
         toast.success('RSVP cancelled')

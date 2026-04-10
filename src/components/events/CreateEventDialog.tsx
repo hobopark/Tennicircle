@@ -6,6 +6,7 @@ import { Loader2, Trophy, PartyPopper, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import { createEvent } from '@/lib/actions/events'
 import { createAnnouncement } from '@/lib/actions/announcements'
+import { useCommunity } from '@/lib/context/community'
 import type { EventType, EventActionResult, AnnouncementActionResult } from '@/lib/types/events'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -64,6 +65,7 @@ export function CreateEventDialog({
   userRole,
   communityId,
 }: CreateEventDialogProps) {
+  const community = useCommunity()
   const router = useRouter()
   const [step, setStep] = useState<Step>(isAnnouncement ? 'form' : 'type-select')
   const [selectedType, setSelectedType] = useState<EventType>('social')
@@ -72,9 +74,11 @@ export function CreateEventDialog({
   // Field error state for local clearing on change
   const [localFieldErrors, setLocalFieldErrors] = useState<Record<string, string | undefined>>({})
 
-  const [eventState, eventAction, isEventPending] = useActionState(createEvent, initialEventState)
+  const boundCreateEvent = createEvent.bind(null, community.communityId, community.communitySlug)
+  const boundCreateAnnouncement = createAnnouncement.bind(null, community.communityId, community.communitySlug)
+  const [eventState, eventAction, isEventPending] = useActionState(boundCreateEvent, initialEventState)
   const [announcementState, announcementAction, isAnnouncementPending] = useActionState(
-    createAnnouncement,
+    boundCreateAnnouncement,
     initialAnnouncementState
   )
 

@@ -5,6 +5,7 @@ import { Pencil, X, Trash2, Megaphone, ChevronRight, Loader2 } from 'lucide-reac
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { updateAnnouncement, deleteAnnouncement } from '@/lib/actions/announcements'
+import { useCommunity } from '@/lib/context/community'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -34,13 +35,14 @@ interface AnnouncementCardProps {
 const initialState: AnnouncementActionResult = { success: false }
 
 export function AnnouncementCard({ announcement, canEdit }: AnnouncementCardProps) {
+  const { communityId, communitySlug } = useCommunity()
   const [editing, setEditing] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [isDeleting, startDeleteTransition] = useTransition()
   const router = useRouter()
 
-  const boundUpdate = updateAnnouncement.bind(null, announcement.id)
+  const boundUpdate = updateAnnouncement.bind(null, communityId, communitySlug, announcement.id)
   const [state, formAction, isPending] = useActionState(boundUpdate, initialState)
 
   useEffect(() => {
@@ -53,7 +55,7 @@ export function AnnouncementCard({ announcement, canEdit }: AnnouncementCardProp
 
   function handleDeleteConfirm() {
     startDeleteTransition(async () => {
-      const result = await deleteAnnouncement(announcement.id)
+      const result = await deleteAnnouncement(communityId, communitySlug, announcement.id)
       if (result.success) {
         setDeleteDialogOpen(false)
         toast.success('Announcement deleted')

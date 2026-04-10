@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Trash2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { deleteEvent } from '@/lib/actions/events'
+import { useCommunity } from '@/lib/context/community'
 import {
   Dialog,
   DialogContent,
@@ -19,17 +20,18 @@ interface DeleteEventButtonProps {
 }
 
 export function DeleteEventButton({ eventId }: DeleteEventButtonProps) {
+  const { communityId, communitySlug } = useCommunity()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
   function handleConfirm() {
     startTransition(async () => {
-      const result = await deleteEvent(eventId)
+      const result = await deleteEvent(communityId, communitySlug, eventId)
       if (result.success) {
         setDialogOpen(false)
         toast.success('Event deleted')
-        router.push('/events')
+        router.push(`/c/${communitySlug}/events`)
         router.refresh()
       } else {
         toast.error(result.error ?? 'Failed to delete event')

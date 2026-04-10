@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { updateEvent } from '@/lib/actions/events'
+import { useCommunity } from '@/lib/context/community'
 import type { Event, EventActionResult } from '@/lib/types/events'
 
 interface EditEventFormProps {
@@ -15,14 +16,15 @@ interface EditEventFormProps {
 const initialState: EventActionResult = { success: false }
 
 export function EditEventForm({ event, eventId }: EditEventFormProps) {
+  const { communityId, communitySlug } = useCommunity()
   const router = useRouter()
-  const boundUpdate = updateEvent.bind(null, eventId)
+  const boundUpdate = updateEvent.bind(null, communityId, communitySlug, eventId)
   const [state, formAction, isPending] = useActionState(boundUpdate, initialState)
 
   useEffect(() => {
     if (state.success) {
       toast.success('Event updated')
-      router.push(`/events/${eventId}`)
+      router.push(`/c/${communitySlug}/events/${eventId}`)
       router.refresh()
     }
   }, [state.success, router, eventId])
