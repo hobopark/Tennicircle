@@ -481,6 +481,35 @@ export async function deleteEvent(
     return { success: false, error: 'You can only delete your own events' }
   }
 
+  // Notify RSVP'd members before deleting (cascade will remove rsvps)
+  {
+    const { data: eventDetails } = await supabase
+      .from('events')
+      .select('title, starts_at')
+      .eq('id', eventId)
+      .single()
+
+    const { data: rsvps } = await supabase
+      .from('event_rsvps')
+      .select('member_id')
+      .eq('event_id', eventId)
+      .is('cancelled_at', null)
+
+    if (rsvps && rsvps.length > 0 && eventDetails) {
+      const serviceClient = createServiceClient()
+      const { formatDateTime } = await import('@/lib/utils/dates')
+      const notificationRows = rsvps.map(r => ({
+        community_id: communityId,
+        member_id: r.member_id,
+        notification_type: 'event_updated' as const,
+        title: 'Event cancelled',
+        body: `${eventDetails.title} on ${formatDateTime(eventDetails.starts_at)} has been cancelled`,
+        metadata: { resource_type: 'event' as const, resource_id: eventId },
+      }))
+      serviceClient.from('notifications').insert(notificationRows).then(() => {})
+    }
+  }
+
   const { error: deleteError } = await supabase
     .from('events')
     .delete()
