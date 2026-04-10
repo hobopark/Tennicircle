@@ -1,7 +1,12 @@
+import { Loader2 } from 'lucide-react'
+
 export default function CoachLoading() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-[640px] mx-auto px-5 pt-14 pb-24">
+        <div className="flex items-center justify-center py-2">
+          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+        </div>
         {/* Greeting area */}
         <div className="h-4 w-32 bg-muted animate-pulse rounded-2xl mb-2" />
         <div className="flex items-center justify-between mb-4">

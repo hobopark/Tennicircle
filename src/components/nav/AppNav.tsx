@@ -9,6 +9,15 @@ import { createClient } from '@/lib/supabase/client'
 import { useMaybeCommunity } from '@/lib/context/community'
 import { CommunitySwitcherDropdown } from '@/components/nav/CommunitySwitcherDropdown'
 import { getPendingRequests } from '@/lib/actions/communities'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import type { UserRole } from '@/lib/types/auth'
 
 // Role-based nav tab definitions — paths are relative sub-paths after /c/{slug}
@@ -74,6 +83,7 @@ export function AppNav() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [memberId, setMemberId] = useState<string | null>(null)
   const [pendingCount, setPendingCount] = useState(0)
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
 
   // Safe community context — null on global routes like /profile
   const community = useMaybeCommunity()
@@ -195,13 +205,33 @@ export function AppNav() {
         <CommunitySwitcherDropdown />
         <button
           type="button"
-          onClick={handleLogout}
+          onClick={() => setShowLogoutDialog(true)}
           aria-label="Log out"
           className="w-9 h-9 rounded-xl bg-muted/80 backdrop-blur-sm flex items-center justify-center hover:bg-muted transition-colors"
         >
           <LogOut className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
+
+      {/* Logout confirmation dialog */}
+      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Log out?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to log out of TenniCircle?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLogoutDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => { setShowLogoutDialog(false); handleLogout() }}>
+              Log Out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <nav
         className="fixed bottom-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-t border-border pb-[env(safe-area-inset-bottom)]"

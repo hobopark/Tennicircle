@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         // Note: This happens server-side; the client will get fresh claims on next navigation
       }
 
-      return NextResponse.redirect(new URL('/welcome', request.url))
+      return NextResponse.redirect(new URL('/communities', request.url))
     }
   }
 

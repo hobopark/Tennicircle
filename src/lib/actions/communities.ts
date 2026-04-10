@@ -370,7 +370,8 @@ export async function getPendingRequests(
 
   // Fetch global profiles for the requestors (community_id IS NULL = global profile)
   const userIds = data.map((r) => r.user_id)
-  const { data: profiles } = await supabase
+  const serviceClient = createServiceClient()
+  const { data: profiles } = await serviceClient
     .from('player_profiles')
     .select('user_id, display_name, avatar_url')
     .in('user_id', userIds)

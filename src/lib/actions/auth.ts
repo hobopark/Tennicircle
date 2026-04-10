@@ -58,20 +58,7 @@ export async function login(
     }
   }
 
-  // Redirect to role-specific home using the session from signInWithPassword response
-  let destination = '/welcome'
-  if (data.session?.access_token) {
-    try {
-      const payload = JSON.parse(atob(data.session.access_token.split('.')[1]))
-      const roleHome: Record<string, string> = {
-        admin: '/admin',
-        coach: '/coach',
-        client: '/sessions',
-      }
-      destination = roleHome[payload.user_role] || '/welcome'
-    } catch { /* fall through to /welcome */ }
-  }
-  redirect(destination)
+  redirect('/communities')
 }
 
 export async function signup(
