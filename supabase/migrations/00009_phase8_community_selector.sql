@@ -372,11 +372,18 @@ DROP POLICY IF EXISTS "session_rsvps_update" ON public.session_rsvps;
 CREATE POLICY "session_rsvps_update" ON public.session_rsvps
   FOR UPDATE TO authenticated
   USING (
+    -- Admin/coach can update any RSVP in their community
     EXISTS (
       SELECT 1 FROM public.community_members
       WHERE user_id = auth.uid()
       AND community_id = session_rsvps.community_id
       AND role IN ('admin', 'coach')
+    )
+    OR
+    -- Members can update their own RSVPs (for cancellation)
+    member_id IN (
+      SELECT id FROM public.community_members
+      WHERE user_id = auth.uid()
     )
   );
 
