@@ -56,7 +56,15 @@ export function CreateSessionForm({ communityId, assignedClients }: CreateSessio
   )
   const [state, formAction, isPending] = useActionState(boundCreateSession, initialState)
 
+  const [title, setTitle] = useState('')
+  const [dayOfWeek, setDayOfWeek] = useState('6')
+  const [startTime, setStartTime] = useState('')
+  const [duration, setDuration] = useState('60')
   const [venue, setVenue] = useState('')
+  const [courtNumber, setCourtNumber] = useState('')
+  const [capacity, setCapacity] = useState('')
+  const [startsOn, setStartsOn] = useState('')
+  const [endsOn, setEndsOn] = useState('')
   const [coCoachIds, setCoCoachIds] = useState<string[]>([])
   const [invitedClientIds, setInvitedClientIds] = useState<string[]>(assignedClients.map(c => c.id))
   const [availableCoaches, setAvailableCoaches] = useState<CoachOption[]>([])
@@ -124,6 +132,8 @@ export function CreateSessionForm({ communityId, assignedClients }: CreateSessio
           type="text"
           required
           placeholder="e.g. Tuesday Evening Group"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
           aria-invalid={!!state.fieldErrors?.title}
         />
         {state.fieldErrors?.title && (
@@ -138,6 +148,8 @@ export function CreateSessionForm({ communityId, assignedClients }: CreateSessio
           id="day_of_week"
           name="day_of_week"
           required
+          value={dayOfWeek}
+          onChange={e => setDayOfWeek(e.target.value)}
           className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           {DAYS_OF_WEEK.map((day) => (
@@ -159,6 +171,8 @@ export function CreateSessionForm({ communityId, assignedClients }: CreateSessio
           name="start_time"
           type="time"
           required
+          value={startTime}
+          onChange={e => setStartTime(e.target.value)}
           className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           aria-invalid={!!state.fieldErrors?.start_time}
         />
@@ -173,7 +187,8 @@ export function CreateSessionForm({ communityId, assignedClients }: CreateSessio
         <select
           id="duration_minutes"
           name="duration_minutes"
-          defaultValue="60"
+          value={duration}
+          onChange={e => setDuration(e.target.value)}
           className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           {DURATION_OPTIONS.map((opt) => (
@@ -204,6 +219,8 @@ export function CreateSessionForm({ communityId, assignedClients }: CreateSessio
           id="court_number"
           name="court_number"
           type="text"
+          value={courtNumber}
+          onChange={e => setCourtNumber(e.target.value)}
           placeholder="Assign on the day"
         />
       </div>
@@ -217,6 +234,8 @@ export function CreateSessionForm({ communityId, assignedClients }: CreateSessio
           type="number"
           min="1"
           required
+          value={capacity}
+          onChange={e => setCapacity(e.target.value)}
           className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           aria-invalid={!!state.fieldErrors?.capacity}
         />
@@ -233,6 +252,8 @@ export function CreateSessionForm({ communityId, assignedClients }: CreateSessio
           name="starts_on"
           type="date"
           required
+          value={startsOn}
+          onChange={e => setStartsOn(e.target.value)}
           className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           aria-invalid={!!state.fieldErrors?.starts_on}
         />
@@ -248,6 +269,8 @@ export function CreateSessionForm({ communityId, assignedClients }: CreateSessio
           id="ends_on"
           name="ends_on"
           type="date"
+          value={endsOn}
+          onChange={e => setEndsOn(e.target.value)}
           className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
