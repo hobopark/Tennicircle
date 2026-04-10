@@ -1,7 +1,9 @@
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUserRole } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { CancelRsvpButton } from '@/components/sessions/CancelRsvpButton'
 import { RsvpSessionButton } from '@/components/sessions/RsvpSessionButton'
@@ -38,12 +40,16 @@ export default async function ClientSessionDetailPage({ params }: PageProps) {
 
   if (!session) return notFound()
 
-  // Get current member
-  const { data: member } = await supabase
-    .from('community_members')
+  // Get community + member
+  const { data: community } = await supabase
+    .from('communities')
     .select('id')
-    .eq('user_id', user.id)
+    .eq('slug', slug)
     .single()
+  if (!community) return notFound()
+
+  const membership = await getUserRole(supabase, community.id)
+  const member = membership ? { id: membership.memberId } : null
 
   // Get user's RSVP for this session
   const { data: userRsvp } = member
