@@ -91,7 +91,11 @@ export async function createCommunity(
     finalSlug = `${slug}-${attempt + 1}`
   }
 
-  const { data: community, error: communityError } = await supabase
+  // Use service client — no INSERT policy on communities, and community_members
+  // INSERT requires admin membership which doesn't exist yet for a new community
+  const serviceClient = createServiceClient()
+
+  const { data: community, error: communityError } = await serviceClient
     .from('communities')
     .insert({ name, slug: finalSlug, description: description ?? null })
     .select('id, slug')
@@ -102,7 +106,7 @@ export async function createCommunity(
   }
 
   // Creator becomes the first admin member (D-36)
-  const { error: memberError } = await supabase
+  const { error: memberError } = await serviceClient
     .from('community_members')
     .insert({
       community_id: community.id,
