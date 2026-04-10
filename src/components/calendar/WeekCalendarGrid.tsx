@@ -78,12 +78,17 @@ function formatTime(hour: number, minute: number): string {
 
 function formatTimeShort(isoString: string): string {
   const d = new Date(isoString)
-  const h = d.getHours()
-  const m = d.getMinutes()
-  const period = h >= 12 ? 'PM' : 'AM'
-  const hr = h % 12 === 0 ? 12 : h % 12
-  const min = m === 0 ? '' : `:${String(m).padStart(2, '0')}`
-  return `${hr}${min}${period}`
+  const parts = new Intl.DateTimeFormat('en-AU', {
+    timeZone: 'Australia/Sydney',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).formatToParts(d)
+  const h = Number(parts.find(p => p.type === 'hour')?.value ?? 0)
+  const m = parts.find(p => p.type === 'minute')?.value ?? '00'
+  const period = (parts.find(p => p.type === 'dayPeriod')?.value ?? 'am').toUpperCase()
+  const min = m === '00' ? '' : `:${m}`
+  return `${h}${min}${period}`
 }
 
 function formatDayLabel(date: Date): string {
@@ -95,12 +100,20 @@ const GRID_START_HOUR = 6
 const GRID_END_HOUR = 22 // exclusive; row 2 + (22-6)*2 = row 34
 const TOTAL_TIME_ROWS = (GRID_END_HOUR - GRID_START_HOUR) * 2 // 32 rows
 
+function sydneyHourMin(d: Date): { hour: number; minute: number } {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Australia/Sydney', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(d)
+  return {
+    hour: Number(parts.find(p => p.type === 'hour')?.value ?? 0),
+    minute: Number(parts.find(p => p.type === 'minute')?.value ?? 0),
+  }
+}
+
 function getGridRowFraction(isoString: string): number {
-  const d = new Date(isoString)
-  const hour = d.getHours()
-  const minutes = d.getMinutes()
+  const { hour, minute } = sydneyHourMin(new Date(isoString))
   // Returns fractional row position for precise placement
-  return 2 + (hour - GRID_START_HOUR) * 2 + (minutes / 30)
+  return 2 + (hour - GRID_START_HOUR) * 2 + (minute / 30)
 }
 
 function getEndTimeIso(isoString: string, durationMinutes: number): string {
@@ -165,8 +178,8 @@ function assignColumns(blocks: CalendarBlock[]): CalendarBlock[] {
 }
 
 function toMinutes(isoString: string): number {
-  const d = new Date(isoString)
-  return d.getHours() * 60 + d.getMinutes()
+  const { hour, minute } = sydneyHourMin(new Date(isoString))
+  return hour * 60 + minute
 }
 
 import { EVENT_TYPE_COLORS, EVENT_TYPE_HEX } from '@/lib/constants/events'
@@ -180,11 +193,8 @@ function getEventHex(eventType: string) {
 }
 
 function isSameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  )
+  const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney', year: 'numeric', month: '2-digit', day: '2-digit' })
+  return fmt.format(a) === fmt.format(b)
 }
 
 // Generate time labels for the left column
