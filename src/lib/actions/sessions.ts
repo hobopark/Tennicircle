@@ -158,6 +158,10 @@ export async function createSessionTemplate(
   revalidatePath(`/c/${communitySlug}/sessions`)
 
   return { success: true }
+  } catch (err) {
+    console.error('[createSession] unexpected error:', err)
+    return { success: false, error: 'Something went wrong. Please try again.' }
+  }
 }
 
 // D-14: Coach edits a session instance with this/future scope
@@ -347,10 +351,6 @@ export async function editSession(
   revalidatePath(`/c/${communitySlug}/coach/schedule`)
 
   return { success: true }
-  } catch (err) {
-    console.error('[createSession] unexpected error:', err)
-    return { success: false, error: 'Something went wrong. Please try again.' }
-  }
 }
 
 // D-17: Coaches and admins can cancel a session with a required reason
