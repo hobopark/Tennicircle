@@ -29,6 +29,7 @@ export async function createSessionTemplate(
   _prevState: SessionActionResult,
   formData: FormData
 ): Promise<SessionActionResult> {
+  try {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -346,6 +347,10 @@ export async function editSession(
   revalidatePath(`/c/${communitySlug}/coach/schedule`)
 
   return { success: true }
+  } catch (err) {
+    console.error('[createSession] unexpected error:', err)
+    return { success: false, error: 'Something went wrong. Please try again.' }
+  }
 }
 
 // D-17: Coaches and admins can cancel a session with a required reason
