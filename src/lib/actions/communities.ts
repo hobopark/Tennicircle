@@ -368,16 +368,22 @@ export async function getPendingRequests(
 
   if (!data || data.length === 0) return { success: true, data: [] }
 
-  // Fetch global profiles for the requestors (community_id IS NULL = global profile)
+  // Fetch any profile for the requestors — try global (NULL) first, fall back to any community profile.
+  // Users who signed up via invite have community-specific profiles, not global ones.
   const userIds = data.map((r) => r.user_id)
   const serviceClient = createServiceClient()
   const { data: profiles } = await serviceClient
     .from('player_profiles')
     .select('user_id, display_name, avatar_url')
     .in('user_id', userIds)
-    .is('community_id', null)
 
-  const profileMap = new Map((profiles ?? []).map((p) => [p.user_id, p]))
+  // Dedupe: prefer global profile (community_id=null), otherwise take first found
+  const profileMap = new Map<string, { user_id: string; display_name: string | null; avatar_url: string | null }>()
+  for (const p of profiles ?? []) {
+    if (!profileMap.has(p.user_id)) {
+      profileMap.set(p.user_id, p)
+    }
+  }
 
   const result = data.map((req) => {
     const profile = profileMap.get(req.user_id)
