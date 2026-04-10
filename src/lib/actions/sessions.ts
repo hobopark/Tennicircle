@@ -63,16 +63,16 @@ export async function createSessionTemplate(
 
   if (!member) return { success: false, error: 'Member record not found' }
 
-  // Validate invited clients belong to this coach
+  // Validate invited clients belong to this coach (via coach_client_assignments)
   if (invitedClientIds.length > 0) {
-    const { data: validClients } = await supabase
-      .from('community_members')
-      .select('id')
-      .eq('coach_id', member.id)
-      .eq('role', 'client')
-      .in('id', invitedClientIds)
+    const { data: validAssignments } = await supabase
+      .from('coach_client_assignments')
+      .select('client_member_id')
+      .eq('coach_member_id', member.id)
+      .eq('community_id', communityId)
+      .in('client_member_id', invitedClientIds)
 
-    if (!validClients || validClients.length !== invitedClientIds.length) {
+    if (!validAssignments || validAssignments.length !== invitedClientIds.length) {
       return { success: false, error: 'One or more selected clients are not assigned to you' }
     }
   }
