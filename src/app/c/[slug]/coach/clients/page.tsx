@@ -57,11 +57,11 @@ export default async function ClientsPage({
   // Fetch coach assignments to show "Coach: X" on client cards
   const { data: assignments } = await supabase
     .from('coach_client_assignments')
-    .select('coach_id, client_id')
+    .select('coach_member_id, client_member_id')
     .eq('community_id', community.id)
 
   // Build coach name lookup
-  const coachMemberIds = [...new Set((assignments ?? []).map(a => a.coach_id))]
+  const coachMemberIds = [...new Set((assignments ?? []).map(a => a.coach_member_id))]
   const coachNameMap = new Map<string, string>()
   for (const m of (members ?? [])) {
     if (coachMemberIds.includes(m.id)) {
@@ -73,11 +73,11 @@ export default async function ClientsPage({
   // Build per-member assigned coach names + isAssignedToMe
   const memberCoachMap = new Map<string, { names: string[]; assignedToMe: boolean }>()
   for (const a of (assignments ?? [])) {
-    const existing = memberCoachMap.get(a.client_id) ?? { names: [], assignedToMe: false }
-    const coachName = coachNameMap.get(a.coach_id) ?? 'Coach'
+    const existing = memberCoachMap.get(a.client_member_id) ?? { names: [], assignedToMe: false }
+    const coachName = coachNameMap.get(a.coach_member_id) ?? 'Coach'
     existing.names.push(coachName)
-    if (a.coach_id === memberId) existing.assignedToMe = true
-    memberCoachMap.set(a.client_id, existing)
+    if (a.coach_member_id === memberId) existing.assignedToMe = true
+    memberCoachMap.set(a.client_member_id, existing)
   }
 
   // Fetch last session attendance per member
