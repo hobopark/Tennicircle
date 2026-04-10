@@ -307,6 +307,25 @@ export function CreateEventDialog({
                 </div>
 
                 <div>
+                  <Label htmlFor="event-duration">Duration (optional)</Label>
+                  <select
+                    id="event-duration"
+                    name="duration_minutes"
+                    defaultValue=""
+                    className="h-12 w-full rounded-2xl mt-1 border border-input bg-transparent px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">No end time</option>
+                    <option value="30">30 min</option>
+                    <option value="60">1 hour</option>
+                    <option value="90">1.5 hours</option>
+                    <option value="120">2 hours</option>
+                    <option value="180">3 hours</option>
+                    <option value="240">4 hours</option>
+                    <option value="480">Full day (8 hours)</option>
+                  </select>
+                </div>
+
+                <div>
                   <Label htmlFor="event-venue">Venue</Label>
                   <Input
                     id="event-venue"
