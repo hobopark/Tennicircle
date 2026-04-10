@@ -133,45 +133,46 @@ CREATE POLICY "community_members_read_own_community" ON public.communities
   );
 
 -- -----------------------------------------------------------------------------
+-- SECURITY DEFINER helper — bypasses RLS to check membership without recursion.
+-- Used by community_members policies and any policy that needs "is this user a
+-- member of community X?" without triggering self-referential RLS on community_members.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.has_membership(p_community_id uuid, p_role text DEFAULT NULL)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.community_members
+    WHERE user_id = auth.uid()
+      AND community_id = p_community_id
+      AND (p_role IS NULL OR role = p_role)
+  )
+$$;
+
+-- -----------------------------------------------------------------------------
 -- community_members table (Original: 00001_foundation_schema.sql)
 -- REWRITE: members_read_own_community, admins_manage_members
 -- KEEP: users_insert_own_membership (00008)
+-- Uses has_membership() to avoid self-referential RLS recursion (42P17)
 -- -----------------------------------------------------------------------------
 DROP POLICY IF EXISTS "members_read_own_community" ON public.community_members;
 CREATE POLICY "members_read_own_community" ON public.community_members
   FOR SELECT TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.community_members cm2
-      WHERE cm2.user_id = auth.uid()
-      AND cm2.community_id = community_members.community_id
-    )
-  );
+  USING (public.has_membership(community_id));
 
 DROP POLICY IF EXISTS "admins_manage_members" ON public.community_members;
 
 -- Separate INSERT and UPDATE policies to replace the old FOR ALL policy
 CREATE POLICY "admins_insert_members" ON public.community_members
   FOR INSERT TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.community_members cm2
-      WHERE cm2.user_id = auth.uid()
-      AND cm2.community_id = community_members.community_id
-      AND cm2.role = 'admin'
-    )
-  );
+  WITH CHECK (public.has_membership(community_id, 'admin'));
 
 CREATE POLICY "admins_update_members" ON public.community_members
   FOR UPDATE TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.community_members cm2
-      WHERE cm2.user_id = auth.uid()
-      AND cm2.community_id = community_members.community_id
-      AND cm2.role = 'admin'
-    )
-  );
+  USING (public.has_membership(community_id, 'admin'));
 
 CREATE POLICY "admins_delete_members" ON public.community_members
   FOR DELETE TO authenticated
