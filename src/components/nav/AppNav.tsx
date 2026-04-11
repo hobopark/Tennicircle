@@ -207,7 +207,7 @@ export function AppNav() {
           type="button"
           onClick={() => setShowLogoutDialog(true)}
           aria-label="Log out"
-          className="w-9 h-9 rounded-xl bg-muted/80 backdrop-blur-sm flex items-center justify-center hover:bg-muted transition-colors"
+          className="w-9 h-9 rounded-xl bg-muted/80 backdrop-blur-sm flex items-center justify-center hover:bg-muted active:scale-95 transition-all"
         >
           <LogOut className="w-4 h-4 text-muted-foreground" />
         </button>
@@ -234,7 +234,7 @@ export function AppNav() {
       </Dialog>
 
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-t border-border pb-[env(safe-area-inset-bottom)]"
+        className="fixed bottom-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]"
         aria-label="Bottom navigation"
       >
         <div className="flex items-center justify-around px-2 h-16">
@@ -254,7 +254,7 @@ export function AppNav() {
                   <span
                     className={
                       active
-                        ? 'bg-primary text-primary-foreground p-1.5 rounded-xl transition-all duration-300 shadow-sm'
+                        ? 'bg-primary text-primary-foreground p-1.5 rounded-xl transition-all duration-300 shadow-md shadow-primary/25'
                         : 'p-1.5 transition-all duration-300'
                     }
                   >
@@ -304,7 +304,7 @@ export function AppNav() {
               >
                 <span className={
                   pathname === '/communities'
-                    ? 'bg-primary text-primary-foreground p-1.5 rounded-xl transition-all duration-300 shadow-sm'
+                    ? 'bg-primary text-primary-foreground p-1.5 rounded-xl transition-all duration-300 shadow-md shadow-primary/25'
                     : 'p-1.5 transition-all duration-300'
                 }>
                   <LayoutDashboard className="w-5 h-5" />
@@ -321,7 +321,7 @@ export function AppNav() {
               >
                 <span className={
                   pathname.startsWith('/profile')
-                    ? 'bg-primary text-primary-foreground p-1.5 rounded-xl transition-all duration-300 shadow-sm'
+                    ? 'bg-primary text-primary-foreground p-1.5 rounded-xl transition-all duration-300 shadow-md shadow-primary/25'
                     : 'p-1.5 transition-all duration-300'
                 }>
                   <User className="w-5 h-5" />

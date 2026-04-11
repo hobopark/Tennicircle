@@ -241,7 +241,7 @@ export function EventsPageClient({
         type="button"
         onClick={openCreateEvent}
         aria-label="Create event"
-        className="sm:hidden fixed bottom-20 right-5 z-40 bg-primary text-primary-foreground w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-primary/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+        className="sm:hidden fixed bottom-20 right-5 z-40 bg-primary text-primary-foreground w-14 h-14 rounded-full flex items-center justify-center shadow-xl shadow-primary/30 active:scale-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
       >
         <Plus className="w-6 h-6" />
       </button>

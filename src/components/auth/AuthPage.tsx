@@ -36,12 +36,12 @@ export function AuthPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center pt-[15vh] px-4">
       {/* TenniCircle wordmark */}
-      <p className="font-display text-[20px] font-bold text-foreground text-center mb-12">
+      <p className="font-display text-2xl font-bold text-primary text-center mb-12">
         TenniCircle
       </p>
 
       {/* Auth card */}
-      <div className="w-full max-w-[440px] bg-popover p-6 sm:p-8 sm:rounded-2xl sm:shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+      <div className="w-full max-w-[440px] bg-popover p-6 sm:p-8 sm:rounded-2xl sm:shadow-[0_4px_16px_rgba(0,0,0,0.08),0_12px_32px_rgba(0,0,0,0.06)]">
 
         {verificationEmail ? (
           <EmailVerificationPending email={verificationEmail} />

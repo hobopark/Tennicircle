@@ -61,7 +61,7 @@ export function NotificationRow({ notification, onTap }: Props) {
       className={`w-full text-left flex gap-3 p-4 rounded-2xl transition-transform active:scale-[0.98] ${
         notification.read_at
           ? 'bg-muted/40'
-          : 'bg-card border-l-2 border-primary'
+          : 'bg-card border-l-2 border-primary shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]'
       }`}
     >
       <span

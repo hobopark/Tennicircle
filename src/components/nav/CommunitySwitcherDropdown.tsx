@@ -86,13 +86,13 @@ export function CommunitySwitcherDropdown() {
       {isOpen && (
         <div
           role="listbox"
-          className="absolute top-full right-0 mt-1 w-56 bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-lg overflow-hidden z-50 opacity-100 scale-100 transition-all duration-150"
+          className="absolute top-full right-0 mt-1 w-56 bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-[0_4px_16px_rgba(0,0,0,0.08),0_12px_32px_rgba(0,0,0,0.06)] overflow-hidden z-50 opacity-100 scale-100 transition-all duration-150"
         >
           {/* Current community */}
           <div
             role="option"
             aria-selected={true}
-            className="flex items-center justify-between gap-2 px-3 py-2.5 bg-primary/5 cursor-default"
+            className="flex items-center justify-between gap-2 px-3 py-2.5 bg-primary/8 cursor-default"
           >
             <span className="text-sm font-medium text-foreground truncate">
               {community.communityName}

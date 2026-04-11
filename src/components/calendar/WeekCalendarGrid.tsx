@@ -408,7 +408,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                   >
                     <Link
                       href={`${linkPrefix}/${session.id}`}
-                      className={`block bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer ${
+                      className={`block bg-card rounded-2xl border border-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-4 active:scale-[0.98] transition-transform cursor-pointer ${
                         isCancelled ? 'opacity-60' : ''
                       }`}
                     >

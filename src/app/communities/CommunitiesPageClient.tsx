@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react'
 import { CommunityCard } from '@/components/communities/CommunityCard'
 import { CommunityBrowseCard } from '@/components/communities/CommunityBrowseCard'
 import { CreateCommunityDialog } from '@/components/communities/CreateCommunityDialog'
+import { AnimatedSection } from '@/components/dashboard/AnimatedSection'
 import type { UserRole } from '@/lib/types/auth'
 
 interface MyCommunity {
@@ -72,8 +73,9 @@ export function CommunitiesPageClient({
 
       {/* Section 1: Your Communities */}
       {(myCommunities.length > 0 || isAdmin) && (
+        <AnimatedSection delay={0}>
         <section className="mb-8">
-          <h2 className="font-heading font-bold text-base mb-3">Your Communities</h2>
+          <h2 className="font-heading font-bold text-base mb-4">Your Communities</h2>
           <div className="grid grid-cols-1 gap-4">
             {myCommunities.map((item) => (
               <CommunityCard
@@ -94,7 +96,7 @@ export function CommunitiesPageClient({
               <button
                 type="button"
                 onClick={() => setCreateDialogOpen(true)}
-                className="border-2 border-dashed border-border rounded-3xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer min-h-[120px] hover:border-primary/50 hover:bg-muted/30 transition-colors"
+                className="border-2 border-dashed border-border rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer min-h-[120px] hover:border-primary/50 hover:bg-muted/30 active:scale-[0.98] transition-transform transition-colors"
                 aria-label="Create a new community"
               >
                 <Plus className="w-8 h-8 text-muted-foreground" />
@@ -103,12 +105,14 @@ export function CommunitiesPageClient({
             )}
           </div>
         </section>
+        </AnimatedSection>
       )}
 
       {/* Section 2: Pending */}
       {pendingCommunities.length > 0 && (
+        <AnimatedSection delay={0.06}>
         <section className="mb-8">
-          <h2 className="font-heading font-bold text-base mb-3 flex items-center gap-2">
+          <h2 className="font-heading font-bold text-base mb-4 flex items-center gap-2">
             Pending
             <span
               className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full"
@@ -132,12 +136,14 @@ export function CommunitiesPageClient({
             ))}
           </div>
         </section>
+        </AnimatedSection>
       )}
 
       {/* Section 3: Browse Communities */}
       {browseCommunities.length > 0 && (
+        <AnimatedSection delay={0.12}>
         <section className="mb-8">
-          <h2 className="font-heading font-bold text-base mb-3">Browse Communities</h2>
+          <h2 className="font-heading font-bold text-base mb-4">Browse Communities</h2>
           <div className="grid grid-cols-1 gap-4">
             {browseCommunities.map((item) => (
               <CommunityBrowseCard
@@ -152,6 +158,7 @@ export function CommunitiesPageClient({
             ))}
           </div>
         </section>
+        </AnimatedSection>
       )}
 
       {/* No browse results — only show when user has communities but browse is empty */}

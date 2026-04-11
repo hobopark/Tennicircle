@@ -153,7 +153,7 @@ export function NotificationFeed({ initialNotifications, memberId, userRole: ser
           {notifications.map((n, index) => (
             <motion.div
               key={n.id}
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: Math.min(index, 5) * 0.05 }}
             >

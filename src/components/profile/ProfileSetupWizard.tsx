@@ -149,9 +149,9 @@ export function ProfileSetupWizard({
                 aria-label={`Step ${i + 1} of 4: ${STEP_LABELS[step]}`}
                 aria-current={isActive ? 'step' : undefined}
                 className={[
-                  'w-8 h-8 rounded-full flex items-center justify-center shrink-0',
+                  'w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300',
                   isCompleted ? 'bg-muted text-muted-foreground' : '',
-                  isActive ? 'bg-accent text-accent-foreground font-heading font-bold' : '',
+                  isActive ? 'bg-accent text-accent-foreground font-heading font-bold ring-2 ring-primary/30' : '',
                   isUpcoming ? 'bg-muted text-muted-foreground opacity-40' : '',
                 ].join(' ')}
               >

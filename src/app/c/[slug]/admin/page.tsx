@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { ChevronRight, Plus, Calendar, MapPin, Users, UserPlus } from 'lucide-react'
 
 import { createClient, getUserRole } from '@/lib/supabase/server'
+import { AnimatedSection } from '@/components/dashboard/AnimatedSection'
 import { AppNav } from '@/components/nav/AppNav'
 import { AnnouncementCard } from '@/components/events/AnnouncementCard'
 import { InviteButton } from '@/components/members/InviteButton'
@@ -180,179 +181,195 @@ export default async function AdminDashboardPage({
       <div className="min-h-screen bg-background">
         <div className="max-w-[640px] mx-auto px-5 pt-14 pb-24">
           {/* Greeting */}
-          <p className="text-sm text-muted-foreground">G&apos;day, {firstName}</p>
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="font-heading font-bold text-2xl text-foreground">Admin Dashboard</h1>
-            <InviteButton userRole="admin" />
-          </div>
+          <AnimatedSection delay={0}>
+            <p className="text-sm text-muted-foreground">G&apos;day, {firstName}</p>
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="font-heading font-bold text-2xl text-foreground">Admin Dashboard</h1>
+              <InviteButton userRole="admin" />
+            </div>
+          </AnimatedSection>
 
           {/* Community stats */}
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1.5">Community</p>
-          <div className="grid grid-cols-4 gap-2 mb-4">
-            <Link href={`/c/${slug}/coach/clients`} className="bg-primary/10 rounded-2xl border border-primary/20 p-3 text-center hover:bg-primary/15 transition-colors">
-              <p className="font-heading font-bold text-xl text-primary">{members.length}</p>
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Members</p>
-              <p className="text-[8px] text-muted-foreground">{adminCount}A · {coachCount}C · {clientCount}P</p>
-            </Link>
-            <div className="bg-blue-500/10 rounded-2xl border border-blue-500/20 p-3 text-center">
-              <p className="font-heading font-bold text-xl text-blue-600">{sessionsThisMonth}</p>
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Sessions</p>
-              <p className="text-[8px] text-muted-foreground">this month</p>
+          <AnimatedSection delay={0.06}>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1.5">Community</p>
+            <div className="grid grid-cols-4 gap-2 mb-4">
+              <Link href={`/c/${slug}/coach/clients`} className="bg-primary/10 rounded-2xl border border-primary/20 p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] hover:bg-primary/15 transition-colors">
+                <p className="font-heading font-bold text-2xl text-primary">{members.length}</p>
+                <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Members</p>
+                <p className="text-[8px] text-muted-foreground">{adminCount}A · {coachCount}C · {clientCount}P</p>
+              </Link>
+              <div className="bg-[hsl(199,89%,48%)]/10 rounded-2xl border border-[hsl(199,89%,48%)]/20 p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+                <p className="font-heading font-bold text-2xl text-[hsl(199,89%,48%)]">{sessionsThisMonth}</p>
+                <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Sessions</p>
+                <p className="text-[8px] text-muted-foreground">this month</p>
+              </div>
+              <div className="bg-[hsl(32,95%,52%)]/10 rounded-2xl border border-[hsl(32,95%,52%)]/20 p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+                <p className="font-heading font-bold text-2xl text-[hsl(32,95%,52%)]">{upcomingEventCount ?? 0}</p>
+                <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Events</p>
+                <p className="text-[8px] text-muted-foreground">upcoming</p>
+              </div>
+              <Link href={`/c/${slug}/coach/clients`} className="bg-[hsl(271,65%,58%)]/10 rounded-2xl border border-[hsl(271,65%,58%)]/20 p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] hover:bg-[hsl(271,65%,58%)]/15 transition-colors">
+                <p className="font-heading font-bold text-2xl text-[hsl(271,65%,58%)]">{pendingRequests?.length ?? 0}</p>
+                <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Pending</p>
+                <p className="text-[8px] text-muted-foreground">requests</p>
+              </Link>
             </div>
-            <div className="bg-amber-500/10 rounded-2xl border border-amber-500/20 p-3 text-center">
-              <p className="font-heading font-bold text-xl text-amber-600">{upcomingEventCount ?? 0}</p>
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Events</p>
-              <p className="text-[8px] text-muted-foreground">upcoming</p>
-            </div>
-            <Link href={`/c/${slug}/coach/clients`} className="bg-emerald-500/10 rounded-2xl border border-emerald-500/20 p-3 text-center hover:bg-emerald-500/15 transition-colors">
-              <p className="font-heading font-bold text-xl text-emerald-600">{pendingRequests?.length ?? 0}</p>
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Pending</p>
-              <p className="text-[8px] text-muted-foreground">requests</p>
-            </Link>
-          </div>
+          </AnimatedSection>
 
           {/* My stats */}
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1.5">My coaching</p>
-          <div className="grid grid-cols-3 gap-2 mb-6">
-            <div className="bg-primary/5 rounded-2xl border border-primary/10 p-3 text-center">
-              <p className="font-heading font-bold text-xl text-primary">{mySessionCount}</p>
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">My sessions</p>
-              <p className="text-[8px] text-muted-foreground">upcoming</p>
+          <AnimatedSection delay={0.12}>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1.5">My coaching</p>
+            <div className="grid grid-cols-3 gap-2 mb-6">
+              <div className="bg-primary/5 rounded-2xl border border-primary/10 p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+                <p className="font-heading font-bold text-2xl text-primary">{mySessionCount}</p>
+                <p className="text-[9px] text-muted-foreground uppercase tracking-wide">My sessions</p>
+                <p className="text-[8px] text-muted-foreground">upcoming</p>
+              </div>
+              <div className="bg-amber-500/5 rounded-2xl border border-amber-500/10 p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+                <p className="font-heading font-bold text-2xl text-amber-600">{myEventCount}</p>
+                <p className="text-[9px] text-muted-foreground uppercase tracking-wide">My events</p>
+                <p className="text-[8px] text-muted-foreground">attending</p>
+              </div>
+              <Link href={`/c/${slug}/coach/schedule`} className="bg-muted/50 rounded-2xl border border-border/50 p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] hover:bg-muted transition-colors">
+                <Calendar className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
+                <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Schedule</p>
+              </Link>
             </div>
-            <div className="bg-amber-500/5 rounded-2xl border border-amber-500/10 p-3 text-center">
-              <p className="font-heading font-bold text-xl text-amber-600">{myEventCount}</p>
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">My events</p>
-              <p className="text-[8px] text-muted-foreground">attending</p>
-            </div>
-            <Link href={`/c/${slug}/coach/schedule`} className="bg-muted/50 rounded-2xl border border-border/50 p-3 text-center hover:bg-muted transition-colors">
-              <Calendar className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Schedule</p>
-            </Link>
-          </div>
+          </AnimatedSection>
 
           {/* Pending Join Requests */}
           {(pendingRequests ?? []).length > 0 && (
-            <AdminPendingRequests requests={pendingRequests ?? []} communitySlug={slug} />
+            <AnimatedSection delay={0.18}>
+              <AdminPendingRequests requests={pendingRequests ?? []} communitySlug={slug} />
+            </AnimatedSection>
           )}
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <Link
-              href={`/c/${slug}/coach/sessions/new`}
-              className="flex items-center gap-2 bg-card rounded-2xl border border-border/50 p-4 hover:bg-muted/50 transition-colors"
-            >
-              <Plus className="w-5 h-5 text-primary" />
-              <span className="text-sm font-medium">Create Session</span>
-            </Link>
-            <Link
-              href={`/c/${slug}/coach/clients`}
-              className="flex items-center gap-2 bg-card rounded-2xl border border-border/50 p-4 hover:bg-muted/50 transition-colors"
-            >
-              <Users className="w-5 h-5 text-primary" />
-              <span className="text-sm font-medium">Manage Members</span>
-            </Link>
-          </div>
+          <AnimatedSection delay={0.24}>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <Link
+                href={`/c/${slug}/coach/sessions/new`}
+                className="flex items-center gap-2 bg-card rounded-2xl border border-border/50 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-all duration-200 cursor-pointer"
+              >
+                <Plus className="w-5 h-5 text-primary" />
+                <span className="text-sm font-medium">Create Session</span>
+              </Link>
+              <Link
+                href={`/c/${slug}/coach/clients`}
+                className="flex items-center gap-2 bg-card rounded-2xl border border-border/50 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-all duration-200 cursor-pointer"
+              >
+                <Users className="w-5 h-5 text-primary" />
+                <span className="text-sm font-medium">Manage Members</span>
+              </Link>
+            </div>
+          </AnimatedSection>
 
           {/* Upcoming Sessions — admin sees ALL sessions */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-heading font-bold text-base">Upcoming Sessions</h2>
-              <Link href={`/c/${slug}/coach/schedule`} className="text-sm text-primary flex items-center gap-1">
-                Schedule <ChevronRight className="w-4 h-4" />
-              </Link>
-            </div>
-            {upcomingSessionRows.length > 0 ? (
-              <div className="flex flex-col gap-3">
-                {upcomingSessionRows.map((s) => (
-                  <Link
-                    key={s.id}
-                    href={`/c/${slug}/coach/sessions/${s.id}`}
-                    className="bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer block"
-                  >
-                    <h3 className="font-heading font-bold text-base mb-1">
-                      {s.session_templates?.title ?? 'Session'}
-                    </h3>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground mb-0.5">
-                      <Calendar className="w-3 h-3 flex-shrink-0" />
-                      <span>{formatSessionDateTime(s.scheduled_at)}</span>
-                    </div>
-                    {s.venue && (
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <MapPin className="w-3 h-3 flex-shrink-0" />
-                        <span>{s.venue}</span>
+          <AnimatedSection delay={0.30}>
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-heading font-bold text-base">Upcoming Sessions</h2>
+                <Link href={`/c/${slug}/coach/schedule`} className="text-sm text-primary flex items-center gap-1">
+                  Schedule <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
+              {upcomingSessionRows.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {upcomingSessionRows.map((s) => (
+                    <Link
+                      key={s.id}
+                      href={`/c/${slug}/coach/sessions/${s.id}`}
+                      className="bg-card rounded-2xl border border-border/50 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] active:scale-[0.98] transition-transform cursor-pointer block"
+                    >
+                      <h3 className="font-heading font-bold text-base mb-1">
+                        {s.session_templates?.title ?? 'Session'}
+                      </h3>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground mb-0.5">
+                        <Calendar className="w-3 h-3 flex-shrink-0" />
+                        <span>{formatSessionDateTime(s.scheduled_at)}</span>
                       </div>
-                    )}
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-card rounded-3xl border border-border/50 p-6 text-center">
-                <p className="font-heading font-bold text-base mb-1">No upcoming sessions</p>
-                <p className="text-sm text-muted-foreground">Sessions from all coaches will appear here.</p>
-              </div>
-            )}
-          </div>
+                      {s.venue && (
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <MapPin className="w-3 h-3 flex-shrink-0" />
+                          <span>{s.venue}</span>
+                        </div>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+                  <p className="font-heading font-bold text-base mb-1">No upcoming sessions</p>
+                  <p className="text-sm text-muted-foreground">Sessions from all coaches will appear here.</p>
+                </div>
+              )}
+            </div>
+          </AnimatedSection>
 
           {/* Upcoming Events */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-heading font-bold text-base">Upcoming Events</h2>
-              <Link href={`/c/${slug}/events`} className="text-sm text-primary flex items-center gap-1">
-                See all <ChevronRight className="w-4 h-4" />
-              </Link>
+          <AnimatedSection delay={0.36}>
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-heading font-bold text-base">Upcoming Events</h2>
+                <Link href={`/c/${slug}/events`} className="text-sm text-primary flex items-center gap-1">
+                  See all <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
+              {(upcomingEvents ?? []).length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {(upcomingEvents ?? []).map((e: RawEventRow) => {
+                    const badge = EVENT_TYPE_BADGE[e.event_type]
+                    return (
+                      <Link
+                        key={e.id}
+                        href={`/c/${slug}/events/${e.id}`}
+                        className="bg-card rounded-2xl border border-border/50 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] active:scale-[0.98] transition-transform cursor-pointer block"
+                      >
+                        {badge && (
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${badge.className} inline-block mb-2`}>
+                            {badge.label}
+                          </span>
+                        )}
+                        <h3 className="font-heading font-bold text-base mb-1">{e.title}</h3>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Calendar className="w-3 h-3 flex-shrink-0" />
+                          <span>{formatSessionDateTime(e.starts_at)}</span>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+                  <p className="font-heading font-bold text-base mb-1">No upcoming events</p>
+                  <p className="text-sm text-muted-foreground">Community events will appear here.</p>
+                </div>
+              )}
             </div>
-            {(upcomingEvents ?? []).length > 0 ? (
-              <div className="flex flex-col gap-3">
-                {(upcomingEvents ?? []).map((e: RawEventRow) => {
-                  const badge = EVENT_TYPE_BADGE[e.event_type]
-                  return (
-                    <Link
-                      key={e.id}
-                      href={`/c/${slug}/events/${e.id}`}
-                      className="bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer block"
-                    >
-                      {badge && (
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${badge.className} inline-block mb-2`}>
-                          {badge.label}
-                        </span>
-                      )}
-                      <h3 className="font-heading font-bold text-base mb-1">{e.title}</h3>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Calendar className="w-3 h-3 flex-shrink-0" />
-                        <span>{formatSessionDateTime(e.starts_at)}</span>
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="bg-card rounded-3xl border border-border/50 p-6 text-center">
-                <p className="font-heading font-bold text-base mb-1">No upcoming events</p>
-                <p className="text-sm text-muted-foreground">Community events will appear here.</p>
-              </div>
-            )}
-          </div>
+          </AnimatedSection>
 
           {/* Announcements */}
-          <div className="mb-6">
-            <h2 className="font-heading font-bold text-base mb-3">Recent Announcements</h2>
-            {(announcements ?? []).length > 0 ? (
-              <div className="flex flex-col gap-3">
-                {(announcements ?? []).map((announcement) => (
-                  <AnnouncementCard
-                    key={announcement.id}
-                    announcement={announcement}
-                    canEdit={true}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="bg-card rounded-3xl border border-border/50 p-6 text-center">
-                <p className="font-heading font-bold text-base mb-1">No announcements</p>
-                <p className="text-sm text-muted-foreground">Post an announcement from the events page.</p>
-              </div>
-            )}
-          </div>
+          <AnimatedSection delay={0.42}>
+            <div className="mb-6">
+              <h2 className="font-heading font-bold text-base mb-3">Recent Announcements</h2>
+              {(announcements ?? []).length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {(announcements ?? []).map((announcement) => (
+                    <AnnouncementCard
+                      key={announcement.id}
+                      announcement={announcement}
+                      canEdit={true}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+                  <p className="font-heading font-bold text-base mb-1">No announcements</p>
+                  <p className="text-sm text-muted-foreground">Post an announcement from the events page.</p>
+                </div>
+              )}
+            </div>
+          </AnimatedSection>
         </div>
       </div>
     </>

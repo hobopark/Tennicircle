@@ -49,9 +49,9 @@ export function ClientDashboard({
     <div className="px-5 pt-14 pb-24 max-w-[640px] mx-auto">
       {/* Greeting */}
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0 * 0.08 }}
+        transition={{ delay: 0 * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
         <p className="text-sm text-muted-foreground">G&apos;day, {firstName}</p>
         <h1 className="font-heading font-bold text-2xl text-foreground mb-6">
@@ -61,30 +61,30 @@ export function ClientDashboard({
 
       {/* Quick stats strip */}
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1 * 0.08 }}
+        transition={{ delay: 1 * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
         className="grid grid-cols-3 gap-3 mb-6"
       >
-        <div className="bg-primary/10 rounded-2xl border border-primary/20 p-4 text-center">
+        <div className="bg-primary/10 rounded-2xl border border-primary/20 p-4 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
           <p className="font-heading font-bold text-2xl text-primary">{stats.sessionsThisMonth}</p>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Sessions this month</p>
         </div>
-        <div className="bg-emerald-500/10 rounded-2xl border border-emerald-500/20 p-4 text-center">
-          <p className="font-heading font-bold text-2xl text-emerald-600 dark:text-emerald-400">{stats.upcomingRsvps}</p>
+        <div className="bg-[hsl(199,89%,48%)]/10 rounded-2xl border border-[hsl(199,89%,48%)]/20 p-4 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+          <p className="font-heading font-bold text-2xl text-[hsl(199,89%,48%)]">{stats.upcomingRsvps}</p>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Upcoming RSVPs</p>
         </div>
-        <div className="bg-amber-500/10 rounded-2xl border border-amber-500/20 p-4 text-center">
-          <p className="font-heading font-bold text-2xl text-amber-600 dark:text-amber-400">{stats.memberSince}</p>
+        <div className="bg-[hsl(32,95%,52%)]/10 rounded-2xl border border-[hsl(32,95%,52%)]/20 p-4 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+          <p className="font-heading font-bold text-2xl text-[hsl(32,95%,52%)]">{stats.memberSince}</p>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Member since</p>
         </div>
       </motion.div>
 
       {/* Upcoming Sessions */}
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 2 * 0.08 }}
+        transition={{ delay: 2 * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
         className="mb-6"
       >
         <div className="flex items-center justify-between mb-3">
@@ -100,7 +100,7 @@ export function ClientDashboard({
               <Link
                 key={session.id}
                 href={`/sessions/${session.id}`}
-                className="bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer block"
+                className="bg-card rounded-2xl border border-border/50 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] active:scale-[0.98] transition-transform cursor-pointer block"
               >
                 <div className="flex items-start justify-between mb-1">
                   <h3 className="font-heading font-bold text-base">
@@ -130,7 +130,7 @@ export function ClientDashboard({
             ))}
           </div>
         ) : (
-          <div className="bg-card rounded-3xl border border-border/50 p-6 text-center">
+          <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
             <p className="font-heading font-bold text-base mb-1">No sessions scheduled</p>
             <p className="text-sm text-muted-foreground">
               Your next sessions will appear here once you&apos;ve RSVP&apos;d.
@@ -141,9 +141,9 @@ export function ClientDashboard({
 
       {/* Upcoming Events */}
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 3 * 0.08 }}
+        transition={{ delay: 3 * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
         className="mb-6"
       >
         <div className="flex items-center justify-between mb-3">
@@ -159,7 +159,7 @@ export function ClientDashboard({
               <Link
                 key={event.id}
                 href={`/events/${event.id}`}
-                className="bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer block"
+                className="bg-card rounded-2xl border border-border/50 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] active:scale-[0.98] transition-transform cursor-pointer block"
               >
                 <div className="flex items-center gap-2 mb-2">
                   {EVENT_TYPE_BADGE[event.event_type] && (
@@ -188,7 +188,7 @@ export function ClientDashboard({
             ))}
           </div>
         ) : (
-          <div className="bg-card rounded-3xl border border-border/50 p-6 text-center">
+          <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
             <p className="font-heading font-bold text-base mb-1">Nothing coming up</p>
             <p className="text-sm text-muted-foreground">
               Community events will appear here once members start creating them.
@@ -200,9 +200,9 @@ export function ClientDashboard({
       {/* Announcements */}
       {announcements.length > 0 && (
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 4 * 0.08 }}
+          transition={{ delay: 4 * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="mb-6"
         >
           <h2 className="font-heading font-bold text-base mb-3">Announcements</h2>

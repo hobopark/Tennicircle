@@ -137,7 +137,7 @@ export function EditSessionForm({ session, templateId }: EditSessionFormProps) {
 
   // Edit form
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5 bg-card rounded-2xl border border-border/40 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-5">
       {/* Title — only editable in "future" scope since it's a template property */}
       <div className="space-y-1.5">
         <Label htmlFor="title">Session title {scope === 'this' && <span className="text-muted-foreground font-normal">(edit all future to change)</span>}</Label>
@@ -236,7 +236,7 @@ export function EditSessionForm({ session, templateId }: EditSessionFormProps) {
       <Button
         type="submit"
         disabled={isPending}
-        className="w-full h-11"
+        className="w-full h-12 rounded-2xl"
       >
         {isPending ? 'Saving...' : 'Save changes'}
       </Button>
