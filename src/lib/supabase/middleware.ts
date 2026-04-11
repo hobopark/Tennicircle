@@ -58,6 +58,15 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Step 3b: Old flat routes → redirect to /communities instantly (no DB query)
+  const oldFlatRoutes = ['/coach', '/sessions', '/admin', '/events', '/notifications', '/welcome']
+  const matchedOldRoute = oldFlatRoutes.find(r => pathname === r || pathname.startsWith(r + '/'))
+  if (matchedOldRoute) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/communities'
+    return NextResponse.redirect(url)
+  }
+
   // Combined query: profile + all memberships (D-13)
   // TWO separate queries because a user without memberships still needs profile check.
   // If profile query is anchored to community_members via join, users with 0 memberships
@@ -87,26 +96,6 @@ export async function updateSession(request: NextRequest) {
 
   // Step 5: On /communities → PASS (always allowed for authenticated users with profile)
   if (pathname === '/communities') return supabaseResponse
-
-  // Step 6: On old flat route → redirect based on community count (D-06)
-  const oldFlatRoutes = ['/coach', '/sessions', '/admin', '/events', '/notifications', '/welcome']
-  const matchedOldRoute = oldFlatRoutes.find(r => pathname === r || pathname.startsWith(r + '/'))
-  if (matchedOldRoute) {
-    const url = request.nextUrl.clone()
-    if (memberships && memberships.length === 1) {
-      const m = memberships[0]
-      const slug = (m.communities as unknown as { slug: string }).slug
-      // Preserve full nested path: /sessions/123 → /c/{slug}/sessions/123
-      if (matchedOldRoute === '/welcome') {
-        url.pathname = getRoleHomeRoute(slug, m.role as 'admin' | 'coach' | 'client')
-      } else {
-        url.pathname = `/c/${slug}${pathname}` // Use full pathname, not just matched route
-      }
-    } else {
-      url.pathname = '/communities'
-    }
-    return NextResponse.redirect(url)
-  }
 
   // Step 7: On /c/[slug]/* → check membership and role access
   const slugMatch = pathname.match(/^\/c\/([^/]+)(.*)$/)
