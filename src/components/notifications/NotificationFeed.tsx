@@ -121,8 +121,8 @@ export function NotificationFeed({ initialNotifications, memberId, userRole: ser
       // Fire-and-forget server update
       markNotificationRead(communityId, communitySlug, notification.id)
     }
-    const link = resolveDeepLink(notification, role)
-    router.push(link)
+    const subPath = resolveDeepLink(notification, role)
+    router.push(`/c/${communitySlug}${subPath}`)
   }
 
   return (
