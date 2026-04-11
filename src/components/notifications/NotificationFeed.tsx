@@ -50,7 +50,7 @@ function resolveDeepLink(n: NotificationRow, userRole: UserRole): string {
 }
 
 export function NotificationFeed({ initialNotifications, memberId, userRole: serverRole }: Props) {
-  const { communitySlug } = useCommunity()
+  const { communityId, communitySlug } = useCommunity()
   const router = useRouter()
   const [notifications, setNotifications] = useState<NotificationRow[]>(initialNotifications)
   const [unreadCount, setUnreadCount] = useState(
@@ -104,7 +104,7 @@ export function NotificationFeed({ initialNotifications, memberId, userRole: ser
     const now = new Date().toISOString()
     setNotifications(prev => prev.map(n => ({ ...n, read_at: n.read_at ?? now })))
     setUnreadCount(0)
-    await markAllNotificationsRead(communitySlug)
+    await markAllNotificationsRead(communityId, communitySlug)
   }
 
   async function handleRowTap(notification: NotificationRow) {
@@ -119,7 +119,7 @@ export function NotificationFeed({ initialNotifications, memberId, userRole: ser
       // Decrement unread count immediately (keeps bell badge and Mark All button in sync)
       setUnreadCount(prev => Math.max(0, prev - 1))
       // Fire-and-forget server update
-      markNotificationRead(communitySlug, notification.id)
+      markNotificationRead(communityId, communitySlug, notification.id)
     }
     const link = resolveDeepLink(notification, role)
     router.push(link)

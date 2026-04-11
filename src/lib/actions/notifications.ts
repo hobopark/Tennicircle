@@ -6,6 +6,7 @@ import type { NotificationActionResult } from '@/lib/types/notifications'
 
 // Mark all unread notifications as read for the authenticated member
 export async function markAllNotificationsRead(
+  communityId: string,
   communitySlug: string
 ): Promise<NotificationActionResult> {
   const supabase = await createClient()
@@ -13,12 +14,13 @@ export async function markAllNotificationsRead(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  // Look up community_members.id via user_id — never use user.id as member_id
+  // Look up community_members.id scoped to current community (multi-community safe)
   const { data: member, error: memberError } = await supabase
     .from('community_members')
     .select('id')
     .eq('user_id', user.id)
-    .single()
+    .eq('community_id', communityId)
+    .maybeSingle()
 
   if (memberError || !member) return { success: false, error: 'Member record not found' }
 
@@ -37,6 +39,7 @@ export async function markAllNotificationsRead(
 
 // Mark a single notification as read for the authenticated member
 export async function markNotificationRead(
+  communityId: string,
   communitySlug: string,
   notificationId: string
 ): Promise<NotificationActionResult> {
@@ -45,12 +48,13 @@ export async function markNotificationRead(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  // Look up community_members.id via user_id — never use user.id as member_id
+  // Look up community_members.id scoped to current community (multi-community safe)
   const { data: member, error: memberError } = await supabase
     .from('community_members')
     .select('id')
     .eq('user_id', user.id)
-    .single()
+    .eq('community_id', communityId)
+    .maybeSingle()
 
   if (memberError || !member) return { success: false, error: 'Member record not found' }
 
