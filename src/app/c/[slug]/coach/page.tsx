@@ -180,16 +180,16 @@ export default async function CoachDashboardPage({
           {/* Stats strip */}
           <AnimatedSection delay={0.06}>
             <div className="grid grid-cols-3 gap-3 mb-6">
-              <div className="bg-primary/10 rounded-2xl border border-primary/20 p-4 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+              <div className="bg-primary/10 rounded-2xl border border-primary/20 p-4 text-center shadow-[var(--shadow-card)]">
                 <p className="font-heading font-bold text-2xl text-primary">{sessionsThisMonth}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Sessions this month</p>
               </div>
-              <div className="bg-[hsl(199,89%,48%)]/10 rounded-2xl border border-[hsl(199,89%,48%)]/20 p-4 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
-                <p className="font-heading font-bold text-2xl text-[hsl(199,89%,48%)]">{playerCount ?? 0}</p>
+              <div className="bg-stat-2/10 rounded-2xl border border-stat-2/20 p-4 text-center shadow-[var(--shadow-card)]">
+                <p className="font-heading font-bold text-2xl text-stat-2">{playerCount ?? 0}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Total players</p>
               </div>
-              <div className="bg-[hsl(32,95%,52%)]/10 rounded-2xl border border-[hsl(32,95%,52%)]/20 p-4 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
-                <p className="font-heading font-bold text-2xl text-[hsl(32,95%,52%)]">{upcomingEventCount ?? 0}</p>
+              <div className="bg-stat-3/10 rounded-2xl border border-stat-3/20 p-4 text-center shadow-[var(--shadow-card)]">
+                <p className="font-heading font-bold text-2xl text-stat-3">{upcomingEventCount ?? 0}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Upcoming events</p>
               </div>
             </div>
@@ -210,7 +210,7 @@ export default async function CoachDashboardPage({
                     <Link
                       key={s.id}
                       href={`/c/${slug}/coach/sessions/${s.id}`}
-                      className="bg-card rounded-2xl border border-border/50 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] active:scale-[0.98] transition-transform cursor-pointer block"
+                      className="bg-card rounded-2xl border border-border/50 p-4 shadow-[var(--shadow-card)] active:scale-[0.98] transition-transform cursor-pointer block"
                     >
                       <h3 className="font-heading font-bold text-base mb-1">
                         {s.session_templates?.title ?? 'Session'}
@@ -229,7 +229,7 @@ export default async function CoachDashboardPage({
                   ))}
                 </div>
               ) : (
-                <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+                <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[var(--shadow-card)]">
                   <p className="font-heading font-bold text-base mb-1">No upcoming sessions</p>
                   <p className="text-sm text-muted-foreground">Create a session to get started.</p>
                 </div>
@@ -254,7 +254,7 @@ export default async function CoachDashboardPage({
                       <Link
                         key={e.id}
                         href={`/c/${slug}/events/${e.id}`}
-                        className="bg-card rounded-2xl border border-border/50 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] active:scale-[0.98] transition-transform cursor-pointer block"
+                        className="bg-card rounded-2xl border border-border/50 p-4 shadow-[var(--shadow-card)] active:scale-[0.98] transition-transform cursor-pointer block"
                       >
                         {badge && (
                           <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${badge.className} inline-block mb-2`}>
@@ -271,7 +271,7 @@ export default async function CoachDashboardPage({
                   })}
                 </div>
               ) : (
-                <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+                <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[var(--shadow-card)]">
                   <p className="font-heading font-bold text-base mb-1">Nothing coming up</p>
                   <p className="text-sm text-muted-foreground">Events will appear here.</p>
                 </div>

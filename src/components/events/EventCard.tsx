@@ -27,7 +27,7 @@ export function EventCard({ event }: EventCardProps) {
   return (
     <Link
       href={`/events/${event.id}`}
-      className={`block bg-card rounded-2xl border border-border/50 border-l-[3px] ${borderColor} p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-all duration-200 cursor-pointer`}
+      className={`block bg-card rounded-2xl border border-border/50 border-l-[3px] ${borderColor} p-4 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] active:scale-[0.98] transition-all duration-200 cursor-pointer`}
     >
       {/* Top row: type badge + spots pill */}
       <div className="flex items-center justify-between mb-2">

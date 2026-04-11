@@ -25,7 +25,7 @@ export function CommunityCard({ community, role }: CommunityCardProps) {
   const href = getRoleHomeRoute(community.slug, role)
 
   return (
-    <div className="bg-card rounded-2xl border border-border/40 p-4 flex flex-col gap-2 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-all duration-200">
+    <div className="bg-card rounded-2xl border border-border/40 p-4 flex flex-col gap-2 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] active:scale-[0.98] transition-all duration-200">
       {/* Top row: name + role badge */}
       <div className="flex items-center justify-between gap-2">
         <span className="font-heading font-bold text-base leading-tight">

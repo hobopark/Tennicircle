@@ -123,7 +123,7 @@ export function CreateSessionForm({ communityId, assignedClients }: CreateSessio
   }
 
   return (
-    <form action={formAction} className="space-y-5 bg-card rounded-2xl border border-border/40 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-5">
+    <form action={formAction} className="space-y-5 bg-card rounded-2xl border border-border/40 shadow-[var(--shadow-card)] p-5">
       {/* Title */}
       <div className="space-y-1.5">
         <Label htmlFor="title">Session title</Label>

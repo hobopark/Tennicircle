@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter } from "next/font/google";
+import { Cormorant_Garamond, Montserrat } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-space-grotesk",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
-const inter = Inter({
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-inter",
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -28,9 +30,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${inter.variable} h-full antialiased`}
+      className={`${cormorant.variable} ${montserrat.variable} h-full antialiased`}
     >
-      <body className="font-sans min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col font-[family-name:var(--font-montserrat)]">
         {children}
         <Toaster position="bottom-center" richColors />
       </body>

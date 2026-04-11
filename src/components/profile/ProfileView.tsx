@@ -54,7 +54,7 @@ export function ProfileView({
     // Profile header card
     <div
       key="header"
-      className="bg-card rounded-2xl border border-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-6 mb-4"
+      className="bg-card rounded-2xl border border-border/50 shadow-[var(--shadow-card)] p-6 mb-4"
     >
       <div className="flex items-start gap-4">
         <div className="flex-1 flex items-start gap-4">
@@ -95,7 +95,7 @@ export function ProfileView({
       ? [
           <div
             key="skills"
-            className="bg-card rounded-2xl border border-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-6 mb-4"
+            className="bg-card rounded-2xl border border-border/50 shadow-[var(--shadow-card)] p-6 mb-4"
           >
             <h2 className="font-heading font-bold text-base mb-3">Skill Level</h2>
             <div className="flex gap-4">
@@ -140,7 +140,7 @@ export function ProfileView({
       ? [
           <div
             key="contact"
-            className="bg-card rounded-2xl border border-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-6 mb-4"
+            className="bg-card rounded-2xl border border-border/50 shadow-[var(--shadow-card)] p-6 mb-4"
           >
             <h2 className="font-heading font-bold text-base mb-3">Contact</h2>
             <div className="flex flex-col gap-3">
@@ -164,7 +164,7 @@ export function ProfileView({
     // Bio card
     <div
       key="bio"
-      className="bg-card rounded-2xl border border-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-6 mb-4"
+      className="bg-card rounded-2xl border border-border/50 shadow-[var(--shadow-card)] p-6 mb-4"
     >
       <h2 className="font-heading font-bold text-base mb-3">About</h2>
       {profile.bio ? (

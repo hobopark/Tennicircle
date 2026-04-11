@@ -7,8 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-montserrat), "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --font-heading: var(--font-cormorant), "Cormorant Garamond", "Georgia", serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -38,6 +39,14 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-court: var(--court);
+  --color-court-foreground: var(--court-foreground);
+  --color-stat-1: var(--stat-1);
+  --color-stat-2: var(--stat-2);
+  --color-stat-3: var(--stat-3);
+  --color-stat-4: var(--stat-4);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -45,105 +54,98 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-  --color-stat-1: var(--color-stat-1);
-  --color-stat-2: var(--color-stat-2);
-  --color-stat-3: var(--color-stat-3);
-  --color-stat-4: var(--color-stat-4);
 }
 
 :root {
-  /* AceHub design system — green primary + warm yellow-orange secondary */
-  --background: hsl(60 10% 98%);       /* warm off-white */
-  --foreground: hsl(160 20% 8%);       /* dark green-tinted text */
-  --card: hsl(0 0% 100%);              /* pure white card surface */
-  --card-foreground: hsl(160 20% 8%);
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(160 20% 8%);
-  --primary: hsl(152 72% 44%);         /* tennis court green — fresher, higher saturation */
-  --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(32 100% 58%);       /* warm orange — shifted from yellow for energy */
-  --secondary-foreground: hsl(160 20% 8%);
-  --muted: hsl(150 8% 95%);            /* muted backgrounds */
-  --muted-foreground: hsl(160 10% 45%);/* secondary/helper text */
-  --accent: hsl(152 35% 93%);          /* subtle green tint */
-  --accent-foreground: hsl(152 65% 25%);
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(150 12% 90%);
-  --input: hsl(150 12% 90%);
-  --ring: hsl(152 72% 44%);            /* focus ring matches primary */
-  --radius: 1rem;                      /* base radius — cards use rounded-2xl (1.8rem) */
+  --background: #FEFCF6;
+  --foreground: #0C0A09;
+  --card: #FFFFFF;
+  --card-foreground: #1C1917;
+  --popover: #FFFFFF;
+  --popover-foreground: #1C1917;
+  --primary: #1B4332;
+  --primary-foreground: #FEFCF6;
+  --secondary: #E8F0E8;
+  --secondary-foreground: #1B4332;
+  --muted: #F0F4F0;
+  --muted-foreground: #57726B;
+  --accent: #C9A84C;
+  --accent-foreground: #1C1917;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: #D4DDD4;
+  --input: #D4DDD4;
+  --ring: #1B4332;
+  --gold: #C9A84C;
+  --gold-foreground: #1C1917;
+  --court: #2D6A4F;
+  --court-foreground: #FEFCF6;
+  --radius: 0.625rem;
 
-  /* Semantic stat tokens — consistent across all dashboards */
-  --color-stat-1: hsl(152 72% 44%);   /* primary metric — green */
-  --color-stat-2: hsl(199 89% 48%);   /* secondary metric — vivid sky blue */
-  --color-stat-3: hsl(32 95% 52%);    /* tertiary metric — warm orange */
-  --color-stat-4: hsl(271 65% 58%);   /* quaternary metric — violet */
+  --stat-1: #1B4332;
+  --stat-2: #2D6A4F;
+  --stat-3: #C9A84C;
+  --stat-4: #40916C;
 
-  /* Card depth system — layered shadows for tactile feel */
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
-  --shadow-card-hover: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.05);
-  --shadow-card-elevated: 0 4px 16px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.06);
+  --shadow-card: 0 1px 3px rgba(27,67,50,0.04), 0 4px 12px rgba(27,67,50,0.03);
+  --shadow-card-hover: 0 2px 8px rgba(27,67,50,0.08), 0 12px 40px rgba(27,67,50,0.06);
 
-  /* Semantic status colors */
-  --color-success: hsl(152 65% 42%);   /* reuse primary green */
-  --color-error: hsl(0 84.2% 60.2%);
-  --color-warning: hsl(45 100% 48%);
-  --color-info: hsl(152 65% 42%);
-
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: hsl(150 10% 94%);
-  --sidebar-foreground: hsl(160 20% 8%);
-  --sidebar-primary: hsl(152 65% 42%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(60 10% 98%);
-  --sidebar-accent-foreground: hsl(160 20% 8%);
-  --sidebar-border: hsl(150 12% 90%);
-  --sidebar-ring: hsl(152 65% 42%);
+  --chart-1: #1B4332;
+  --chart-2: #2D6A4F;
+  --chart-3: #40916C;
+  --chart-4: #52B788;
+  --chart-5: #C9A84C;
+  --sidebar: #F0F4F0;
+  --sidebar-foreground: #1C1917;
+  --sidebar-primary: #1B4332;
+  --sidebar-primary-foreground: #FEFCF6;
+  --sidebar-accent: #E8F0E8;
+  --sidebar-accent-foreground: #1B4332;
+  --sidebar-border: #D4DDD4;
+  --sidebar-ring: #1B4332;
 }
 
 .dark {
-  --background: hsl(160 15% 6%);
-  --foreground: hsl(60 10% 96%);
-  --card: hsl(160 15% 9%);
-  --card-foreground: hsl(60 10% 96%);
-  --popover: hsl(160 15% 9%);
-  --popover-foreground: hsl(60 10% 96%);
-  --primary: hsl(152 72% 50%);         /* brighter in dark mode */
-  --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(32 100% 60%);       /* warm orange — match hue shift */
-  --secondary-foreground: hsl(160 20% 8%);
-  --muted: hsl(160 10% 14%);
-  --muted-foreground: hsl(160 10% 55%);
-  --accent: hsl(152 20% 15%);          /* darker green accent */
-  --accent-foreground: hsl(152 65% 70%);
-  --destructive: hsl(0 62.8% 30.6%);
-  --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(160 12% 18%);
-  --input: hsl(160 12% 18%);
-  --ring: hsl(152 72% 50%);
+  --background: #0C1A14;
+  --foreground: #F0F4F0;
+  --card: #152820;
+  --card-foreground: #F0F4F0;
+  --popover: #152820;
+  --popover-foreground: #F0F4F0;
+  --primary: #52B788;
+  --primary-foreground: #0C1A14;
+  --secondary: #1E3A2E;
+  --secondary-foreground: #D8E8D8;
+  --muted: #1E3A2E;
+  --muted-foreground: #8BAA9E;
+  --accent: #D4B85C;
+  --accent-foreground: #0C1A14;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #52B788;
+  --gold: #D4B85C;
+  --gold-foreground: #0C1A14;
+  --court: #40916C;
+  --court-foreground: #F0F4F0;
 
-  --color-stat-1: hsl(152 72% 50%);
-  --color-stat-2: hsl(199 89% 55%);
-  --color-stat-3: hsl(32 95% 58%);
-  --color-stat-4: hsl(271 65% 65%);
+  --stat-1: #52B788;
+  --stat-2: #40916C;
+  --stat-3: #D4B85C;
+  --stat-4: #8BAA9E;
 
   --shadow-card: 0 1px 3px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.1);
   --shadow-card-hover: 0 2px 8px rgba(0,0,0,0.2), 0 8px 24px rgba(0,0,0,0.15);
-  --shadow-card-elevated: 0 4px 16px rgba(0,0,0,0.25), 0 12px 32px rgba(0,0,0,0.2);
 
-  --sidebar: hsl(160 15% 9%);
-  --sidebar-foreground: hsl(60 10% 96%);
-  --sidebar-primary: hsl(152 65% 48%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(160 15% 6%);
-  --sidebar-accent-foreground: hsl(60 10% 96%);
-  --sidebar-border: hsl(160 12% 18%);
-  --sidebar-ring: hsl(152 65% 48%);
+  --sidebar: #152820;
+  --sidebar-foreground: #F0F4F0;
+  --sidebar-primary: #52B788;
+  --sidebar-primary-foreground: #0C1A14;
+  --sidebar-accent: #1E3A2E;
+  --sidebar-accent-foreground: #D8E8D8;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #52B788;
 }
 
 @layer base {
@@ -156,6 +158,40 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Gold gradient text */
+.text-gradient-gold {
+  background: linear-gradient(135deg, #C9A84C 0%, #E8D48B 50%, #C9A84C 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Premium card hover */
+.card-premium {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Court pattern background */
+.court-pattern {
+  background-image:
+    linear-gradient(rgba(27, 67, 50, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27, 67, 50, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Hide scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 @keyframes shimmer {

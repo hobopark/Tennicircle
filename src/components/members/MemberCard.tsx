@@ -70,7 +70,7 @@ export function MemberCard({ member, viewerRole, isSelf }: MemberCardProps) {
   return (
     <>
       <div
-        className={`bg-card rounded-2xl border border-border/50 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] transition-colors ${
+        className={`bg-card rounded-2xl border border-border/50 p-4 shadow-[var(--shadow-card)] transition-colors ${
           !member.hasProfile ? 'opacity-60' : ''
         }`}
       >

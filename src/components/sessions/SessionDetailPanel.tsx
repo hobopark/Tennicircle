@@ -63,7 +63,7 @@ export function SessionDetailPanel({ session, rsvps, coaches }: SessionDetailPan
   const coachDisplay = [...primaryCoaches, ...coCoaches].join(', ')
 
   return (
-    <div className="flex flex-col gap-6 bg-card rounded-2xl border border-border/40 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-5">
+    <div className="flex flex-col gap-6 bg-card rounded-2xl border border-border/40 shadow-[var(--shadow-card)] p-5">
       {/* Cancelled banner */}
       {isCancelled && (
         <div className="rounded-2xl bg-destructive/10 border border-destructive/20 px-4 py-3">

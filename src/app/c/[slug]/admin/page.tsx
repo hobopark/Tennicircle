@@ -193,23 +193,23 @@ export default async function AdminDashboardPage({
           <AnimatedSection delay={0.06}>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1.5">Community</p>
             <div className="grid grid-cols-4 gap-2 mb-4">
-              <Link href={`/c/${slug}/coach/clients`} className="bg-primary/10 rounded-2xl border border-primary/20 p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] hover:bg-primary/15 transition-colors">
+              <Link href={`/c/${slug}/coach/clients`} className="bg-primary/10 rounded-2xl border border-primary/20 p-3 text-center shadow-[var(--shadow-card)] hover:bg-primary/15 transition-colors">
                 <p className="font-heading font-bold text-2xl text-primary">{members.length}</p>
                 <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Members</p>
                 <p className="text-[8px] text-muted-foreground">{adminCount}A · {coachCount}C · {clientCount}P</p>
               </Link>
-              <div className="bg-[hsl(199,89%,48%)]/10 rounded-2xl border border-[hsl(199,89%,48%)]/20 p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
-                <p className="font-heading font-bold text-2xl text-[hsl(199,89%,48%)]">{sessionsThisMonth}</p>
+              <div className="bg-stat-2/10 rounded-2xl border border-stat-2/20 p-3 text-center shadow-[var(--shadow-card)]">
+                <p className="font-heading font-bold text-2xl text-stat-2">{sessionsThisMonth}</p>
                 <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Sessions</p>
                 <p className="text-[8px] text-muted-foreground">this month</p>
               </div>
-              <div className="bg-[hsl(32,95%,52%)]/10 rounded-2xl border border-[hsl(32,95%,52%)]/20 p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
-                <p className="font-heading font-bold text-2xl text-[hsl(32,95%,52%)]">{upcomingEventCount ?? 0}</p>
+              <div className="bg-stat-3/10 rounded-2xl border border-stat-3/20 p-3 text-center shadow-[var(--shadow-card)]">
+                <p className="font-heading font-bold text-2xl text-stat-3">{upcomingEventCount ?? 0}</p>
                 <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Events</p>
                 <p className="text-[8px] text-muted-foreground">upcoming</p>
               </div>
-              <Link href={`/c/${slug}/coach/clients`} className="bg-[hsl(271,65%,58%)]/10 rounded-2xl border border-[hsl(271,65%,58%)]/20 p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] hover:bg-[hsl(271,65%,58%)]/15 transition-colors">
-                <p className="font-heading font-bold text-2xl text-[hsl(271,65%,58%)]">{pendingRequests?.length ?? 0}</p>
+              <Link href={`/c/${slug}/coach/clients`} className="bg-stat-4/10 rounded-2xl border border-stat-4/20 p-3 text-center shadow-[var(--shadow-card)] hover:bg-[hsl(271,65%,58%)]/15 transition-colors">
+                <p className="font-heading font-bold text-2xl text-stat-4">{pendingRequests?.length ?? 0}</p>
                 <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Pending</p>
                 <p className="text-[8px] text-muted-foreground">requests</p>
               </Link>
@@ -220,17 +220,17 @@ export default async function AdminDashboardPage({
           <AnimatedSection delay={0.12}>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1.5">My coaching</p>
             <div className="grid grid-cols-3 gap-2 mb-6">
-              <div className="bg-primary/5 rounded-2xl border border-primary/10 p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+              <div className="bg-primary/5 rounded-2xl border border-primary/10 p-3 text-center shadow-[var(--shadow-card)]">
                 <p className="font-heading font-bold text-2xl text-primary">{mySessionCount}</p>
                 <p className="text-[9px] text-muted-foreground uppercase tracking-wide">My sessions</p>
                 <p className="text-[8px] text-muted-foreground">upcoming</p>
               </div>
-              <div className="bg-amber-500/5 rounded-2xl border border-amber-500/10 p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
-                <p className="font-heading font-bold text-2xl text-amber-600">{myEventCount}</p>
+              <div className="bg-stat-3/5 rounded-2xl border border-stat-3/10 p-3 text-center shadow-[var(--shadow-card)]">
+                <p className="font-heading font-bold text-2xl text-stat-3">{myEventCount}</p>
                 <p className="text-[9px] text-muted-foreground uppercase tracking-wide">My events</p>
                 <p className="text-[8px] text-muted-foreground">attending</p>
               </div>
-              <Link href={`/c/${slug}/coach/schedule`} className="bg-muted/50 rounded-2xl border border-border/50 p-3 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] hover:bg-muted transition-colors">
+              <Link href={`/c/${slug}/coach/schedule`} className="bg-muted/50 rounded-2xl border border-border/50 p-3 text-center shadow-[var(--shadow-card)] hover:bg-muted transition-colors">
                 <Calendar className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
                 <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Schedule</p>
               </Link>
@@ -249,14 +249,14 @@ export default async function AdminDashboardPage({
             <div className="grid grid-cols-2 gap-3 mb-6">
               <Link
                 href={`/c/${slug}/coach/sessions/new`}
-                className="flex items-center gap-2 bg-card rounded-2xl border border-border/50 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-all duration-200 cursor-pointer"
+                className="flex items-center gap-2 bg-card rounded-2xl border border-border/50 p-4 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] active:scale-[0.98] transition-all duration-200 cursor-pointer"
               >
                 <Plus className="w-5 h-5 text-primary" />
                 <span className="text-sm font-medium">Create Session</span>
               </Link>
               <Link
                 href={`/c/${slug}/coach/clients`}
-                className="flex items-center gap-2 bg-card rounded-2xl border border-border/50 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-all duration-200 cursor-pointer"
+                className="flex items-center gap-2 bg-card rounded-2xl border border-border/50 p-4 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] active:scale-[0.98] transition-all duration-200 cursor-pointer"
               >
                 <Users className="w-5 h-5 text-primary" />
                 <span className="text-sm font-medium">Manage Members</span>
@@ -279,7 +279,7 @@ export default async function AdminDashboardPage({
                     <Link
                       key={s.id}
                       href={`/c/${slug}/coach/sessions/${s.id}`}
-                      className="bg-card rounded-2xl border border-border/50 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] active:scale-[0.98] transition-transform cursor-pointer block"
+                      className="bg-card rounded-2xl border border-border/50 p-4 shadow-[var(--shadow-card)] active:scale-[0.98] transition-transform cursor-pointer block"
                     >
                       <h3 className="font-heading font-bold text-base mb-1">
                         {s.session_templates?.title ?? 'Session'}
@@ -298,7 +298,7 @@ export default async function AdminDashboardPage({
                   ))}
                 </div>
               ) : (
-                <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+                <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[var(--shadow-card)]">
                   <p className="font-heading font-bold text-base mb-1">No upcoming sessions</p>
                   <p className="text-sm text-muted-foreground">Sessions from all coaches will appear here.</p>
                 </div>
@@ -323,7 +323,7 @@ export default async function AdminDashboardPage({
                       <Link
                         key={e.id}
                         href={`/c/${slug}/events/${e.id}`}
-                        className="bg-card rounded-2xl border border-border/50 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] active:scale-[0.98] transition-transform cursor-pointer block"
+                        className="bg-card rounded-2xl border border-border/50 p-4 shadow-[var(--shadow-card)] active:scale-[0.98] transition-transform cursor-pointer block"
                       >
                         {badge && (
                           <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${badge.className} inline-block mb-2`}>
@@ -340,7 +340,7 @@ export default async function AdminDashboardPage({
                   })}
                 </div>
               ) : (
-                <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+                <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[var(--shadow-card)]">
                   <p className="font-heading font-bold text-base mb-1">No upcoming events</p>
                   <p className="text-sm text-muted-foreground">Community events will appear here.</p>
                 </div>
@@ -363,7 +363,7 @@ export default async function AdminDashboardPage({
                   ))}
                 </div>
               ) : (
-                <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+                <div className="bg-card rounded-2xl border border-border/50 p-6 text-center shadow-[var(--shadow-card)]">
                   <p className="font-heading font-bold text-base mb-1">No announcements</p>
                   <p className="text-sm text-muted-foreground">Post an announcement from the events page.</p>
                 </div>

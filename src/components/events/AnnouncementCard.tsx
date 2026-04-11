@@ -72,7 +72,7 @@ export function AnnouncementCard({ announcement, canEdit }: AnnouncementCardProp
 
   if (editing) {
     return (
-      <div className="bg-card rounded-2xl border border-primary/30 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+      <div className="bg-card rounded-2xl border border-primary/30 p-4 shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-between mb-3">
           <span className="text-[10px] font-bold text-primary uppercase tracking-wide">
             EDITING ANNOUNCEMENT
@@ -141,7 +141,7 @@ export function AnnouncementCard({ announcement, canEdit }: AnnouncementCardProp
 
   // Expanded view — full details with edit/delete for coaches
   return (
-    <div className="bg-card rounded-2xl border border-border/50 p-4 relative shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+    <div className="bg-card rounded-2xl border border-border/50 p-4 relative shadow-[var(--shadow-card)]">
       <div className="flex items-center gap-2 absolute top-4 right-4">
         {canEdit && (
           <>

@@ -50,7 +50,7 @@ export function CommunityBrowseCard({ community, pendingRequestId }: CommunityBr
   }
 
   return (
-    <div className="bg-card rounded-2xl border border-border/50 p-4 flex flex-col gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+    <div className="bg-card rounded-2xl border border-border/50 p-4 flex flex-col gap-3 shadow-[var(--shadow-card)]">
       {/* Community name */}
       <span className="font-heading font-bold text-base leading-tight">
         {community.name}
@@ -91,7 +91,7 @@ export function CommunityBrowseCard({ community, pendingRequestId }: CommunityBr
             <button
               type="button"
               disabled
-              className="inline-flex items-center justify-center gap-1.5 h-8 px-2.5 rounded-lg border border-transparent bg-[hsl(32,100%,58%)] text-white text-sm font-medium whitespace-nowrap cursor-not-allowed opacity-90"
+              className="inline-flex items-center justify-center gap-1.5 h-8 px-2.5 rounded-lg border border-transparent bg-gold text-gold-foreground text-sm font-medium whitespace-nowrap cursor-not-allowed opacity-90"
             >
               Pending Approval
             </button>
@@ -99,7 +99,7 @@ export function CommunityBrowseCard({ community, pendingRequestId }: CommunityBr
               type="button"
               onClick={handleCancelRequest}
               disabled={isCancelling}
-              className="text-sm text-orange-500 underline text-center disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-sm text-gold underline text-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCancelling ? 'Cancelling...' : 'Cancel request'}
             </button>
