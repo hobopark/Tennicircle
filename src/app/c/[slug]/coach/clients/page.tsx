@@ -130,7 +130,7 @@ export default async function ClientsPage({
     })
     .sort((a, b) => {
       // Sort: admins first, then coaches, then clients
-      const roleOrder = { admin: 0, coach: 1, client: 2 }
+      const roleOrder: Record<string, number> = { admin: 0, coach: 1, client: 2 }
       const ra = roleOrder[a.role] ?? 3
       const rb = roleOrder[b.role] ?? 3
       if (ra !== rb) return ra - rb

@@ -9,6 +9,7 @@ import type { LessonHistoryEntry } from '@/lib/types/profiles'
 
 interface LessonHistoryProps {
   initialEntries: LessonHistoryEntry[]
+  communityId: string
   memberId: string
   isCoachViewing: boolean
   totalCount: number
@@ -36,6 +37,7 @@ function formatSessionTime(isoDate: string, durationMinutes: number): string {
 
 export function LessonHistory({
   initialEntries,
+  communityId,
   memberId,
   isCoachViewing,
   totalCount,
@@ -45,7 +47,7 @@ export function LessonHistory({
 
   function handleLoadMore() {
     startTransition(async () => {
-      const result = await getLessonHistory(memberId, 20, entries.length)
+      const result = await getLessonHistory(communityId, memberId, 20, entries.length)
       if (result.success && result.data) {
         setEntries(prev => [...prev, ...result.data!.entries])
       }

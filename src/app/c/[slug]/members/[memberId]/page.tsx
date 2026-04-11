@@ -122,6 +122,7 @@ export default async function MemberProfilePage({ params }: PageProps) {
 
           <LessonHistory
             initialEntries={lessonEntries}
+            communityId={community.id}
             memberId={memberId}
             isCoachViewing={true}
             totalCount={lessonSummary?.total_sessions ?? 0}
