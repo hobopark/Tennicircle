@@ -450,8 +450,10 @@ export async function getBrowseCommunities(): Promise<{
   if (error) return { success: false, error: error.message }
   if (!communities || communities.length === 0) return { success: true, data: [] }
 
-  // Fetch member counts for each community
-  const { data: counts } = await supabase
+  // Fetch member counts for each community (service client bypasses RLS —
+  // the user can't see members of communities they haven't joined yet)
+  const serviceClient = createServiceClient()
+  const { data: counts } = await serviceClient
     .from('community_members')
     .select('community_id')
     .in('community_id', communities.map((c) => c.id))
