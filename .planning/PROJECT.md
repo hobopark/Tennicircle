@@ -130,6 +130,12 @@ Coaches can schedule sessions and members can RSVP — replacing spreadsheets en
 | Open sign-up → community browser → approval | New users without invite pick a community and request to join; coach/admin approves | — Decided 2026-04-09 |
 | Post-login community picker | Users in multiple communities choose which to enter; single-community auto-redirects | — Decided 2026-04-09 |
 | Coaches see all members, filter own clients | Coaches can assign/remove members to themselves from full roster | — Decided 2026-04-09 |
+| Multi-manager chatrooms | Any member can be promoted to manager; avoids single-point ownership | — Decided 2026-04-12 |
+| Cursor-based unread tracking | One row per user per chatroom vs per-message read receipts; scales better | — Decided 2026-04-12 |
+| Polling for chat nav badge (not realtime) | Supabase Realtime postgres_changes doesn't filter by RLS server-side; polling is safer | — Decided 2026-04-12 |
+| Invite links: logged-in users only for MVP | Logged-out/new-user invite flow deferred; token threading through email verification unreliable | — Decided 2026-04-13 |
+| Service client for invite processing | invite_links RLS requires membership but user isn't a member yet; service client bypasses | — Decided 2026-04-13 |
+| Domain: tennicircle.app | Namecheap registration, Vercel hosting, Resend SMTP for auth emails | — Decided 2026-04-12 |
 
 ## Evolution
 

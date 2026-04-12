@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 9 complete
-last_updated: "2026-04-12"
-last_activity: 2026-04-12 -- Phase 09 (Community Chat) complete
+stopped_at: Post-Phase 9 bug fixes complete
+last_updated: "2026-04-13"
+last_activity: 2026-04-13 -- Post-Phase 9 bug fixes, invite flow, domain setup
 progress:
   total_phases: 9
   completed_phases: 9
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Coaches can schedule sessions and members can RSVP — replacing spreadsheets entirely.
-**Current focus:** Phase 09 — community-chat (complete)
+**Current focus:** MVP close-out — all 9 phases complete, bug fixes done, domain live
 
 ## Current Position
 
-Phase: 09 (community-chat) — COMPLETE
-Status: Phase 09 complete
-Last activity: 2026-04-12 -- Phase 09 (Community Chat) built and tested
+Phase: All phases complete (1-9)
+Status: MVP ready for close-out
+Last activity: 2026-04-13 -- Post-Phase 9 bug fixes, invite flow, domain setup
 
 Progress: [██████████] 100%
 
@@ -81,16 +81,33 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+None — MVP feature-complete.
+
+### Known Limitations (MVP)
+
+- Invite links only work for logged-in users; new user signup via invite deferred
+- Phase 7 eval fixes still deferred (test stubs, JWT refresh, demotion, dark mode, query perf)
+- No video support in chat (photos only, 10MB max)
+- No message deletion in chat
 
 ### Blockers/Concerns
 
-- Research flag: Multi-community membership behaviour in the Custom Access Token Hook needs explicit design before Phase 1 coding (currently assumes single-community per user)
-- Research flag: Confirm pg_cron availability on Supabase free tier before Phase 2 planning; fallback is a Vercel Cron job
-- Research flag: Validate rrule.js compatibility with Next.js 16 + date-fns 4 before Phase 2
+None active — all research flags resolved during implementation.
+
+### Post-Phase 9 Bug Fixes (2026-04-12/13)
+
+- Avatar upload RLS path mismatch (Phase 8 policy vs code path)
+- Profile setup redirect loop (maybeSingle with multiple profile rows)
+- Client dashboard showing email instead of display name
+- Coach assignment actions were stubbed as TODO — now implemented
+- "Create session" button visible to clients on calendar — now role-gated
+- Invite link flow: service client for RLS bypass, login form captures invite token
+- Browse communities member count: service client for cross-community query
+- FK cascade gaps: 7 tables missing ON DELETE CASCADE/SET NULL
+- Missing revalidatePath import breaking Vercel build
 
 ## Session Continuity
 
-Last session: 2026-04-08T09:30:50.217Z
-Stopped at: Phase 5 UI-SPEC approved
-Resume file: .planning/phases/05-notifications/05-UI-SPEC.md
+Last session: 2026-04-13
+Stopped at: MVP close-out — all features built and tested
+Resume: Ready for milestone completion
