@@ -49,7 +49,7 @@ export function SignUpForm({ onSignUpSuccess }: SignUpFormProps) {
 
       {/* Email field */}
       <div className="flex flex-col gap-2">
-        <Label htmlFor="signup-email" className="text-sm text-foreground">
+        <Label htmlFor="signup-email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Email address
         </Label>
         <Input
@@ -59,8 +59,9 @@ export function SignUpForm({ onSignUpSuccess }: SignUpFormProps) {
           placeholder="you@example.com"
           autoComplete="email"
           className={[
-            'h-12 rounded-xl bg-input border border-border px-4 text-base font-sans',
-            'placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-ring',
+            'h-12 rounded-xl bg-muted/50 border border-border/60 px-4 text-base font-sans',
+            'placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:bg-white',
+            'transition-all duration-200',
             displayEmailError ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30' : '',
           ].join(' ')}
           onChange={handleEmailChange}
@@ -76,7 +77,7 @@ export function SignUpForm({ onSignUpSuccess }: SignUpFormProps) {
 
       {/* Password field */}
       <div className="flex flex-col gap-2">
-        <Label htmlFor="signup-password" className="text-sm text-foreground">
+        <Label htmlFor="signup-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Create a password
         </Label>
         <Input
@@ -86,8 +87,9 @@ export function SignUpForm({ onSignUpSuccess }: SignUpFormProps) {
           placeholder="At least 8 characters"
           autoComplete="new-password"
           className={[
-            'h-12 rounded-xl bg-input border border-border px-4 text-base font-sans',
-            'placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-ring',
+            'h-12 rounded-xl bg-muted/50 border border-border/60 px-4 text-base font-sans',
+            'placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:bg-white',
+            'transition-all duration-200',
             displayPasswordError ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30' : '',
           ].join(' ')}
           onChange={handlePasswordChange}
@@ -112,7 +114,7 @@ export function SignUpForm({ onSignUpSuccess }: SignUpFormProps) {
       <Button
         type="submit"
         disabled={isPending}
-        className="w-full h-[52px] rounded-xl bg-primary text-primary-foreground text-sm font-sans hover:bg-[#265178] active:bg-[#1F4466] disabled:opacity-40 disabled:cursor-not-allowed mt-2"
+        className="w-full h-[52px] rounded-xl bg-primary text-primary-foreground text-sm font-sans font-semibold uppercase tracking-wide hover:bg-court active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed mt-3 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200"
       >
         {isPending ? (
           <Loader2 className="size-4 animate-spin" aria-label="Creating account..." />
@@ -122,7 +124,7 @@ export function SignUpForm({ onSignUpSuccess }: SignUpFormProps) {
       </Button>
 
       {/* Terms helper text */}
-      <p className="text-sm text-muted-foreground text-center">
+      <p className="text-xs text-muted-foreground/70 text-center">
         By signing up, you agree to our terms.
       </p>
     </form>

@@ -38,7 +38,7 @@ export function LoginForm() {
 
       {/* Email field */}
       <div className="flex flex-col gap-2">
-        <Label htmlFor="login-email" className="text-sm text-foreground">
+        <Label htmlFor="login-email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Email address
         </Label>
         <Input
@@ -49,8 +49,9 @@ export function LoginForm() {
           autoComplete="email"
           defaultValue={state.values?.email ?? ''}
           className={[
-            'h-12 rounded-xl bg-input border border-border px-4 text-base font-sans',
-            'placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-ring',
+            'h-12 rounded-xl bg-muted/50 border border-border/60 px-4 text-base font-sans',
+            'placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:bg-white',
+            'transition-all duration-200',
             displayEmailError ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30' : '',
           ].join(' ')}
           onChange={handleEmailChange}
@@ -66,7 +67,7 @@ export function LoginForm() {
 
       {/* Password field */}
       <div className="flex flex-col gap-2">
-        <Label htmlFor="login-password" className="text-sm text-foreground">
+        <Label htmlFor="login-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Password
         </Label>
         <Input
@@ -76,8 +77,9 @@ export function LoginForm() {
           placeholder="Your password"
           autoComplete="current-password"
           className={[
-            'h-12 rounded-xl bg-input border border-border px-4 text-base font-sans',
-            'placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-ring',
+            'h-12 rounded-xl bg-muted/50 border border-border/60 px-4 text-base font-sans',
+            'placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:bg-white',
+            'transition-all duration-200',
             displayPasswordError ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30' : '',
           ].join(' ')}
           onChange={handlePasswordChange}
@@ -102,7 +104,7 @@ export function LoginForm() {
       <Button
         type="submit"
         disabled={isPending}
-        className="w-full h-[52px] rounded-xl bg-primary text-primary-foreground text-sm font-sans hover:bg-[#265178] active:bg-[#1F4466] disabled:opacity-40 disabled:cursor-not-allowed mt-2"
+        className="w-full h-[52px] rounded-xl bg-primary text-primary-foreground text-sm font-sans font-semibold uppercase tracking-wide hover:bg-court active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed mt-3 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200"
       >
         {isPending ? (
           <Loader2 className="size-4 animate-spin" aria-label="Logging in..." />
@@ -112,9 +114,9 @@ export function LoginForm() {
       </Button>
 
       {/* Forgot password — deferred functionality */}
-      <div className="text-right">
+      <div className="text-center">
         <span
-          className="text-sm text-muted-foreground cursor-default"
+          className="text-sm text-muted-foreground cursor-pointer hover:text-primary transition-colors duration-200"
           aria-disabled="true"
           role="button"
           tabIndex={-1}
