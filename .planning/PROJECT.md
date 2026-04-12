@@ -57,6 +57,16 @@ Coaches can schedule sessions and members can RSVP — replacing spreadsheets en
 - [ ] Coaches/admin can post announcements to their community
 - [ ] In-app notifications only for MVP (session reminders, waitlist updates, announcements)
 
+#### Community Chat
+- [ ] Any community member can create chatrooms
+- [ ] Chatroom creator is automatically a manager; multiple managers supported
+- [ ] Managers can rename chatroom, add/remove members, promote/demote managers
+- [ ] Realtime messaging via Supabase Realtime (postgres_changes)
+- [ ] Messages support text and photos (JPEG/PNG/WebP, 10MB max)
+- [ ] Unread tracking with cursor-based read receipts (per-user per-room)
+- [ ] Unread badge on Chat nav tab + per-chatroom counts in list
+- [ ] Member picker to add community members to chatrooms
+
 #### Member Management & Invites
 - [ ] Admin can send invite links specifying coach or client role
 - [ ] Admin can add/remove coaches and grant admin privilege to any member
@@ -78,7 +88,7 @@ Coaches can schedule sessions and members can RSVP — replacing spreadsheets en
 - Payments / revenue tracking — handled outside the app for MVP; premium subscriptions, pro shop planned for post-MVP
 - AI-assisted coaching (video/photo analysis) — Phase 2 feature per PRD
 - Progress analytics dashboards — Phase 2 feature
-- Community activity feed / social wall — deferred
+- Community activity feed / social wall — deferred (community chat addresses core messaging need)
 - Live scoring / automated bracket generation for tournaments — deferred; manual draws for MVP
 - Automated match scheduling based on availability — deferred
 - Multi-sport support — Phase 3 per PRD
@@ -139,4 +149,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-09 after milestone audit gap closure (Phases 7-8 added)*
+*Last updated: 2026-04-12 — added Community Chat feature (Phase 9)*

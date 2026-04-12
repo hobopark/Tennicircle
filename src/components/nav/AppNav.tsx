@@ -4,11 +4,12 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ShieldCheck, LayoutDashboard, CalendarDays, Calendar, Users, User, Trophy, Bell, LogOut } from 'lucide-react'
+import { ShieldCheck, LayoutDashboard, CalendarDays, Calendar, Users, User, Trophy, Bell, MessageCircle, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useMaybeCommunity } from '@/lib/context/community'
 import { CommunitySwitcherDropdown } from '@/components/nav/CommunitySwitcherDropdown'
 import { getPendingRequests } from '@/lib/actions/communities'
+import { getTotalUnreadChatCount } from '@/lib/actions/chat'
 import {
   Dialog,
   DialogContent,
@@ -70,6 +71,12 @@ const NAV_TABS: {
     roles: ['admin', 'coach', 'client'],
   },
   {
+    subPath: '/chat',
+    label: 'Chat',
+    icon: <MessageCircle className="w-5 h-5" />,
+    roles: ['admin', 'coach', 'client'],
+  },
+  {
     subPath: '/notifications',
     label: 'Notifications',
     icon: <Bell className="w-5 h-5" />,
@@ -83,6 +90,7 @@ export function AppNav() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [memberId, setMemberId] = useState<string | null>(null)
   const [pendingCount, setPendingCount] = useState(0)
+  const [chatUnreadCount, setChatUnreadCount] = useState(0)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
 
   // Safe community context — null on global routes like /profile
@@ -124,6 +132,20 @@ export function AppNav() {
       if (result.success && result.data) setPendingCount(result.data.length)
     })
   }, [community?.communityId, community?.role])
+
+  // Poll chat unread count every 30s
+  useEffect(() => {
+    if (!community) {
+      setChatUnreadCount(0)
+      return
+    }
+    const fetchChatUnread = () => {
+      getTotalUnreadChatCount(community.communityId).then(count => setChatUnreadCount(count))
+    }
+    fetchChatUnread()
+    const interval = setInterval(fetchChatUnread, 30_000)
+    return () => clearInterval(interval)
+  }, [community?.communityId])
 
   // Realtime subscription for live badge updates
   useEffect(() => {
@@ -280,6 +302,19 @@ export function AppNav() {
                             aria-label={`${pendingCount} pending join request${pendingCount !== 1 ? 's' : ''}`}
                           >
                             {pendingCount > 9 ? '9+' : pendingCount}
+                          </span>
+                        )}
+                      </span>
+                    ) : tab.subPath === '/chat' ? (
+                      <span className="relative">
+                        <MessageCircle className="w-5 h-5" aria-hidden="true" />
+                        {chatUnreadCount > 0 && (
+                          <span
+                            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm"
+                            style={{ backgroundColor: '#c8e030', color: '#1a1a1a' }}
+                            aria-label={`${chatUnreadCount > 9 ? '9+' : chatUnreadCount} unread messages`}
+                          >
+                            {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
                           </span>
                         )}
                       </span>

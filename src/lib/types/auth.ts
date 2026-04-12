@@ -95,15 +95,15 @@ export const ROLE_HOME_ROUTES: Record<Exclude<UserRole, 'pending'>, string> = {
 
 // Path suffix patterns after /c/[slug] — used by proxy for role-based route access checks
 export const ROLE_ALLOWED_ROUTE_PATTERNS: Record<Exclude<UserRole, 'pending'>, string[]> = {
-  admin: ['/admin', '/coach', '/sessions', '/events', '/notifications', '/members'],
-  coach: ['/coach', '/events', '/notifications', '/members'],
-  client: ['/sessions', '/events', '/notifications', '/members'],
+  admin: ['/admin', '/coach', '/sessions', '/events', '/notifications', '/members', '/chat'],
+  coach: ['/coach', '/events', '/notifications', '/members', '/chat'],
+  client: ['/sessions', '/events', '/notifications', '/members', '/chat'],
 }
 
 export const ROLE_ALLOWED_ROUTES: Record<Exclude<UserRole, 'pending'>, string[]> = {
-  admin: ['/admin', '/coach', '/sessions', '/welcome', '/profile', '/events'],
-  coach: ['/coach', '/welcome', '/profile', '/events'],
-  client: ['/sessions', '/welcome', '/profile', '/events'],
+  admin: ['/admin', '/coach', '/sessions', '/welcome', '/profile', '/events', '/chat'],
+  coach: ['/coach', '/welcome', '/profile', '/events', '/chat'],
+  client: ['/sessions', '/welcome', '/profile', '/events', '/chat'],
 } as const
 
 // Public routes that don't require authentication

@@ -75,6 +75,7 @@ export default async function CoachSchedulePage({
     confirmedCount: number
     capacity: number | null
     attendeePreview: Array<{ display_name: string | null; avatar_url: string | null }>
+    allAttendeeNames: string[]
   }> = {}
 
   if (sessionIds.length > 0) {
@@ -110,10 +111,16 @@ export default async function CoachSchedulePage({
         }
       })
 
+      const allAttendeeNames = sessionAttendees.map(a => {
+        const profile = profileByUserId.get(a.member?.user_id)
+        return profile?.display_name ?? a.member?.display_name ?? null
+      }).filter((n): n is string => n !== null)
+
       attendeeDataMap[id] = {
         confirmedCount: sessionAttendees.length,
         capacity: session.capacity ?? null,
         attendeePreview,
+        allAttendeeNames,
       }
     }
   }
@@ -164,7 +171,7 @@ export default async function CoachSchedulePage({
               <Plus className="w-4 h-4" /> Create session
             </Link>
           </div>
-          <WeekCalendarGrid sessions={sessions} attendeeData={attendeeDataMap} events={calendarEvents} />
+          <WeekCalendarGrid sessions={sessions} attendeeData={attendeeDataMap} events={calendarEvents} linkPrefix={`/c/${slug}/coach/sessions`} />
         </div>
       </div>
     </>

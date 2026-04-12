@@ -66,6 +66,15 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **MGMT-06**: Coach can assign/remove members to/from their own client list
 - [ ] **MGMT-07**: Members without completed profiles visible in roster with "profile pending" state
 
+### Community Chat
+
+- [ ] **CHAT-01**: Any community member can create a chatroom and becomes its manager
+- [ ] **CHAT-02**: Realtime text messaging between chatroom members
+- [ ] **CHAT-03**: Photo attachments in chat (JPEG/PNG/WebP, 10MB max)
+- [ ] **CHAT-04**: Unread message tracking with per-room and total counts
+- [ ] **CHAT-05**: Multiple managers per chatroom; managers can rename, add/remove members, promote/demote
+- [ ] **CHAT-06**: Chat tab in bottom nav accessible to all roles (admin, coach, client)
+
 ### Community Navigation
 
 - [ ] **COMM-01**: Post-login community picker for users in multiple communities
@@ -186,12 +195,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COMM-04 | Phase 8 | Pending |
 | COMM-05 | Phase 8 | Pending |
 | COMM-06 | Phase 8 | Pending |
+| CHAT-01 | Phase 9 | Complete |
+| CHAT-02 | Phase 9 | Complete |
+| CHAT-03 | Phase 9 | Complete |
+| CHAT-04 | Phase 9 | Complete |
+| CHAT-05 | Phase 9 | Complete |
+| CHAT-06 | Phase 9 | Complete |
 
 **Coverage:**
-- v1 requirements: 44 total
-- Mapped to phases: 44
+- v1 requirements: 50 total
+- Mapped to phases: 50
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-06 after roadmap creation*
+*Last updated: 2026-04-12 — added CHAT-01 through CHAT-06 (Phase 9)*

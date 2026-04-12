@@ -20,6 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 6: Polish & Launch Readiness** - UX hardening, edge cases, and cross-cutting correctness
 - [ ] **Phase 7: Member Management & Invite System** - Admin/coach invite links, role management, coach client assignment
 - [ ] **Phase 8: Community Selector & Open Sign-Up** - Multi-community navigation, community browser, join requests with approval
+- [x] **Phase 9: Community Chat** - Realtime chatrooms with text and photo messaging, multi-manager rooms, unread tracking
 
 ## Phase Details
 
@@ -174,6 +175,22 @@ Plans:
 - [x] 08-05-PLAN.md — Join request approval UI, loading skeletons, schema push checkpoint
 **UI hint**: yes
 
+### Phase 9: Community Chat
+**Goal**: Community members can communicate in realtime chatrooms with text and photo messages, replacing external group chats
+**Depends on**: Phase 8
+**Requirements**: CHAT-01, CHAT-02, CHAT-03, CHAT-04, CHAT-05, CHAT-06
+**Success Criteria** (what must be TRUE):
+  1. Any community member can create a chatroom, name it, and add other community members
+  2. Members of a chatroom can send and receive text messages in realtime without page refresh
+  3. Members can attach and send photos (JPEG/PNG/WebP, up to 10MB) that render inline in the chat
+  4. The Chat nav tab shows total unread message count; the chatroom list shows per-room unread counts
+  5. Chatroom managers (multiple allowed) can rename the room, add/remove members, and promote/demote other managers
+  6. Opening a chatroom marks all messages as read; unread counts update accordingly
+**Plans:** Built directly (no phased plan files)
+**Schema**: `chatrooms`, `chatroom_members` (with role column), `chat_messages`, `chat_read_cursors` + `is_chatroom_member()` and `is_chatroom_manager()` security definer functions
+**Storage**: `chat-media` bucket (public, 10MB, image/*)
+**UI hint**: yes
+
 ## Progress
 
 **Execution Order:**
@@ -189,3 +206,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 6. Polish & Launch Readiness | 5/5 | Complete | - |
 | 7. Member Management & Invite System | 4/4 | Complete | - |
 | 8. Community Selector & Open Sign-Up | 0/5 | Planning complete | - |
+| 9. Community Chat | - | Complete | 2026-04-12 |

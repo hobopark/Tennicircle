@@ -3,8 +3,8 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, MapPin, CalendarX } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { ChevronLeft, ChevronRight, MapPin, CalendarX, Search, X } from 'lucide-react'
+import { useCommunity } from '@/lib/context/community'
 import { InitialsAvatar } from '@/components/profile/InitialsAvatar'
 
 /** Session shape accepted by the calendar grid — includes joined template data and optional user flags */
@@ -30,6 +30,7 @@ interface SessionAttendeeData {
   confirmedCount: number
   capacity: number | null
   attendeePreview: AttendeeInfo[]
+  allAttendeeNames?: string[]
 }
 
 interface CalendarEvent {
@@ -204,6 +205,7 @@ for (let h = GRID_START_HOUR; h < GRID_END_HOUR; h++) {
 }
 
 export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', initialDate, loading = false, attendeeData = {}, events = [] }: WeekCalendarGridProps) {
+  const { communitySlug } = useCommunity()
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
     if (initialDate) return getWeekStart(new Date(initialDate))
     return getWeekStart(new Date())
@@ -232,10 +234,34 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
     localStorage.setItem('tennis-hide-cancelled', String(next))
   }
 
-  // Filter cancelled sessions if toggle is on
-  const filteredSessions = hideCancelled
-    ? sessions.filter(s => s.cancelled_at === null || s.cancelled_at === undefined)
-    : sessions
+  // Client name filter
+  const [clientFilter, setClientFilter] = useState<string>('')
+  const [clientSearchOpen, setClientSearchOpen] = useState(false)
+
+  const uniqueClientNames = useMemo(() => {
+    const names = new Set<string>()
+    for (const key of Object.keys(attendeeData)) {
+      for (const name of attendeeData[key]?.allAttendeeNames ?? []) {
+        if (name) names.add(name)
+      }
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b))
+  }, [attendeeData])
+
+  // Filter cancelled sessions if toggle is on, then filter by client name
+  const filteredSessions = useMemo(() => {
+    let result = sessions
+    if (hideCancelled) {
+      result = result.filter(s => s.cancelled_at === null || s.cancelled_at === undefined)
+    }
+    if (clientFilter) {
+      result = result.filter(s => {
+        const names = attendeeData[s.id]?.allAttendeeNames ?? []
+        return names.some(n => n === clientFilter)
+      })
+    }
+    return result
+  }, [sessions, hideCancelled, clientFilter, attendeeData])
 
   // Day view: selected date state
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date())
@@ -357,6 +383,45 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
         >
           {hideCancelled ? 'Cancelled hidden' : 'Hide cancelled'}
         </button>
+
+        {/* Client name filter */}
+        {uniqueClientNames.length > 0 && (
+          <div className="relative">
+            {clientFilter ? (
+              <button
+                type="button"
+                onClick={() => { setClientFilter(''); setClientSearchOpen(false) }}
+                className="text-xs px-3 py-1.5 rounded-full bg-primary/15 text-primary font-bold transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                {clientFilter}
+                <X className="w-3 h-3" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setClientSearchOpen(!clientSearchOpen)}
+                className="text-xs px-3 py-1.5 rounded-full bg-muted/50 text-muted-foreground hover:text-foreground transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Search className="w-3 h-3" />
+                Filter by client
+              </button>
+            )}
+            {clientSearchOpen && !clientFilter && (
+              <div className="absolute top-full left-0 mt-1 z-50 bg-card border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto min-w-[200px]">
+                {uniqueClientNames.map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => { setClientFilter(name); setClientSearchOpen(false) }}
+                    className="block w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors cursor-pointer first:rounded-t-xl last:rounded-b-xl"
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {view === 'day' ? (
@@ -400,11 +465,10 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                 const title = session.session_templates?.title ?? ''
 
                 return (
-                  <motion.div
+                  <div
                     key={session.id}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
+                    className="animate-fade-in-up"
+                    style={{ animationDelay: `${index * 0.05}s` }}
                   >
                     <Link
                       href={`${linkPrefix}/${session.id}`}
@@ -475,7 +539,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                         </div>
                       )}
                     </Link>
-                  </motion.div>
+                  </div>
                 )
               })}
               {/* Event cards in day view */}
@@ -483,14 +547,13 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                 const duration = evt.duration_minutes ?? 60
                 const hex = getEventHex(evt.event_type)
                 return (
-                  <motion.div
+                  <div
                     key={evt.id}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: (dayViewSessions.length + index) * 0.05 }}
+                    className="animate-fade-in-up"
+                    style={{ animationDelay: `${(dayViewSessions.length + index) * 0.05}s` }}
                   >
                     <Link
-                      href={`/events/${evt.id}`}
+                      href={`/c/${communitySlug}/events/${evt.id}`}
                       className="block rounded-3xl p-4 active:scale-[0.98] transition-transform cursor-pointer"
                       style={{ backgroundColor: hex.bg, borderWidth: 1, borderColor: hex.border }}
                     >
@@ -513,7 +576,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                         </div>
                       )}
                     </Link>
-                  </motion.div>
+                  </div>
                 )
               })}
             </div>
@@ -528,7 +591,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
               <h2 className="text-[20px] font-bold text-foreground mb-2">Your schedule is clear</h2>
               <p className="text-base text-muted-foreground mb-4">Create a recurring session to get started.</p>
               <Link
-                href="/coach/sessions/new"
+                href={`/c/${communitySlug}/coach/sessions/new`}
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90"
               >
                 Create session
@@ -758,7 +821,7 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
                           }}
                         >
                           <Link
-                            href={`/events/${evt.id}`}
+                            href={`/c/${communitySlug}/events/${evt.id}`}
                             className="block h-full w-full rounded-lg text-[13px] p-1 overflow-hidden cursor-pointer transition-opacity hover:opacity-90 text-white"
                             style={{ backgroundColor: evtColors.blockHex }}
                           >
