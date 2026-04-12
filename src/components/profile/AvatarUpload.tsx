@@ -6,7 +6,6 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
 interface AvatarUploadProps {
-  communityId: string | null
   userId: string
   currentAvatarUrl: string | null
   displayName: string
@@ -14,7 +13,6 @@ interface AvatarUploadProps {
 }
 
 export function AvatarUpload({
-  communityId,
   userId,
   currentAvatarUrl,
   displayName,
@@ -87,7 +85,7 @@ export function AvatarUpload({
 
       // Upload to Supabase Storage
       const supabase = createClient()
-      const path = `${communityId ?? 'global'}/${userId}/avatar`
+      const path = `${userId}/avatar`
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(path, blob, { upsert: true, contentType: blob.type })

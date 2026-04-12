@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Check, Loader2 } from 'lucide-react'
+import { Check, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -132,6 +132,20 @@ export function ProfileSetupWizard({
     <div
       className="animate-fade-in-up w-full bg-background p-5 sm:max-w-[440px] sm:w-full sm:bg-card sm:rounded-3xl sm:border sm:border-border/50 sm:shadow-[0_4px_24px_rgba(0,0,0,0.06)] sm:p-8"
     >
+      {/* Close button — only when editing an existing profile */}
+      {isEditing && (
+        <div className="flex justify-end mb-2">
+          <button
+            type="button"
+            onClick={() => router.push('/profile')}
+            className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-muted transition-colors cursor-pointer text-muted-foreground"
+            aria-label="Close profile editor"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
       {/* Step indicator */}
       <div className="flex items-center mb-8" role="list" aria-label="Setup progress">
         {STEPS.map((step, i) => {
@@ -238,7 +252,6 @@ export function ProfileSetupWizard({
                 <InitialsAvatar name={formData.displayName ?? ''} />
               )}
               <AvatarUpload
-                communityId={communityId}
                 userId={userId}
                 currentAvatarUrl={formData.avatarUrl ?? null}
                 displayName={formData.displayName ?? ''}
