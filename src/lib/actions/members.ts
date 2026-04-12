@@ -105,6 +105,72 @@ export async function removeMember(
   return { success: true }
 }
 
+// Assign a client to the current coach/admin
+export async function assignCoachToClient(
+  communityId: string,
+  communitySlug: string,
+  clientMemberId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
+  if (membership.role !== 'coach' && membership.role !== 'admin') {
+    return { success: false, error: 'Only coaches and admins can assign clients' }
+  }
+
+  const { error } = await supabase
+    .from('coach_client_assignments')
+    .insert({
+      community_id: communityId,
+      coach_member_id: membership.memberId,
+      client_member_id: clientMemberId,
+    })
+
+  if (error) {
+    if (error.message.includes('duplicate') || error.code === '23505') {
+      return { success: false, error: 'Already assigned to you' }
+    }
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath(`/c/${communitySlug}/coach/clients`)
+  return { success: true }
+}
+
+// Remove a client from the current coach/admin
+export async function removeCoachFromClient(
+  communityId: string,
+  communitySlug: string,
+  clientMemberId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const membership = await getUserRole(supabase, communityId)
+  if (!membership) return { success: false, error: 'Not a member of this community' }
+  if (membership.role !== 'coach' && membership.role !== 'admin') {
+    return { success: false, error: 'Only coaches and admins can unassign clients' }
+  }
+
+  const { error } = await supabase
+    .from('coach_client_assignments')
+    .delete()
+    .eq('community_id', communityId)
+    .eq('coach_member_id', membership.memberId)
+    .eq('client_member_id', clientMemberId)
+
+  if (error) return { success: false, error: error.message }
+
+  revalidatePath(`/c/${communitySlug}/coach/clients`)
+  return { success: true }
+}
+
 // Join a community as a client (open sign-up flow — no invite).
 // CRITICAL: communityId must be passed explicitly — never queried with .limit(1) (multi-tenant safe).
 export async function joinCommunityAsClient(

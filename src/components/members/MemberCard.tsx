@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { ChevronRight, ChevronDown, Shield, UserCheck, UserMinus, UserCog } from 'lucide-react'
 import { InitialsAvatar } from '@/components/profile/InitialsAvatar'
 import { RemoveMemberDialog } from '@/components/members/RemoveMemberDialog'
-import { updateMemberRole } from '@/lib/actions/members'
+import { updateMemberRole, assignCoachToClient, removeCoachFromClient } from '@/lib/actions/members'
 import { useCommunity } from '@/lib/context/community'
 import { toast } from 'sonner'
 import type { UserRole } from '@/lib/types/auth'
@@ -38,13 +38,27 @@ export function MemberCard({ member, viewerRole, isSelf }: MemberCardProps) {
   const router = useRouter()
 
   function handleAssign() {
-    // TODO: assignCoachToClient was removed during Phase 8 migration — needs reimplementation
-    toast.error('Coach assignment not yet available')
+    startTransition(async () => {
+      const result = await assignCoachToClient(communityId, communitySlug, member.id)
+      if (result.success) {
+        toast.success(`${member.displayName} assigned to you`)
+        router.refresh()
+      } else {
+        toast.error(result.error ?? 'Failed to assign client')
+      }
+    })
   }
 
   function handleUnassign() {
-    // TODO: removeCoachFromClient was removed during Phase 8 migration — needs reimplementation
-    toast.error('Coach unassignment not yet available')
+    startTransition(async () => {
+      const result = await removeCoachFromClient(communityId, communitySlug, member.id)
+      if (result.success) {
+        toast.success(`${member.displayName} removed from your clients`)
+        router.refresh()
+      } else {
+        toast.error(result.error ?? 'Failed to unassign client')
+      }
+    })
   }
 
   function handleRoleChange(newRole: 'coach' | 'client' | 'admin') {
