@@ -51,10 +51,17 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Step 3: Authenticated + verified + on /auth → redirect /communities
+  // Step 3: Authenticated + verified + on /auth → check for invite token first
   if (pathname.startsWith('/auth')) {
+    const inviteToken = request.nextUrl.searchParams.get('invite')
     const url = request.nextUrl.clone()
-    url.pathname = '/communities'
+    if (inviteToken) {
+      // Preserve invite token — redirect to invite processing page
+      url.pathname = '/invite'
+      url.searchParams.set('token', inviteToken)
+    } else {
+      url.pathname = '/communities'
+    }
     return NextResponse.redirect(url)
   }
 
@@ -94,8 +101,9 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Step 5: On /communities → PASS (always allowed for authenticated users with profile)
+  // Step 5: On /communities or /invite → PASS (always allowed for authenticated users with profile)
   if (pathname === '/communities') return supabaseResponse
+  if (pathname === '/invite') return supabaseResponse
 
   // Step 7: On /c/[slug]/* → check membership and role access
   const slugMatch = pathname.match(/^\/c\/([^/]+)(.*)$/)
