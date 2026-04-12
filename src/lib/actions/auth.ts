@@ -100,6 +100,7 @@ export async function signup(
   })
 
   if (error) {
+    console.error('[signup] Supabase error:', error.message, error.status, error.name)
     if (
       error.message.includes('already registered') ||
       error.message.includes('already been registered')
@@ -112,7 +113,7 @@ export async function signup(
     }
     return {
       errors: {
-        general: ['Something went wrong. Please try again in a moment.'],
+        general: [`Sign up failed: ${error.message}`],
       },
     }
   }
