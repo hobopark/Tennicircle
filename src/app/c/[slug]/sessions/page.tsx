@@ -75,11 +75,17 @@ export default async function SessionsPage({
   }
 
   // Fetch profile for display_name / first name
-  const { data: profile } = await supabase
+  // Prefer community-specific profile, fall back to global (community_id = NULL)
+  const { data: profiles } = await supabase
     .from('player_profiles')
-    .select('display_name')
+    .select('display_name, community_id')
     .eq('user_id', user.id)
-    .maybeSingle()
+    .order('community_id', { ascending: true, nullsFirst: false })
+    .limit(2)
+
+  const profile = profiles?.find(p => p.community_id === community.id)
+    ?? profiles?.[0]
+    ?? null
 
   const displayName = profile?.display_name ?? user.email?.split('@')[0] ?? 'Member'
   const firstName = displayName.split(' ')[0]
