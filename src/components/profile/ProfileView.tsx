@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { Settings, Phone, Mail } from 'lucide-react'
-import { motion } from 'framer-motion'
 import { InitialsAvatar } from '@/components/profile/InitialsAvatar'
 import { CoachAssessmentWidget } from '@/components/profile/CoachAssessmentWidget'
 import type { PlayerProfile, CoachAssessment, SkillLevel } from '@/lib/types/profiles'
@@ -188,14 +187,13 @@ export function ProfileView({
   return (
     <div className="max-w-[640px] mx-auto px-5 pt-14 pb-24">
       {cards.map((card, index) => (
-        <motion.div
+        <div
           key={index}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
+          className="animate-fade-in-up"
+          style={{ animationDelay: `${index * 0.05}s` }}
         >
           {card}
-        </motion.div>
+        </div>
       ))}
     </div>
   )

@@ -164,11 +164,12 @@ export default async function SessionsPage({
   const memberSinceDate = new Date(member.joined_at ?? new Date().toISOString())
   const memberSince = memberSinceDate.toLocaleDateString('en-AU', { timeZone: 'Australia/Sydney', month: 'short', year: 'numeric' })
 
-  // Fetch events the user has RSVP'd to
+  // Fetch events the user is confirmed for (exclude waitlisted from dashboard)
   const { data: myEventRsvps } = await supabase
     .from('event_rsvps')
     .select('event_id, rsvp_type, id, community_id, member_id, waitlist_position, cancelled_at, created_at')
     .eq('member_id', member.id)
+    .eq('rsvp_type', 'confirmed')
     .is('cancelled_at', null)
 
   const myEventIds = (myEventRsvps ?? []).map(r => r.event_id)

@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from 'react'
 import { Loader2 } from 'lucide-react'
-import { motion } from 'framer-motion'
 import { getLessonHistory } from '@/lib/actions/profiles'
 import { ProgressNoteForm } from '@/components/profile/ProgressNoteForm'
 import type { LessonHistoryEntry } from '@/lib/types/profiles'
@@ -83,12 +82,10 @@ export function LessonHistory({
                 {futureEntries.map((entry, index) => {
                   const coachNames = entry.coaches.map(c => c.display_name).join(', ')
                   return (
-                    <motion.li
+                    <li
                       key={entry.rsvp_id}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: Math.min(index, 5) * 0.05 }}
-                      className="bg-primary/5 rounded-3xl border border-primary/20 p-4"
+                      className="animate-fade-in-up bg-primary/5 rounded-3xl border border-primary/20 p-4"
+                      style={{ animationDelay: `${Math.min(index, 5) * 0.05}s` }}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm font-bold text-foreground">
@@ -104,7 +101,7 @@ export function LessonHistory({
                       {entry.coaches.length > 0 && (
                         <p className="text-sm text-muted-foreground mt-0.5">with {coachNames}</p>
                       )}
-                    </motion.li>
+                    </li>
                   )
                 })}
               </ul>
@@ -118,12 +115,10 @@ export function LessonHistory({
               {pastEntries.map((entry, index) => {
                 const coachNames = entry.coaches.map(c => c.display_name).join(', ')
                 return (
-                  <motion.li
+                  <li
                     key={entry.rsvp_id}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: Math.min(index, 5) * 0.05 }}
-                    className="bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer"
+                    className="animate-fade-in-up bg-card rounded-3xl border border-border/50 p-4 active:scale-[0.98] transition-transform cursor-pointer"
+                    style={{ animationDelay: `${Math.min(index, 5) * 0.05}s` }}
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2">
@@ -166,7 +161,7 @@ export function LessonHistory({
                         </div>
                       )}
                     </div>
-                  </motion.li>
+                  </li>
                 )
               })}
             </ul>

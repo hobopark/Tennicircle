@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { CalendarDays, MapPin } from 'lucide-react'
+import { useCommunity } from '@/lib/context/community'
 import type { EventWithRsvpStatus } from '@/lib/types/events'
 import { EVENT_TYPE_LABELS } from '@/lib/types/events'
 import { formatEventDate } from '@/lib/utils/dates'
@@ -19,6 +20,7 @@ interface EventCardProps {
 }
 
 export function EventCard({ event }: EventCardProps) {
+  const { communitySlug } = useCommunity()
   const spotsLeft = event.capacity !== null ? event.capacity - event.rsvp_count : null
   const isFull = spotsLeft !== null && spotsLeft <= 0
   const userRsvp = event.user_rsvp
@@ -26,7 +28,7 @@ export function EventCard({ event }: EventCardProps) {
 
   return (
     <Link
-      href={`/events/${event.id}`}
+      href={`/c/${communitySlug}/events/${event.id}`}
       className={`block bg-card rounded-2xl border border-border/50 border-l-[3px] ${borderColor} p-4 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] active:scale-[0.98] transition-all duration-200 cursor-pointer`}
     >
       {/* Top row: type badge + spots pill */}

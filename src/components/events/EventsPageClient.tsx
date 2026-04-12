@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Plus, CalendarX } from 'lucide-react'
-import { motion } from 'framer-motion'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { EventCard } from './EventCard'
@@ -68,14 +67,13 @@ function EventList({ events, emptyMessage }: { events: EventWithRsvpStatus[]; em
           </p>
           <div className="flex flex-col gap-2">
             {group.events.map((event, index) => (
-              <motion.div
+              <div
                 key={event.id}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: Math.min(index, 5) * 0.05 }}
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${Math.min(index, 5) * 0.05}s` }}
               >
                 <EventCard event={event} />
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -180,17 +178,16 @@ export function EventsPageClient({
               </div>
               <div className="flex flex-col gap-2">
                 {announcements.map((announcement, index) => (
-                  <motion.div
+                  <div
                     key={announcement.id}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
+                    className="animate-fade-in-up"
+                    style={{ animationDelay: `${index * 0.05}s` }}
                   >
                     <AnnouncementCard
                       announcement={announcement}
                       canEdit={canPost}
                     />
-                  </motion.div>
+                  </div>
                 ))}
               </div>
               <Separator className="my-4" />
@@ -214,7 +211,7 @@ export function EventsPageClient({
           )}
 
           {/* Events section */}
-          {timeFilter === 'upcoming' && (
+          {timeFilter === 'upcoming' && officialEvents.length > 0 && (
             <div className="mb-2">
               <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-bold">
                 EVENTS

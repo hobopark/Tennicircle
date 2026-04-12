@@ -130,7 +130,7 @@ export function SessionDetailPanel({ session, rsvps, coaches }: SessionDetailPan
         {!isCancelled && (
           <div className="flex items-center gap-2 shrink-0">
             <Link
-              href={`/coach/sessions/${session.id}/edit`}
+              href={`/c/${communitySlug}/coach/sessions/${session.id}/edit`}
               className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[min(var(--radius-md),12px)] text-[0.8rem] font-medium text-foreground hover:bg-muted transition-colors"
             >
               <Pencil className="w-3.5 h-3.5" />

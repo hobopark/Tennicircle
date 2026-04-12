@@ -175,26 +175,51 @@ export async function rsvpEvent(
     rsvpType = 'confirmed'
   }
 
-  const { error: insertError } = await supabase
+  // Check for an existing active RSVP
+  const { data: activeRsvp } = await supabase
     .from('event_rsvps')
-    .insert({
-      event_id: eventId,
-      member_id: member.id,
-      community_id: communityId,
-      rsvp_type: rsvpType,
-      waitlist_position: waitlistPosition,
-    })
+    .select('id')
+    .eq('event_id', eventId)
+    .eq('member_id', member.id)
+    .is('cancelled_at', null)
+    .maybeSingle()
 
-  if (insertError) {
-    // Handle unique constraint (already RSVP'd)
-    if (
-      insertError.code === '23505' ||
-      insertError.message.includes('unique') ||
-      insertError.message.includes('duplicate')
-    ) {
-      return { success: false, error: "You have already RSVP'd to this event" }
-    }
-    return { success: false, error: insertError.message }
+  if (activeRsvp) {
+    return { success: false, error: "You have already RSVP'd to this event" }
+  }
+
+  // Check for a previously cancelled RSVP — reactivate instead of inserting
+  const { data: cancelledRsvp } = await supabase
+    .from('event_rsvps')
+    .select('id')
+    .eq('event_id', eventId)
+    .eq('member_id', member.id)
+    .not('cancelled_at', 'is', null)
+    .maybeSingle()
+
+  if (cancelledRsvp) {
+    const { error: reactivateError } = await supabase
+      .from('event_rsvps')
+      .update({
+        cancelled_at: null,
+        rsvp_type: rsvpType,
+        waitlist_position: waitlistPosition,
+      })
+      .eq('id', cancelledRsvp.id)
+
+    if (reactivateError) return { success: false, error: reactivateError.message }
+  } else {
+    const { error: insertError } = await supabase
+      .from('event_rsvps')
+      .insert({
+        event_id: eventId,
+        member_id: member.id,
+        community_id: communityId,
+        rsvp_type: rsvpType,
+        waitlist_position: waitlistPosition,
+      })
+
+    if (insertError) return { success: false, error: insertError.message }
   }
 
   // NOTF-03: Notify member of event RSVP confirmation (fire-and-forget)
@@ -213,6 +238,8 @@ export async function rsvpEvent(
 
   revalidatePath(`/c/${communitySlug}/events`)
   revalidatePath(`/c/${communitySlug}/sessions`)
+  revalidatePath(`/c/${communitySlug}/sessions/calendar`)
+  revalidatePath(`/c/${communitySlug}/coach/schedule`)
 
   return { success: true, rsvpType }
 }
@@ -342,6 +369,8 @@ export async function cancelEventRsvp(
 
   revalidatePath(`/c/${communitySlug}/events`)
   revalidatePath(`/c/${communitySlug}/sessions`)
+  revalidatePath(`/c/${communitySlug}/sessions/calendar`)
+  revalidatePath(`/c/${communitySlug}/coach/schedule`)
 
   return { success: true }
 }

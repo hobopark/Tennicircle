@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { ChevronRight, MapPin, Calendar, User } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { useCommunity } from '@/lib/context/community'
 import { AnnouncementCard } from '@/components/events/AnnouncementCard'
 import type { AnnouncementWithAuthor, EventWithRsvpStatus } from '@/lib/types/events'
 import { formatSessionDateTime, formatEventDate } from '@/lib/utils/dates'
@@ -45,27 +45,19 @@ export function ClientDashboard({
   announcements,
   userRole,
 }: ClientDashboardProps) {
+  const { communitySlug } = useCommunity()
   return (
     <div className="px-5 pt-14 pb-24 max-w-[640px] mx-auto">
       {/* Greeting */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0 * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
-      >
+      <div className="animate-fade-in-up">
         <p className="text-sm text-muted-foreground">G&apos;day, {firstName}</p>
         <h1 className="font-heading font-bold text-2xl text-foreground mb-6">
           {displayName}&apos;s Dashboard
         </h1>
-      </motion.div>
+      </div>
 
       {/* Quick stats strip */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1 * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="grid grid-cols-3 gap-3 mb-6"
-      >
+      <div className="animate-fade-in-up grid grid-cols-3 gap-3 mb-6" style={{ animationDelay: '0.08s' }}>
         <div className="bg-primary/10 rounded-2xl border border-primary/20 p-4 text-center shadow-[var(--shadow-card)]">
           <p className="font-heading font-bold text-2xl text-primary">{stats.sessionsThisMonth}</p>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Sessions this month</p>
@@ -78,18 +70,13 @@ export function ClientDashboard({
           <p className="font-heading font-bold text-2xl text-stat-3">{stats.memberSince}</p>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Member since</p>
         </div>
-      </motion.div>
+      </div>
 
       {/* Upcoming Sessions */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 2 * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="mb-6"
-      >
+      <div className="animate-fade-in-up mb-6" style={{ animationDelay: '0.16s' }}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-heading font-bold text-base">Upcoming Sessions</h2>
-          <Link href="/sessions/calendar" className="text-sm text-primary flex items-center gap-1">
+          <Link href={`/c/${communitySlug}/sessions/calendar`} className="text-sm text-primary flex items-center gap-1">
             Calendar <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
@@ -99,7 +86,7 @@ export function ClientDashboard({
             {upcomingSessions.map(session => (
               <Link
                 key={session.id}
-                href={`/sessions/${session.id}`}
+                href={`/c/${communitySlug}/sessions/${session.id}`}
                 className="bg-card rounded-2xl border border-border/50 p-4 shadow-[var(--shadow-card)] active:scale-[0.98] transition-transform cursor-pointer block"
               >
                 <div className="flex items-start justify-between mb-1">
@@ -137,18 +124,13 @@ export function ClientDashboard({
             </p>
           </div>
         )}
-      </motion.div>
+      </div>
 
       {/* Upcoming Events */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 3 * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="mb-6"
-      >
+      <div className="animate-fade-in-up mb-6" style={{ animationDelay: '0.24s' }}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-heading font-bold text-base">Upcoming Events</h2>
-          <Link href="/events" className="text-sm text-primary flex items-center gap-1">
+          <Link href={`/c/${communitySlug}/events`} className="text-sm text-primary flex items-center gap-1">
             See all <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
@@ -158,7 +140,7 @@ export function ClientDashboard({
             {upcomingEvents.map(event => (
               <Link
                 key={event.id}
-                href={`/events/${event.id}`}
+                href={`/c/${communitySlug}/events/${event.id}`}
                 className="bg-card rounded-2xl border border-border/50 p-4 shadow-[var(--shadow-card)] active:scale-[0.98] transition-transform cursor-pointer block"
               >
                 <div className="flex items-center gap-2 mb-2">
@@ -195,16 +177,11 @@ export function ClientDashboard({
             </p>
           </div>
         )}
-      </motion.div>
+      </div>
 
       {/* Announcements */}
       {announcements.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 4 * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="mb-6"
-        >
+        <div className="animate-fade-in-up mb-6" style={{ animationDelay: '0.32s' }}>
           <h2 className="font-heading font-bold text-base mb-3">Announcements</h2>
           <div className="flex flex-col gap-3">
             {announcements.map(announcement => (
@@ -215,7 +192,7 @@ export function ClientDashboard({
               />
             ))}
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   )

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
 import { Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
@@ -118,8 +117,8 @@ export function NotificationFeed({ initialNotifications, memberId, userRole: ser
       )
       // Decrement unread count immediately (keeps bell badge and Mark All button in sync)
       setUnreadCount(prev => Math.max(0, prev - 1))
-      // Fire-and-forget server update
-      markNotificationRead(communityId, communitySlug, notification.id)
+      // Await server update before navigating so it persists
+      await markNotificationRead(communityId, communitySlug, notification.id)
     }
     const subPath = resolveDeepLink(notification, role)
     router.push(`/c/${communitySlug}${subPath}`)
@@ -151,17 +150,16 @@ export function NotificationFeed({ initialNotifications, memberId, userRole: ser
       ) : (
         <div className="space-y-2">
           {notifications.map((n, index) => (
-            <motion.div
+            <div
               key={n.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: Math.min(index, 5) * 0.05 }}
+              className="animate-fade-in-up"
+              style={{ animationDelay: `${Math.min(index, 5) * 0.05}s` }}
             >
               <NotificationRowComponent
                 notification={n}
                 onTap={handleRowTap}
               />
-            </motion.div>
+            </div>
           ))}
         </div>
       )}

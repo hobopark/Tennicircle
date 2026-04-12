@@ -41,6 +41,7 @@ export function InviteButton({ userRole }: InviteButtonProps) {
         <select
           value={selectedRole}
           onChange={(e) => setSelectedRole(e.target.value as 'coach' | 'client')}
+          aria-label="Invite role"
           className="h-9 rounded-lg border border-border bg-card px-2 text-xs font-medium text-foreground"
         >
           <option value="client">Client</option>

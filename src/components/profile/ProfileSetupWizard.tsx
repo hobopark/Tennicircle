@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { Check, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -130,10 +129,8 @@ export function ProfileSetupWizard({
   const isLastStep = currentStep === STEPS.length - 1
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="w-full bg-background p-5 sm:max-w-[440px] sm:w-full sm:bg-card sm:rounded-3xl sm:border sm:border-border/50 sm:shadow-[0_4px_24px_rgba(0,0,0,0.06)] sm:p-8"
+    <div
+      className="animate-fade-in-up w-full bg-background p-5 sm:max-w-[440px] sm:w-full sm:bg-card sm:rounded-3xl sm:border sm:border-border/50 sm:shadow-[0_4px_24px_rgba(0,0,0,0.06)] sm:p-8"
     >
       {/* Step indicator */}
       <div className="flex items-center mb-8" role="list" aria-label="Setup progress">
@@ -341,6 +338,6 @@ export function ProfileSetupWizard({
           </button>
         </div>
       )}
-    </motion.div>
+    </div>
   )
 }
