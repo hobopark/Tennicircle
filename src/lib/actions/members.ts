@@ -62,21 +62,33 @@ export async function processInviteSignup(
   }
 
   // Create community membership with the role from the invite
-  const { error: insertError } = await supabase
+  const { data: newMember, error: insertError } = await supabase
     .from('community_members')
     .insert({
       community_id: invite.community_id,
       user_id: userId,
       role: invite.role,
-      // If invite role is 'client' and created_by is a coach, set coach_id (D-07)
       coach_id: invite.role === 'client' ? invite.created_by : null,
     })
+    .select('id')
+    .single()
 
   if (insertError) {
     if (insertError.message.includes('duplicate')) {
       return { success: false, error: 'Already a member of this community' }
     }
     return { success: false, error: insertError.message }
+  }
+
+  // Also create coach_client_assignments row so "My clients" filter works
+  if (invite.role === 'client' && invite.created_by && newMember) {
+    await supabase
+      .from('coach_client_assignments')
+      .insert({
+        community_id: invite.community_id,
+        coach_member_id: invite.created_by,
+        client_member_id: newMember.id,
+      })
   }
 
   return { success: true }
