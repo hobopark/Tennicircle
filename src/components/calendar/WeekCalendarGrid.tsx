@@ -205,7 +205,7 @@ for (let h = GRID_START_HOUR; h < GRID_END_HOUR; h++) {
 }
 
 export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', initialDate, loading = false, attendeeData = {}, events = [] }: WeekCalendarGridProps) {
-  const { communitySlug } = useCommunity()
+  const { communitySlug, role } = useCommunity()
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
     if (initialDate) return getWeekStart(new Date(initialDate))
     return getWeekStart(new Date())
@@ -589,13 +589,19 @@ export function WeekCalendarGrid({ sessions, linkPrefix = '/coach/sessions', ini
           {!hasSessionsThisWeek && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <h2 className="text-[20px] font-bold text-foreground mb-2">Your schedule is clear</h2>
-              <p className="text-base text-muted-foreground mb-4">Create a recurring session to get started.</p>
-              <Link
-                href={`/c/${communitySlug}/coach/sessions/new`}
-                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90"
-              >
-                Create session
-              </Link>
+              {role === 'coach' || role === 'admin' ? (
+                <>
+                  <p className="text-base text-muted-foreground mb-4">Create a recurring session to get started.</p>
+                  <Link
+                    href={`/c/${communitySlug}/coach/sessions/new`}
+                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90"
+                  >
+                    Create session
+                  </Link>
+                </>
+              ) : (
+                <p className="text-base text-muted-foreground">No sessions scheduled this week.</p>
+              )}
             </div>
           )}
 
