@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, getUserRole } from '@/lib/supabase/server'
+import { createClient, createServiceClient, getUserRole } from '@/lib/supabase/server'
 import type { UserRole } from '@/lib/types/auth'
 
 // AUTH-04: Admin can update a community member's role
@@ -45,7 +45,9 @@ export async function processInviteSignup(
   userId: string,
   inviteToken: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
+  // Use service client to bypass RLS — the invite_links SELECT policy
+  // requires community membership, but the user isn't a member yet
+  const supabase = createServiceClient()
 
   // Look up the invite link
   const { data: invite, error: lookupError } = await supabase
