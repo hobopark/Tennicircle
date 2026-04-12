@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { processInviteSignup } from '@/lib/actions/members'
 import { LoginSchema, SignUpSchema } from '@/lib/validations/auth'
 import type { AuthFormState } from '@/lib/types/auth'
 import { redirect } from 'next/navigation'
@@ -56,6 +57,12 @@ export async function login(
       },
       values: { email: validated.data.email },
     }
+  }
+
+  // Process invite token if present
+  const inviteToken = formData.get('invite_token') as string | null
+  if (inviteToken && data.user) {
+    await processInviteSignup(data.user.id, inviteToken)
   }
 
   redirect('/communities')

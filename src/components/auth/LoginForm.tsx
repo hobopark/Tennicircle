@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +13,8 @@ const initialState: AuthFormState = {}
 
 export function LoginForm() {
   const [state, formAction, isPending] = useActionState(login, initialState)
+  const searchParams = useSearchParams()
+  const inviteToken = searchParams.get('invite') ?? ''
   const [emailError, setEmailError] = useState<string | undefined>(undefined)
   const [passwordError, setPasswordError] = useState<string | undefined>(undefined)
 
@@ -30,6 +33,9 @@ export function LoginForm() {
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      {/* Hidden invite token — threaded from URL */}
+      <input type="hidden" name="invite_token" value={inviteToken} />
+
       {/* Email field */}
       <div className="flex flex-col gap-2">
         <Label htmlFor="login-email" className="text-sm text-foreground">
