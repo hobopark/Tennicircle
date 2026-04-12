@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { createClient, getUserRole } from '@/lib/supabase/server'
 import type { UserRole } from '@/lib/types/auth'
 
