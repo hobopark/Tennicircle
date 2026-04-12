@@ -117,7 +117,7 @@ export function ProfileSetupWizard({
 
       if (result.success) {
         toast.success('Profile saved')
-        router.push('/profile')
+        router.push('/communities')
       } else {
         toast.error(result.error ?? 'Something went wrong saving your profile. Please try again.')
       }
@@ -137,7 +137,7 @@ export function ProfileSetupWizard({
         <div className="flex justify-end mb-2">
           <button
             type="button"
-            onClick={() => router.push('/profile')}
+            onClick={() => router.push('/communities')}
             className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-muted transition-colors cursor-pointer text-muted-foreground"
             aria-label="Close profile editor"
           >

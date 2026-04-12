@@ -82,6 +82,7 @@ export async function updateSession(request: NextRequest) {
     .from('player_profiles')
     .select('user_id')
     .eq('user_id', user.id)
+    .limit(1)
     .maybeSingle()
 
   const { data: memberships } = await supabase
