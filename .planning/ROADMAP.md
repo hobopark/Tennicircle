@@ -12,14 +12,14 @@ TenniCircle replaces Jaden's spreadsheet-and-group-chat workflow with an integra
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [x] **Phase 1: Foundation & Auth** - Multi-tenant data model, RLS, auth flows, and role enforcement (completed 2026-04-07)
-- [ ] **Phase 2: Session Management** - Recurring session templates, RSVP with capacity enforcement, and waitlist
-- [ ] **Phase 3: Player Profiles** - Player profiles, lesson history, and coach progress notes
-- [ ] **Phase 4: Coach Dashboard & Community Events** - Schedule view, player roster, and community events with RSVP
-- [ ] **Phase 5: Notifications** - In-app notification feed with real-time delivery
-- [ ] **Phase 6: Polish & Launch Readiness** - UX hardening, edge cases, and cross-cutting correctness
-- [ ] **Phase 7: Member Management & Invite System** - Admin/coach invite links, role management, coach client assignment
-- [ ] **Phase 8: Community Selector & Open Sign-Up** - Multi-community navigation, community browser, join requests with approval
+- [x] **Phase 1: Foundation & Auth** - Multi-tenant data model, RLS, auth flows, and role enforcement
+- [x] **Phase 2: Session Management** - Recurring session templates, RSVP with capacity enforcement, and waitlist
+- [x] **Phase 3: Player Profiles** - Player profiles, lesson history, and coach progress notes
+- [x] **Phase 4: Coach Dashboard & Community Events** - Schedule view, player roster, and community events with RSVP
+- [x] **Phase 5: Notifications** - In-app notification feed with real-time delivery
+- [x] **Phase 6: Polish & Launch Readiness** - UX hardening, edge cases, and cross-cutting correctness
+- [x] **Phase 7: Member Management & Invite System** - Admin/coach invite links, role management, coach client assignment
+- [x] **Phase 8: Community Selector & Open Sign-Up** - Multi-community navigation, community browser, join requests with approval
 - [x] **Phase 9: Community Chat** - Realtime chatrooms with text and photo messaging, multi-manager rooms, unread tracking
 
 ## Phase Details
