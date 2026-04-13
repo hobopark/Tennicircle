@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { CalendarDays, MapPin } from 'lucide-react'
+import { CalendarDays, Clock, MapPin } from 'lucide-react'
 import { useCommunity } from '@/lib/context/community'
 import type { EventWithRsvpStatus } from '@/lib/types/events'
 import { EVENT_TYPE_LABELS } from '@/lib/types/events'
@@ -54,6 +54,14 @@ export function EventCard({ event }: EventCardProps) {
         <CalendarDays className="w-3 h-3 flex-shrink-0" />
         <span>{formatEventDate(event.starts_at)}</span>
       </div>
+
+      {/* Duration */}
+      {event.duration_minutes && (
+        <div className="flex items-center gap-1 text-sm text-muted-foreground mb-0.5">
+          <Clock className="w-3 h-3 flex-shrink-0" />
+          <span>{event.duration_minutes >= 60 ? `${Math.floor(event.duration_minutes / 60)}h${event.duration_minutes % 60 ? ` ${event.duration_minutes % 60}m` : ''}` : `${event.duration_minutes}m`}</span>
+        </div>
+      )}
 
       {/* Venue */}
       <div className="flex items-center gap-1 text-sm text-muted-foreground mb-1">

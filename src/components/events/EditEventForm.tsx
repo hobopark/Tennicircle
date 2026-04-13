@@ -89,6 +89,25 @@ export function EditEventForm({ event, eventId }: EditEventFormProps) {
       </div>
 
       <div>
+        <label htmlFor="edit-duration" className="text-sm font-medium text-foreground">Duration (optional)</label>
+        <select
+          id="edit-duration"
+          name="duration_minutes"
+          defaultValue={event.duration_minutes ?? ''}
+          className="w-full h-12 rounded-2xl mt-1 border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          <option value="">No duration</option>
+          <option value="30">30 minutes</option>
+          <option value="60">1 hour</option>
+          <option value="90">1.5 hours</option>
+          <option value="120">2 hours</option>
+          <option value="180">3 hours</option>
+          <option value="240">4 hours</option>
+          <option value="480">8 hours</option>
+        </select>
+      </div>
+
+      <div>
         <label htmlFor="edit-venue" className="text-sm font-medium text-foreground">Venue</label>
         <input
           id="edit-venue"

@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { CalendarDays, MapPin, Pencil, ChevronLeft } from 'lucide-react'
+import { CalendarDays, Clock, MapPin, Pencil, ChevronLeft } from 'lucide-react'
 import { createClient, getUserRole } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { EventRsvpButton } from '@/components/events/EventRsvpButton'
@@ -158,6 +158,13 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               <CalendarDays className="w-4 h-4 flex-shrink-0" />
               <span>{formatEventDate(event.starts_at)}</span>
             </div>
+
+            {event.duration_minutes && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <Clock className="w-4 h-4 flex-shrink-0" />
+                <span>{event.duration_minutes >= 60 ? `${Math.floor(event.duration_minutes / 60)}h${event.duration_minutes % 60 ? ` ${event.duration_minutes % 60}m` : ''}` : `${event.duration_minutes} min`}</span>
+              </div>
+            )}
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
               <MapPin className="w-4 h-4 flex-shrink-0" />
