@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Plus, ChevronLeft } from 'lucide-react'
-import { createClient, getUserRole } from '@/lib/supabase/server'
+import { createClient, getUserRole, getCachedUser, getCachedCommunityBySlug } from '@/lib/supabase/server'
 import { WeekCalendarGrid } from '@/components/calendar/WeekCalendarGrid'
 import { AppNav } from '@/components/nav/AppNav'
 import type { SessionWithTemplate, RsvpWithMember } from '@/lib/types/sessions'
@@ -15,14 +15,10 @@ export default async function CoachSchedulePage({
 }) {
   const { slug } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) redirect('/auth')
 
-  const { data: community } = await supabase
-    .from('communities')
-    .select('id')
-    .eq('slug', slug)
-    .single()
+  const community = await getCachedCommunityBySlug(slug)
   if (!community) redirect('/communities')
 
   const membership = await getUserRole(supabase, community.id)

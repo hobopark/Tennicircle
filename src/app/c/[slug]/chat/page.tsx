@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { redirect } from 'next/navigation'
-import { createClient, getUserRole } from '@/lib/supabase/server'
+import { createClient, getUserRole, getCachedUser, getCachedCommunityBySlug } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { ChatRoomList } from '@/components/chat/ChatRoomList'
 import { getChatRooms } from '@/lib/actions/chat'
@@ -13,14 +13,10 @@ export default async function ChatPage({
 }) {
   const { slug } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) redirect('/auth')
 
-  const { data: community } = await supabase
-    .from('communities')
-    .select('id')
-    .eq('slug', slug)
-    .single()
+  const community = await getCachedCommunityBySlug(slug)
   if (!community) redirect('/communities')
 
   const membership = await getUserRole(supabase, community.id)

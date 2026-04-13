@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
-import { createClient, getUserRole } from '@/lib/supabase/server'
+import { createClient, getUserRole, getCachedUser, getCachedCommunityBySlug } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { CancelRsvpButton } from '@/components/sessions/CancelRsvpButton'
 import { RsvpSessionButton } from '@/components/sessions/RsvpSessionButton'
@@ -28,7 +28,7 @@ export default async function ClientSessionDetailPage({ params }: PageProps) {
   const { slug, sessionId } = await params
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) return notFound()
 
   // Fetch session with template title
@@ -41,11 +41,7 @@ export default async function ClientSessionDetailPage({ params }: PageProps) {
   if (!session) return notFound()
 
   // Get community + member
-  const { data: community } = await supabase
-    .from('communities')
-    .select('id')
-    .eq('slug', slug)
-    .single()
+  const community = await getCachedCommunityBySlug(slug)
   if (!community) return notFound()
 
   const membership = await getUserRole(supabase, community.id)

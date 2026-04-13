@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ChevronRight, Plus, Calendar, MapPin } from 'lucide-react'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser, getCachedCommunityBySlug } from '@/lib/supabase/server'
 import { getUserRole } from '@/lib/supabase/server'
 import { AnimatedSection } from '@/components/dashboard/AnimatedSection'
 import { AppNav } from '@/components/nav/AppNav'
@@ -21,14 +21,10 @@ export default async function CoachDashboardPage({
 }) {
   const { slug } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) redirect('/auth')
 
-  const { data: community } = await supabase
-    .from('communities')
-    .select('id')
-    .eq('slug', slug)
-    .single()
+  const community = await getCachedCommunityBySlug(slug)
   if (!community) redirect('/communities')
 
   const membership = await getUserRole(supabase, community.id)

@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { CalendarDays, Clock, MapPin, Pencil, ChevronLeft } from 'lucide-react'
-import { createClient, getUserRole } from '@/lib/supabase/server'
+import { createClient, getUserRole, getCachedUser, getCachedCommunityBySlug } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { EventRsvpButton } from '@/components/events/EventRsvpButton'
 import { DeleteEventButton } from '@/components/events/DeleteEventButton'
@@ -37,7 +37,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   const { slug, eventId } = await params
 
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
 
   if (!user) {
     return (
@@ -50,11 +50,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     )
   }
 
-  const { data: community } = await supabase
-    .from('communities')
-    .select('id')
-    .eq('slug', slug)
-    .single()
+  const community = await getCachedCommunityBySlug(slug)
   if (!community) return notFound()
 
   const membership = await getUserRole(supabase, community.id)

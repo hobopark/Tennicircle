@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser, getCachedCommunityBySlug } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { ClientDashboard } from '@/components/dashboard/ClientDashboard'
 import type { EventWithRsvpStatus, EventRsvp, RawEventRow, RawAnnouncementRow } from '@/lib/types/events'
@@ -13,7 +13,7 @@ export default async function SessionsPage({
 }) {
   const { slug } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
 
   if (!user) {
     return (
@@ -27,11 +27,7 @@ export default async function SessionsPage({
   }
 
   // Resolve community by slug
-  const { data: community } = await supabase
-    .from('communities')
-    .select('id')
-    .eq('slug', slug)
-    .single()
+  const community = await getCachedCommunityBySlug(slug)
   if (!community) {
     return (
       <>

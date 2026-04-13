@@ -1,4 +1,4 @@
-import { createClient, getUserRole } from '@/lib/supabase/server'
+import { createClient, getUserRole, getCachedUser, getCachedCommunityBySlug } from '@/lib/supabase/server'
 import { NotificationFeed } from '@/components/notifications/NotificationFeed'
 import { AppNav } from '@/components/nav/AppNav'
 import type { NotificationRow } from '@/lib/types/notifications'
@@ -13,18 +13,14 @@ export default async function NotificationsPage({
 }) {
   const { slug } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
 
   let initialNotifications: NotificationRow[] = []
   let memberId = ''
   let userRole: UserRole = 'pending'
 
   if (user) {
-    const { data: community } = await supabase
-      .from('communities')
-      .select('id')
-      .eq('slug', slug)
-      .single()
+    const community = await getCachedCommunityBySlug(slug)
 
     if (community) {
       const membership = await getUserRole(supabase, community.id)

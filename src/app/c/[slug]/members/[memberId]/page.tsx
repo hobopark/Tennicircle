@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { redirect, notFound } from 'next/navigation'
-import { createClient, getUserRole } from '@/lib/supabase/server'
+import { createClient, getUserRole, getCachedUser, getCachedCommunityBySlug } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { ProfileView } from '@/components/profile/ProfileView'
 import { LessonHistory } from '@/components/profile/LessonHistory'
@@ -17,14 +17,10 @@ export default async function MemberProfilePage({ params }: PageProps) {
   const supabase = await createClient()
 
   // Auth guard
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) redirect('/auth')
 
-  const { data: community } = await supabase
-    .from('communities')
-    .select('id')
-    .eq('slug', slug)
-    .single()
+  const community = await getCachedCommunityBySlug(slug)
   if (!community) redirect('/communities')
 
   const membership = await getUserRole(supabase, community.id)

@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
 import { AppNav } from '@/components/nav/AppNav'
 import { WeekCalendarGrid } from '@/components/calendar/WeekCalendarGrid'
 
@@ -13,7 +13,7 @@ export default async function SessionsCalendarPage({
 }) {
   const { slug } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
 
   if (!user) {
     return (
